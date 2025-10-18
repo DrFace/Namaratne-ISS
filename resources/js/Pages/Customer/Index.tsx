@@ -6,6 +6,7 @@ import CreateCustomerModal from "./CreateCustomerModal";
 import { PencilIcon } from "@heroicons/react/20/solid";
 import ConfirmButton from "@/Components/elements/buttons/ConfirmButton";
 import { PrimaryLink } from "@/Components/elements/buttons/PrimaryButton";
+import EditCustomerModal from "./EditCustomerModal";
 
 export default function CustomersIndexPage() {
     const { customers: initialCustomers } = usePage().props as any;
@@ -16,6 +17,19 @@ export default function CustomersIndexPage() {
     const search = { placeholder: "Search Customer" };
     const handleCustomerCreated = (newCustomer: any) => {
         setCustomers({ ...customers, data: [...customers.data, newCustomer] });
+    };
+    const handleCustomerUpdated = (updated: any) => {
+        setCustomers({
+            ...customers,
+            data: customers.data.map((c: any) => (c.id === updated.id ? updated : c)),
+        });
+    };
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedCustomer, setSelectedCustomer] = useState(null);
+
+    const openEditModal = (customer: any) => {
+        setSelectedCustomer(customer);
+        setIsEditModalOpen(true);
     };
 
     const tableColumns = [
@@ -55,9 +69,13 @@ export default function CustomersIndexPage() {
                             key={c.id}
                             buttons={
                                 <>
-                                    <PrimaryLink href={`/customer/${c.id}/edit`}>
-                                        <PencilIcon className="w-4 h-4 mr-2" /> Edit
-                                    </PrimaryLink>
+                                     <button
+                                        onClick={() => openEditModal(c)}
+                                        className="flex items-center text-blue-600 hover:underline"
+                                    >
+                                        <PencilIcon className="w-4 h-4 mr-1" />
+                                        Edit
+                                    </button>
                                     <ConfirmButton url={`/customer/${c.id}`} label="Delete" />
                                 </>
                             }
@@ -82,6 +100,12 @@ export default function CustomersIndexPage() {
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     onCreated={handleCustomerCreated}
+                />
+                <EditCustomerModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => setIsEditModalOpen(false)}
+                    customer={selectedCustomer}
+                    onUpdated={handleCustomerUpdated}
                 />
             </div>
         </Authenticated>

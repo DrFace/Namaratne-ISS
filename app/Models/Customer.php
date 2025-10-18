@@ -89,4 +89,8 @@ class Customer extends Model
         $this->save();
     }
 
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 }

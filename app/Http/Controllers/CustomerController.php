@@ -3,7 +3,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Customer\CustomerRequest;
 use App\Models\Customer;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class CustomerController extends Controller
@@ -33,35 +32,30 @@ class CustomerController extends Controller
             'customer' => $customer,
         ]);
     }
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+
+    public function update(CustomerRequest $request, Customer $customer)
     {
-        //
+        $data = $request->validated();
+
+        $customer->update($data);
+        $customer->netBalance = $customer->creditBalance ?? $customer->netBalance ?? 0;
+        $customer->save();
+
+        return redirect()->back()->with('success', 'Customer Update successfully!');
+
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function destroy(Customer $customer)
     {
-        //
+        $customer->delete();
+
+        return redirect()->back()->with('success', 'Customer deleted successfully!');
+
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function edit(Customer $customer)
     {
-        //
+        return inertia('Customers/Edit', ['customer' => $customer]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
 }

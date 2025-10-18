@@ -10,12 +10,18 @@ import { PrimaryLink } from "@/Components/elements/buttons/PrimaryButton";
 
 export default function ProductsIndexPage() {
     const { products: initialProducts, seriasList } = usePage().props as any;
+
+    // State: products object (paginated)
     const [products, setProducts] = useState(initialProducts);
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
     const [isSeriasModalOpen, setIsSeriasModalOpen] = useState(false);
 
+    // When a new product is created, merge into .data
     const handleProductCreated = (newProduct: any) => {
-        setProducts([...products, newProduct]);
+        setProducts((prev: any) => ({
+            ...prev,
+            data: [...prev.data, newProduct],
+        }));
     };
 
     const handleSeriasCreated = (newSerias: any) => {
@@ -31,12 +37,11 @@ export default function ProductsIndexPage() {
         { label: "Selling Price", sortField: "sellingPrice", sortable: true },
         { label: "Quantity", sortField: "quantity", sortable: true },
         { label: "Purchase Date", sortField: "purchaseDate", sortable: true },
-        { label: "Status", sortField: "status", sortable: true },
         { label: "Availability", sortField: "availability", sortable: true },
     ];
-    const filters = {}; // currently empty
-    const createLink = undefined; // or route("products.create")
-    const search = { placeholder: "Search Products" };
+
+    const filters = {};
+    const createLink = undefined;
 
     return (
         <Authenticated bRoutes={undefined}>
@@ -64,44 +69,43 @@ export default function ProductsIndexPage() {
                     filters={filters}
                     url={route("products.index")}
                     createLink={createLink}
-                    // search={search}
-                    links={products?.meta?.links}
-                >          {products.map((product: any) => (
-                    <TableBody
-                        key={product.id}
-                        buttons={
-                            <>
-                                <PrimaryLink
-                                    className="!py-2"
-                                    href={`/products/${product.id}/edit`}
-                                >
-                                    <PencilIcon className="w-3 h-3 mr-2" /> Edit
-                                </PrimaryLink>
-                                <ConfirmButton
-                                    className="!py-2"
-                                    url={`/products/${product.id}`}
-                                    label="Delete"
-                                />
-                            </>
-                        }
-                    >
-                        <TableTd>{product.id}</TableTd>
-                        <TableTd>{product.productName}</TableTd>
-                        <TableTd>
-                            {seriasList.find((s: any) => s.id === product.seriasId)?.seriasNo ?? "-"}
-                        </TableTd>
-                        <TableTd>LKR {product.buyingPrice}</TableTd>
-                        <TableTd>LKR {product.sellingPrice}</TableTd>
-                        <TableTd>{product.quantity}</TableTd>
-                        <TableTd>{product.purchaseDate ?? "-"}</TableTd>
-                        <TableTd>{product.status}</TableTd>
-                        <TableTd>
-                            <div className={`font-semibold ${product.quantity > 0 ? "text-green-500" : "text-red-500"}`}>
-                                {product.quantity > 0 ? "In-stock" : "Out of stock"}
-                            </div>
-                        </TableTd>
-                    </TableBody>
-                ))}
+                    links={products.meta?.links}
+                >
+                    {products.data.map((product: any) => (
+                        <TableBody
+                            key={product.id}
+                            buttons={
+                                <>
+                                    <PrimaryLink
+                                        className="!py-2"
+                                        href={`/products/${product.id}/edit`}
+                                    >
+                                        <PencilIcon className="w-3 h-3 mr-2" /> Edit
+                                    </PrimaryLink>
+                                    <ConfirmButton
+                                        className="!py-2"
+                                        url={`/products/${product.id}`}
+                                        label="Delete"
+                                    />
+                                </>
+                            }
+                        >
+                            <TableTd>{product.id}</TableTd>
+                            <TableTd>{product.productName}</TableTd>
+                            <TableTd>
+                                {seriasList.find((s: any) => s.id === product.seriasId)?.seriasNo ?? "-"}
+                            </TableTd>
+                            <TableTd>LKR {product.buyingPrice}</TableTd>
+                            <TableTd>LKR {product.sellingPrice}</TableTd>
+                            <TableTd>{product.quantity}</TableTd>
+                            <TableTd>{product.purchaseDate ?? "-"}</TableTd>
+                            <TableTd>
+                                <div className={`font-semibold ${product.quantity > 0 ? "text-green-500" : "text-red-500"}`}>
+                                    {product.quantity > 0 ? "In-stock" : "Out of stock"}
+                                </div>
+                            </TableTd>
+                        </TableBody>
+                    ))}
                 </MasterTable>
 
                 {/* Modals */}

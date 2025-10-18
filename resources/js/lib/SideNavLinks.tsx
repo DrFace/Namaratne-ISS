@@ -66,8 +66,8 @@ const SideNavLinks: React.FC = () => {
             name: "Billing",
             link: true,
             border: false,
-            startWith: "/",
-            // route: "admin.billing", // ⚠ comment karala
+            startWith: "/billing",
+            route: "billing.index", // ⚠ comment karala
             icon: "CurrencyDollarIcon",
             count: 0,
         },
