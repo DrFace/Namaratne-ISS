@@ -25,6 +25,8 @@ class Product extends Model
         'supplierId',
         'createdBy',
         'lowStock',
+        'profitMargin',
+        'batchNumber',
         'status',
         'availability',
         'expiryDate',
@@ -34,6 +36,7 @@ class Product extends Model
      protected $casts = [
         'expiryDate'   => 'date',
         'purchaseDate' => 'date',
+        'profitMargin' => 'decimal'
     ];
 
     // public function scopeFilter($query, array $filters)
@@ -61,4 +64,5 @@ class Product extends Model
     {
         return $this->belongsTo(SeriasNumber::class);
     }
+   
 }

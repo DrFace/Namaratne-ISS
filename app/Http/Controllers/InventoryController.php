@@ -10,14 +10,25 @@ class InventoryController extends Controller
 {
     public function index()
     {
-        $products   = Product::all();
-        $seriasList = SeriasNumber::where('status', 'pending')->get(['id', 'seriasNo']); // fetch active serias
+        // Paginate only required columns
+        $products = Product::select([
+            'id',
+            'productName',
+            'seriasId',
+            'buyingPrice',
+            'sellingPrice',
+            'quantity',
+            'purchaseDate',
+            'status',
+        ])->paginate(10)->toArray();
+
+        // Fetch series list
+        $seriasList = SeriasNumber::select(['id', 'seriasNo'])->get()->toArray();
 
         return Inertia::render('Inventory/Index', [
             'products'   => $products,
             'seriasList' => $seriasList,
         ]);
-
     }
 
     public function store(Request $request)
@@ -53,7 +64,6 @@ class InventoryController extends Controller
 
         $product = Product::create($validated);
 
-        
         return response()->json([
             'message' => 'Product created successfully',
             'product' => $product,

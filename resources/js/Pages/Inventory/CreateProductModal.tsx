@@ -99,12 +99,13 @@ export default function CreateProductModal({
 
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-            <div className="bg-white rounded-lg p-6 w-[600px] shadow-lg">
+            <div className="bg-white rounded-lg p-6 w-[600px] max-h-[80vh] overflow-y-auto shadow-lg">
                 <h2 className="text-lg font-bold mb-4">Add Product</h2>
                 <form onSubmit={handleSubmit} className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                         {/* Product Name */}
                         <div>
+                            <label className="block text-sm font-medium">Product Name</label>
                             <input
                                 type="text"
                                 name="productName"
@@ -120,6 +121,7 @@ export default function CreateProductModal({
 
                         {/* Product Code */}
                         <div>
+                            <label className="block text-sm font-medium">Product Code</label>
                             <input
                                 type="text"
                                 name="productCode"
@@ -156,6 +158,7 @@ export default function CreateProductModal({
 
                         {/* Description */}
                         <div className="col-span-2">
+                            <label className="block text-sm font-medium">Description</label>
                             <textarea
                                 name="productDescription"
                                 placeholder="Description"
@@ -170,6 +173,7 @@ export default function CreateProductModal({
 
                         {/* Buying Price */}
                         <div>
+                            <label className="block text-sm font-medium">Buying Price</label>
                             <input
                                 type="number"
                                 name="buyingPrice"
@@ -185,6 +189,7 @@ export default function CreateProductModal({
 
                         {/* Tax */}
                         <div>
+                            <label className="block text-sm font-medium">Tax</label>
                             <input
                                 type="number"
                                 name="tax"
@@ -200,6 +205,7 @@ export default function CreateProductModal({
 
                         {/* Discount */}
                         <div>
+                            <label className="block text-sm font-medium">Discount</label>
                             <input
                                 type="number"
                                 name="discount"
@@ -215,6 +221,7 @@ export default function CreateProductModal({
 
                         {/* Selling Price */}
                         <div>
+                            <label className="block text-sm font-medium">Selling Price</label>
                             <input
                                 type="number"
                                 name="sellingPrice"
@@ -230,6 +237,7 @@ export default function CreateProductModal({
 
                         {/* Quantity */}
                         <div>
+                            <label className="block text-sm font-medium">Quantity</label>
                             <input
                                 type="number"
                                 name="quantity"
@@ -245,6 +253,7 @@ export default function CreateProductModal({
 
                         {/* Low Stock */}
                         <div>
+                            <label className="block text-sm font-medium">Low Stock</label>
                             <input
                                 type="number"
                                 name="lowStock"
@@ -260,6 +269,7 @@ export default function CreateProductModal({
 
                         {/* Unit */}
                         <div>
+                            <label className="block text-sm font-medium">Unit</label>
                             <input
                                 type="text"
                                 name="unit"
@@ -275,6 +285,7 @@ export default function CreateProductModal({
 
                         {/* Brand */}
                         <div className="col-span-2">
+                            <label className="block text-gray-800 font-semibold mb-2">Brand</label>
                             <input
                                 type="text"
                                 name="brand"
@@ -290,6 +301,7 @@ export default function CreateProductModal({
 
                         {/* Purchase Date */}
                         <div className="col-span-2">
+                            <label className="block text-gray-800 font-semibold mb-2">Purchase Date</label>
                             <input
                                 type="date"
                                 name="purchaseDate"
@@ -303,7 +315,8 @@ export default function CreateProductModal({
                         </div>
 
                         {/* Expiry Date */}
-                        <div className="col-span-2">
+                        {/* <div className="col-span-2">
+                            <label className="block text-gray-800 font-semibold mb-2">Expiry Date</label>
                             <input
                                 type="date"
                                 name="expiryDate"
@@ -314,7 +327,7 @@ export default function CreateProductModal({
                             {errors.expiryDate && (
                                 <p className="text-red-500 text-sm">{errors.expiryDate[0]}</p>
                             )}
-                        </div>
+                        </div> */}
 
                         {/* Product Image */}
                         <div className="col-span-2">

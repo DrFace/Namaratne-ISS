@@ -1,0 +1,61 @@
+<?php
+namespace App\Http\Controllers;
+
+use App\Http\Requests\Customer\CustomerRequest;
+use App\Models\Customer;
+use Inertia\Inertia;
+
+class CustomerController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        $customers = Customer::latest()->paginate(10);
+
+        return Inertia::render('Customer/Index', [
+            'customers' => $customers,
+        ]);
+    }
+
+    public function store(CustomerRequest $request)
+    {
+        $data = $request->validated();
+
+        $customer             = Customer::create($data);
+        $customer->netBalance = $customer->creditBalance ?? 0;
+        $customer->save();
+
+        return response()->json([
+            'message'  => 'Customer added successfully!',
+            'customer' => $customer,
+        ]);
+    }
+
+    public function update(CustomerRequest $request, Customer $customer)
+    {
+        $data = $request->validated();
+
+        $customer->update($data);
+        $customer->netBalance = $customer->creditBalance ?? $customer->netBalance ?? 0;
+        $customer->save();
+
+        return redirect()->back()->with('success', 'Customer Update successfully!');
+
+    }
+
+    public function destroy(Customer $customer)
+    {
+        $customer->delete();
+
+        return redirect()->back()->with('success', 'Customer deleted successfully!');
+
+    }
+
+    public function edit(Customer $customer)
+    {
+        return inertia('Customers/Edit', ['customer' => $customer]);
+    }
+
+}
