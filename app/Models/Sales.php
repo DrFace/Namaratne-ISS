@@ -54,4 +54,8 @@ class Sales extends Model
     {
         return $this->belongsTo(User::class, 'createdBy', 'id');
     }
+    public function items()
+    {
+        return $this->hasMany(SalesDetails::class, 'salesId');
+    }
 }

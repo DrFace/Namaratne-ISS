@@ -45,6 +45,9 @@ class BillingController extends Controller
                 'totalAmount'   => $validated['totalAmount'],
                 'paidAmount'    => $validated['paidAmount'] ?? 0,
                 'dueAmount'     => $validated['totalAmount'] - ($validated['paidAmount'] ?? 0),
+                'cashAmount'    => $validated['cashAmount'] ?? 0,
+                'cardAmount'    => $validated['cardAmount'] ?? 0,
+                'creditAmount'  => $validated['creditAmount'] ?? 0,
                 'paymentMethod' => $validated['paymentMethod'],
                 'status'        => $validated['status'],
                 'billNumber'    => 'BILL-' . time(),
@@ -58,12 +61,12 @@ class BillingController extends Controller
                         'productId'      => $item['id'],
                         'quantity'       => $item['quantity'],
                         'salePrice'      => $item['sellingPrice'],
+                        'descount'       => 0, // you can calculate per item discount if needed
                         'totalAmount'    => $item['quantity'] * $item['sellingPrice'],
                         'returnQuantity' => 0,
                     ]);
 
-                    Product::where('id', $item['id'])
-                        ->decrement('quantity', $item['quantity']);
+                    Product::where('id', $item['id'])->decrement('quantity', $item['quantity']);
                 }
             }
 
@@ -89,11 +92,18 @@ class BillingController extends Controller
         $customers = Customer::where('contactNumber', 'like', "%$query%")
             ->orWhere('name', 'like', "%$query%")
             ->limit(5)
-            ->get(['id', 'name', 'contactNumber']);
+            ->get(['id', 'name', 'contactNumber', 'discountValue', 'discountType', 'creditBalance']);
 
         return response()->json($customers);
     }
 
+    public function invoice($id)
+    {
+        $sale = Sales::with('items.product')->findOrFail($id);
+        return Inertia::render('Billing/InvoicePrint', [
+            'invoice' => $sale,
+        ]);
+    }
     /**
      * Display the specified resource.
      */

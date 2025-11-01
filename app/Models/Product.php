@@ -36,7 +36,7 @@ class Product extends Model
      protected $casts = [
         'expiryDate'   => 'date',
         'purchaseDate' => 'date',
-        'profitMargin' => 'decimal'
+        'profitMargin' => 'decimal:2'
     ];
 
     // public function scopeFilter($query, array $filters)
@@ -64,5 +64,5 @@ class Product extends Model
     {
         return $this->belongsTo(SeriasNumber::class);
     }
-   
+
 }

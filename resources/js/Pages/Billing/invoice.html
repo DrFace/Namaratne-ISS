@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tax Invoice - Namratne Motor Distributors</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    window.onload = () => setTimeout(() => window.print(), 500);
+  </script>
+</head>
+
+<body class="bg-white font-sans text-[13px] text-gray-900 leading-tight">
+  <div class="max-w-[800px] mx-auto border border-gray-300 shadow-sm my-6 p-6">
+
+    <!-- ===== HEADER ===== -->
+    <div class="flex justify-between items-start border-b-2 border-pink-600 pb-2 mb-2">
+      <div>
+        <h1 class="text-2xl font-bold text-pink-600 tracking-wide">TAX INVOICE</h1>
+        <div class="mt-2 space-y-1 text-xs">
+          <p><strong>Invoice Number:</strong> _______________________</p>
+          <p><strong>Invoice Date:</strong> ___________________________</p>
+        </div>
+      </div>
+
+      <div class="text-right text-xs leading-snug">
+        <p class="font-semibold text-sm">Namaratne Motor Distributors</p>
+        <p>Direct Importers & Islandwide Distributors for ESP Shock Absorbers</p>
+        <p>143/19B, Salawa Rd, Mirihana</p>
+        <p>Tel: 0777756095</p>
+        <p>Email: saleinfo.nmd@gmail.com</p>
+        <p>VAT No: ___________________</p>
+      </div>
+    </div>
+
+    <!-- ===== INVOICE TO / FROM ===== -->
+    <div class="flex justify-between border-b border-gray-300 pb-3 mb-3 text-xs">
+      <div class="w-1/2">
+        <p class="font-semibold mb-1">Invoice To:</p>
+        <div class="space-y-0.5">
+          <p>Client Name: ____________________________</p>
+          <p>Company: _______________________________</p>
+          <p>Phone No: ______________________________</p>
+          <p>Email: _________________________________</p>
+          <p>Address: _______________________________</p>
+        </div>
+      </div>
+      <div class="w-1/2 text-right">
+        <p class="font-semibold mb-1">Invoice From:</p>
+        <p>VAT No: __________________________</p>
+      </div>
+    </div>
+
+    <!-- ===== ITEMS TABLE ===== -->
+    <table class="w-full border-collapse text-xs mb-4">
+      <thead>
+        <tr class="bg-pink-100 border border-gray-400 text-[12px]">
+          <th class="border border-gray-400 p-1 text-left w-[35%]">ITEM DESCRIPTION</th>
+          <th class="border border-gray-400 p-1 text-left w-[20%]">ITEM CODE</th>
+          <th class="border border-gray-400 p-1 text-right w-[15%]">UNIT PRICE</th>
+          <th class="border border-gray-400 p-1 text-center w-[10%]">QTY</th>
+          <th class="border border-gray-400 p-1 text-right w-[20%]">TOTAL</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="border border-gray-300 p-1">Example Product 1</td>
+          <td class="border border-gray-300 p-1">ESP-001</td>
+          <td class="border border-gray-300 p-1 text-right">1,500.00</td>
+          <td class="border border-gray-300 p-1 text-center">2</td>
+          <td class="border border-gray-300 p-1 text-right">3,000.00</td>
+        </tr>
+        <tr>
+          <td class="border border-gray-300 p-1">Example Product 2</td>
+          <td class="border border-gray-300 p-1">ESP-002</td>
+          <td class="border border-gray-300 p-1 text-right">2,000.00</td>
+          <td class="border border-gray-300 p-1 text-center">1</td>
+          <td class="border border-gray-300 p-1 text-right">2,000.00</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ===== TOTALS ===== -->
+    <div class="flex justify-end mb-6">
+      <table class="border border-gray-400 w-[250px] text-[12px]">
+        <tbody>
+          <tr>
+            <td class="border border-gray-300 p-1 font-medium">GOODS VALUE</td>
+            <td class="border border-gray-300 p-1 text-right">5,000.00</td>
+          </tr>
+          <tr>
+            <td class="border border-gray-300 p-1 font-medium">DISCOUNT</td>
+            <td class="border border-gray-300 p-1 text-right">- 250.00</td>
+          </tr>
+          <tr>
+            <td class="border border-gray-300 p-1 font-medium">TOTAL</td>
+            <td class="border border-gray-300 p-1 text-right">4,750.00</td>
+          </tr>
+          <tr>
+            <td class="border border-gray-300 p-1 font-medium">VAT 18%</td>
+            <td class="border border-gray-300 p-1 text-right">855.00</td>
+          </tr>
+          <tr class="bg-pink-100 font-bold">
+            <td class="border border-gray-300 p-1">GRAND TOTAL</td>
+            <td class="border border-gray-300 p-1 text-right">5,605.00</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ===== NOTE ===== -->
+    <div class="border-t border-gray-300 pt-2 mt-2">
+      <p class="text-center text-xs italic">
+        NOTE: All Cheques to be drawn in favour of
+        <b>Namaratne Motor Distributors</b> and crossed ‘Account Payee’
+      </p>
+    </div>
+
+    <!-- ===== SIGNATURES ===== -->
+    <div class="flex justify-between mt-10 text-xs">
+      <div class="text-center">
+        <div class="mb-8">...........................................................</div>
+        <p>Customer Signature</p>
+      </div>
+      <div class="text-center">
+        <div class="mb-8">...........................................................</div>
+        <p>NMD Representative Signature</p>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

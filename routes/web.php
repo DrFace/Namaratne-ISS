@@ -22,6 +22,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/inventory', [InventoryController::class, 'index'])->name('products.index');
     Route::post('/inventory', [InventoryController::class, 'store'])->name('products.store');
+    Route::get('/inventory/{id}/edit', [InventoryController::class, 'show'])->name('products.edit');
+    Route::put('/inventory/{id}', [InventoryController::class, 'update'])->name('products.update');
+    Route::delete('/inventory/{id}', [InventoryController::class, 'destroy'])->name('products.destroy');
     Route::post('/serias', [InventoryController::class, 'seriasStore'])->name('serias.store');
 
     Route::get('/customer', [CustomerController::class, 'index'])->name('customer.index');
@@ -33,10 +36,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
     Route::post('/billing', [BillingController::class, 'store'])->name('billing.store');
     Route::get('/customers/search', [BillingController::class, 'search']);
+    Route::get('/billing/print/{id}', [BillingController::class, 'invoice']);
     // Route::get('/billing/{billing}/edit', [BillingController::class, 'edit'])->name('billing.edit');
     // Route::post('/billing/{billing}', [BillingController::class, 'update'])->name('billing.update');
     // Route::delete('/billing/{billing}', [BillingController::class, 'destroy'])->name('billing.destroy');
-
 
 });
 
