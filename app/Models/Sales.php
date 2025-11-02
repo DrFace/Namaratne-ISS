@@ -38,7 +38,7 @@ class Sales extends Model
 
     public function customer()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(Customer::class, 'customerId');
     }
 
     public function salesDetails()
@@ -48,7 +48,7 @@ class Sales extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'createdBy');
     }
     public function createdByUser()
     {
