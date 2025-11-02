@@ -174,11 +174,11 @@ export default function InvoicePrint({ invoice }: { invoice: InvoiceData }) {
                 {/* SIGNATURES */}
                 <div className="flex justify-between mt-10 text-xs">
                     <div className="text-center">
-                        <div className="mb-8">...........................................................</div>
+                        <div className="mb-2">...........................................................</div>
                         <p>Customer Signature</p>
                     </div>
                     <div className="text-center">
-                        <div className="mb-8">...........................................................</div>
+                        <div className="mb-2">...........................................................</div>
                         <p>NMD Representative Signature</p>
                     </div>
                 </div>
