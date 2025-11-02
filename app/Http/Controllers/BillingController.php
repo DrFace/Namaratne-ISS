@@ -99,7 +99,26 @@ class BillingController extends Controller
 
     public function invoice($id)
     {
-        $sale = Sales::with('items.product')->findOrFail($id);
+        $sale = Sales::with([
+            'items.product:id,productName,productCode',
+            'customer:id,name,contactNumber,email,address'
+        ])->findOrFail($id);
+        
+        $sale->items->transform(function ($item) {
+            $item->productName = $item->product?->productName;
+            $item->productCode = $item->product?->productCode;
+            unset($item->product);
+            return $item;
+        });
+        
+        if ($sale->customer) {
+            $sale->customer_name = $sale->customer->name;
+            $sale->customer_contact = $sale->customer->contactNumber;
+            $sale->customer_email = $sale->customer->email;
+            $sale->customer_address = $sale->customer->address;
+            unset($sale->customer);
+        }
+        
         return Inertia::render('Billing/InvoicePrint', [
             'invoice' => $sale,
         ]);
