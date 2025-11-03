@@ -11,7 +11,7 @@ export default function Dashboard() {
             <div className="p-6 space-y-6">
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold text-gray-800 font-Inter">
-                        Welcome back, {user.first_name} 👋
+                        Welcome back, {user.first_name}
                     </h1>
                     <p className="text-sm text-gray-600">
                         Here’s your personalized overview based on your role.
