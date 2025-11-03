@@ -20,4 +20,5 @@ jobs:
             cd ..
             cd /var/www/html
             git checkout main
+            git merge --abort
             git pull
