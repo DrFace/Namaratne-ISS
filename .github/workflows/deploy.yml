@@ -21,3 +21,5 @@ jobs:
             cd /var/www/html
             git checkout main
             git pull
+            npm install
+            npm run build
