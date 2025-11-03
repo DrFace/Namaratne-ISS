@@ -17,7 +17,6 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            cd ..
             cd /var/www/html
             git checkout main
             git pull
@@ -29,3 +28,7 @@ jobs:
             php artisan config:clear
             php artisan view:clear
             php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            sudo systemctl restart apache2
