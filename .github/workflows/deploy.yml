@@ -21,7 +21,11 @@ jobs:
             cd /var/www/html
             git checkout main
             git pull
+            composer install --no-dev --optimize-autoloader
             npm install
             npm run build
             php artisan route:clear
             php artisan cache:clear
+            php artisan config:clear
+            php artisan view:clear
+            php artisan optimize:clear
