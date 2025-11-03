@@ -19,4 +19,5 @@ jobs:
           script: |
             cd ..
             cd /var/www/html
-            git pull origin chore/ci_cd_setup
+            git checkout main
+            git pull
