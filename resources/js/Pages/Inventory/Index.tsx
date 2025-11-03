@@ -31,7 +31,7 @@ export default function ProductsIndexPage() {
     const tableColumns = [
         { label: "", sortField: "", sortable: false },
         { label: "ID", sortField: "id", sortable: true },
-        { label: "Product Name", sortField: "productName", sortable: true },
+        { label: "Product name", sortField: "productName", sortable: true },
         { label: "Series", sortField: "seriasNo", sortable: true },
         { label: "Buying Price", sortField: "buyingPrice", sortable: true },
         { label: "Selling Price", sortField: "sellingPrice", sortable: true },
