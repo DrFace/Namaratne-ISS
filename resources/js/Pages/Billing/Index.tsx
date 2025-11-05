@@ -21,9 +21,8 @@ export default function Billing({ products: initialProducts }: any) {
     const [discountType, setDiscountType] = useState<"percentage" | "fixed">("fixed");
 
     // Payment fields
+    const [paymentType, setPaymentType] = useState<"cash" | "credit">("cash");
     const [cashAmount, setCashAmount] = useState(0);
-    const [cardAmount, setCardAmount] = useState(0);
-    const [creditAmount, setCreditAmount] = useState(0);
     const [balance, setBalance] = useState(0);
 
     // Totals
@@ -36,7 +35,14 @@ export default function Billing({ products: initialProducts }: any) {
     const customerCredit = selectedCustomer?.creditBalance || 0;
     const netTotal = Math.max(total - discountAmount - customerCredit, 0);
 
-    const paidAmount = cashAmount + cardAmount + creditAmount;
+    const paidAmount = paymentType === "cash" ? cashAmount : netTotal;
+
+    // Check if credit limit is exceeded
+    const customerCreditLimit = selectedCustomer?.creditLimit || 0;
+    const customerCurrentCreditSpend = selectedCustomer?.currentCreditSpend || 0;
+    const customerRemainingCredit = customerCreditLimit - customerCurrentCreditSpend;
+    const creditAfterTransaction = customerRemainingCredit - netTotal;
+    const isCreditLimitExceeded = paymentType === "credit" && netTotal > customerRemainingCredit;
 
     useEffect(() => {
         setBalance(netTotal - paidAmount);
@@ -116,13 +122,13 @@ export default function Billing({ products: initialProducts }: any) {
 
     // Save sale
     const saveSale = async (status: "draft" | "approved") => {
-        try {
-            // Determine payment method
-            let paymentMethod: "cash" | "card" | "credit" = "cash";
-            if (cashAmount > 0 && cardAmount > 0) paymentMethod = "cash"; // mixed
-            else if (cardAmount > 0) paymentMethod = "card";
-            else if (creditAmount > 0) paymentMethod = "credit";
+        // Validate credit limit for approved sales
+        if (status === "approved" && isCreditLimitExceeded) {
+            alert("Cannot approve sale: Credit limit exceeded!");
+            return;
+        }
 
+        try {
             const res = await axios.post("/billing", {
                 customerId: selectedCustomer?.id,
                 customerName,
@@ -134,11 +140,11 @@ export default function Billing({ products: initialProducts }: any) {
                 creditUsed: customerCredit,
                 netTotal,
                 paidAmount,
-                cashAmount,
-                cardAmount,
-                creditAmount,
+                cashAmount: paymentType === "cash" ? cashAmount : 0,
+                cardAmount: 0,
+                creditAmount: paymentType === "credit" ? netTotal : 0,
                 balance,
-                paymentMethod,
+                paymentMethod: paymentType,
                 status,
             });
 
@@ -152,9 +158,8 @@ export default function Billing({ products: initialProducts }: any) {
                 setCustomerName("");
                 setCustomerContact("");
                 setSelectedCustomer(null);
+                setPaymentType("cash");
                 setCashAmount(0);
-                setCardAmount(0);
-                setCreditAmount(0);
                 setDiscountValue(0);
             }
         } catch (err: any) {
@@ -364,6 +369,8 @@ export default function Billing({ products: initialProducts }: any) {
                                                 setCustomerName("");
                                                 setCustomerContact("");
                                                 setCartItems([]);
+                                                setPaymentType("cash");
+                                                setCashAmount(0);
                                             }}
                                             className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
                                         >
@@ -393,36 +400,65 @@ export default function Billing({ products: initialProducts }: any) {
 
                                 {/* Payment */}
                                 <div className="space-y-2 mb-3">
-                                    <label className="font-semibold">Cash Payment</label>
-                                    <input
-                                        type="number"
-                                        placeholder="Cash Amount"
-                                        value={cashAmount === 0 ? "" : cashAmount}
-                                        onChange={(e) =>
-                                            setCashAmount(e.target.value === "" ? 0 : Number(e.target.value))
-                                        }
+                                    <label className="font-semibold">Payment Type</label>
+                                    <select
+                                        value={paymentType}
+                                        onChange={(e) => {
+                                            setPaymentType(e.target.value as "cash" | "credit");
+                                            setCashAmount(0);
+                                        }}
                                         className="w-full border rounded p-2"
-                                    />
-                                    <label className="font-semibold mt-2">Card Payment</label>
-                                    <input
-                                        type="number"
-                                        placeholder="Card Amount"
-                                        value={cardAmount === 0 ? "" : cardAmount}
-                                        onChange={(e) =>
-                                            setCardAmount(e.target.value === "" ? 0 : Number(e.target.value))
-                                        }
-                                        className="w-full border rounded p-2"
-                                    />
-                                    <label className="font-semibold mt-2">Credit Payment</label>
-                                    <input
-                                        type="number"
-                                        placeholder="Credit Amount"
-                                        value={creditAmount === 0 ? "" : creditAmount}
-                                        onChange={(e) =>
-                                            setCreditAmount(e.target.value === "" ? 0 : Number(e.target.value))
-                                        }
-                                        className="w-full border rounded p-2"
-                                    />
+                                    >
+                                        <option value="cash">Cash</option>
+                                        <option value="credit">Credit</option>
+                                    </select>
+
+                                    {paymentType === "cash" && (
+                                        <>
+                                            <label className="font-semibold mt-2">Cash Amount</label>
+                                            <input
+                                                type="number"
+                                                placeholder="Enter cash amount"
+                                                value={cashAmount === 0 ? "" : cashAmount}
+                                                onChange={(e) =>
+                                                    setCashAmount(e.target.value === "" ? 0 : Number(e.target.value))
+                                                }
+                                                className="w-full border rounded p-2"
+                                            />
+                                        </>
+                                    )}
+
+                                    {paymentType === "credit" && (
+                                        <>
+                                            <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded space-y-2">
+                                                <p className="text-sm text-blue-700">
+                                                    Full amount (Rs. {netTotal.toLocaleString()}) will be paid through credit
+                                                </p>
+                                                <div className="text-xs text-blue-600 space-y-1 pt-2 border-t border-blue-200">
+                                                    <div className="flex justify-between">
+                                                        <span>Available Credit:</span>
+                                                        <span className="font-semibold">Rs. {customerRemainingCredit.toLocaleString()}</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span>Credit After Transaction:</span>
+                                                        <span className={`font-semibold ${creditAfterTransaction < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                                            Rs. {creditAfterTransaction.toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {isCreditLimitExceeded && (
+                                                <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded">
+                                                    <p className="text-sm text-red-700 font-semibold">
+                                                        Credit limit exceeded!
+                                                    </p>
+                                                    <p className="text-xs text-red-600 mt-1">
+                                                        Bill total (Rs. {netTotal.toLocaleString()}) exceeds available credit (Rs. {customerRemainingCredit.toLocaleString()})
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
                                 </div>
 
                                 {/* Totals */}
@@ -501,7 +537,12 @@ export default function Billing({ products: initialProducts }: any) {
                                     </button>
                                     <button
                                         onClick={() => saveSale("approved")}
-                                        className="bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium"
+                                        disabled={isCreditLimitExceeded}
+                                        className={`py-2 rounded-lg font-medium ${
+                                            isCreditLimitExceeded
+                                                ? "bg-gray-400 cursor-not-allowed text-gray-200"
+                                                : "bg-green-600 hover:bg-green-700 text-white"
+                                        }`}
                                     >
                                         Print Bill
                                     </button>

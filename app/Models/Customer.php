@@ -15,6 +15,7 @@ class Customer extends Model
         'email',
         'address',
         'creditLimit',
+        'currentCreditSpend',
         'netBalance',
         'cashBalance',
         'creditBalance',
@@ -27,14 +28,15 @@ class Customer extends Model
     ];
 
     protected $casts = [
-        'availability'  => 'boolean',
-        'creditLimit'   => 'decimal:2',
-        'netBalance'    => 'decimal:2',
-        'cashBalance'   => 'decimal:2',
-        'creditBalance' => 'decimal:2',
-        'cardBalance'   => 'decimal:2',
-        'totalBalance'  => 'decimal:2',
-        'discountValue' => 'decimal:2',
+        'availability'        => 'boolean',
+        'creditLimit'         => 'decimal:2',
+        'currentCreditSpend'  => 'decimal:2',
+        'netBalance'          => 'decimal:2',
+        'cashBalance'         => 'decimal:2',
+        'creditBalance'       => 'decimal:2',
+        'cardBalance'         => 'decimal:2',
+        'totalBalance'        => 'decimal:2',
+        'discountValue'       => 'decimal:2',
     ];
     /**
      * Accessor for formatted discount display

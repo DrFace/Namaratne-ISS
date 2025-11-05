@@ -58,4 +58,24 @@ class CustomerController extends Controller
         return inertia('Customers/Edit', ['customer' => $customer]);
     }
 
+    public function settleCredit(Customer $customer)
+    {
+        $creditAmount = $customer->currentCreditSpend;
+
+        if ($creditAmount <= 0) {
+            return response()->json([
+                'message' => 'No outstanding credit to settle',
+            ], 400);
+        }
+
+        // Reset the current credit spend to 0
+        $customer->currentCreditSpend = 0;
+        $customer->save();
+
+        return response()->json([
+            'message' => "Credit of Rs. {$creditAmount} settled successfully for {$customer->name}",
+            'customer' => $customer,
+        ]);
+    }
+
 }

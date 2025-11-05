@@ -7,6 +7,7 @@ import { PencilIcon } from "@heroicons/react/20/solid";
 import ConfirmButton from "@/Components/elements/buttons/ConfirmButton";
 import { PrimaryLink } from "@/Components/elements/buttons/PrimaryButton";
 import EditCustomerModal from "./EditCustomerModal";
+import axios from "axios";
 
 export default function CustomersIndexPage() {
     const { customers: initialCustomers } = usePage().props as any;
@@ -32,6 +33,39 @@ export default function CustomersIndexPage() {
         setIsEditModalOpen(true);
     };
 
+    const handleSettleCredit = async (customer: any) => {
+        const creditAmount = Number(customer.currentCreditSpend || 0);
+        
+        if (creditAmount <= 0) {
+            alert("No outstanding credit to settle");
+            return;
+        }
+
+        const confirmed = window.confirm(
+            `Do you wish to mark this credit as settled?\n\nCustomer: ${customer.name}\nCredit Amount: Rs. ${creditAmount.toLocaleString()}`
+        );
+
+        if (!confirmed) return;
+
+        try {
+            const response = await axios.post(`/customer/${customer.id}/settle-credit`);
+            
+            // Update the local state
+            setCustomers({
+                ...customers,
+                data: customers.data.map((c: any) => 
+                    c.id === customer.id 
+                        ? { ...c, currentCreditSpend: 0 } 
+                        : c
+                ),
+            });
+
+            alert(response.data.message || "Credit settled successfully");
+        } catch (error: any) {
+            alert(error.response?.data?.message || "Error settling credit");
+        }
+    };
+
     const tableColumns = [
         { label: "", sortField: "", sortable: true },
         { label: "ID", sortField: "id", sortable: true },
@@ -39,6 +73,8 @@ export default function CustomersIndexPage() {
         { label: "Name", sortField: "name", sortable: true },
         { label: "Contact", sortField: "contactNumber", sortable: true },
         { label: "Credit Limit", sortField: "creditLimit", sortable: true },
+        { label: "Current Credit Spend", sortField: "currentCreditSpend", sortable: true },
+        { label: "Available Credit", sortField: "availableCredit", sortable: false },
         { label: "Net Balance", sortField: "netBalance", sortable: true },
         { label: "Status", sortField: "status", sortable: true },
         { label: "Availability", sortField: "availability", sortable: true },
@@ -76,6 +112,14 @@ export default function CustomersIndexPage() {
                                         <PencilIcon className="w-4 h-4 mr-1" />
                                         Edit
                                     </button>
+                                    {Number(c.currentCreditSpend || 0) > 0 && (
+                                        <button
+                                            onClick={() => handleSettleCredit(c)}
+                                            className="flex items-center text-green-600 hover:underline font-medium"
+                                        >
+                                            Settle Credit
+                                        </button>
+                                    )}
                                     <ConfirmButton url={`/customer/${c.id}`} label="Delete" />
                                 </>
                             }
@@ -84,8 +128,14 @@ export default function CustomersIndexPage() {
                             <TableTd>{c.customerId}</TableTd>
                             <TableTd>{c.name}</TableTd>
                             <TableTd>{c.contactNumber}</TableTd>
-                            <TableTd>{c.creditLimit}</TableTd>
-                            <TableTd>{c.netBalance}</TableTd>
+                            <TableTd>Rs. {Number(c.creditLimit || 0).toLocaleString()}</TableTd>
+                            <TableTd>Rs. {Number(c.currentCreditSpend || 0).toLocaleString()}</TableTd>
+                            <TableTd>
+                                <span className="font-semibold text-blue-600">
+                                    Rs. {(Number(c.creditLimit || 0) - Number(c.currentCreditSpend || 0)).toLocaleString()}
+                                </span>
+                            </TableTd>
+                            <TableTd>Rs. {Number(c.netBalance || 0).toLocaleString()}</TableTd>
                             <TableTd>{c.status}</TableTd>
                             <TableTd>
                                 <span className={c.availability ? "text-green-600" : "text-red-600"}>

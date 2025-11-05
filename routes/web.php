@@ -33,6 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/customer/{customer}/edit', [CustomerController::class, 'edit'])->name('customer.edit');
     Route::post('/customer/{customer}', [CustomerController::class, 'update'])->name('customer.update');
     Route::delete('/customer/{customer}', [CustomerController::class, 'destroy'])->name('customer.destroy');
+    Route::post('/customer/{customer}/settle-credit', [CustomerController::class, 'settleCredit'])->name('customer.settle-credit');
 
     Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
     Route::post('/billing', [BillingController::class, 'store'])->name('billing.store');

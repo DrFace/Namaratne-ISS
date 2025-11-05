@@ -68,6 +68,12 @@ class BillingController extends Controller
 
                     Product::where('id', $item['id'])->decrement('quantity', $item['quantity']);
                 }
+
+                // Update customer's currentCreditSpend if payment method is credit
+                if ($validated['paymentMethod'] === 'credit' && $validated['customerId']) {
+                    Customer::where('id', $validated['customerId'])
+                        ->increment('currentCreditSpend', $validated['creditAmount'] ?? 0);
+                }
             }
 
             return response()->json([
@@ -92,7 +98,7 @@ class BillingController extends Controller
         $customers = Customer::where('contactNumber', 'like', "%$query%")
             ->orWhere('name', 'like', "%$query%")
             ->limit(5)
-            ->get(['id', 'name', 'contactNumber', 'discountValue', 'discountType', 'creditBalance']);
+            ->get(['id', 'name', 'contactNumber', 'email', 'discountValue', 'discountType', 'creditBalance', 'creditLimit', 'currentCreditSpend']);
 
         return response()->json($customers);
     }
