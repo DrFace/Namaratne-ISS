@@ -82,22 +82,19 @@ export default function InvoicePrint({ invoice }: { invoice: InvoiceData }) {
                 </div>
 
                 {/* INVOICE TO / FROM */}
-                <div className="flex justify-between border-b border-gray-300 pb-3 mb-3 text-xs">
-                    <div className="w-1/2">
-                        <p className="font-semibold mb-1">Invoice To:</p>
-                        <div className="space-y-0.5">
-                            <p>Client Name: {invoice.customer_name || "__________________________"}</p>
-                            <p>Company: {invoice.company || "_____________________________"}</p>
-                            <p>Phone No: {invoice.customer_contact || "____________________________"}</p>
-                            <p>Email: {invoice.customer_email || "_______________________________"}</p>
-                            <p>Address: {invoice.customer_address || "_____________________________"}</p>
-                            <p>VAT No: __________________________</p>
-                        </div>
+                <div className="border-2 border-gray-400 flex mb-3 text-xs">
+                    <div className="w-1/2 p-3 border-r-2 border-gray-400">
+                        <p className="font-semibold mb-2">Invoice To:</p>
+                        <p>Client Name: {invoice.customer_name || "__________________________"}</p>
+                        <p>Company: {invoice.company || "_____________________________"}</p>
+                        <p>Phone No: {invoice.customer_contact || "____________________________"}</p>
+                        <p>Email: {invoice.customer_email || "_______________________________"}</p>
+                        <p>Address: {invoice.customer_address || "_____________________________"}</p>
+                        <p>VAT No: __________________________</p>
                     </div>
-                    <div className="w-1/2 text-right">
-                        <p className="font-semibold mb-1">Invoice From:</p>
+                    <div className="w-1/2 p-3">
+                        <p className="font-semibold mb-2">Invoice From:</p>
                         <p>Namaratne Motor Distributors</p>
-                        <p>Direct Importers & Islandwide Distributors for ESP Shock Absorbers</p>
                         <p>143/19B, Salawa Rd, Mirihana</p>
                         <p>Tel: 0777756095</p>
                         <p>Email: saleinfo.nmd@gmail.com</p>
@@ -117,24 +114,42 @@ export default function InvoicePrint({ invoice }: { invoice: InvoiceData }) {
                         </tr>
                     </thead>
                     <tbody>
-                        {invoice.items && invoice.items.length > 0 ? invoice.items.map((item, i) => {
-                            const price = parseFloat(item.salePrice);
-                            const qty = item.quantity;
-                            const total = parseFloat(item.totalAmount);
-                            return (
-                                <tr key={i}>
-                                    <td className="border border-gray-300 p-1">{item.productCode || "-"}</td>
-                                    <td className="border border-gray-300 p-1">{item.productName || "-"}</td>
-                                    <td className="border border-gray-300 p-1 text-right">{price.toFixed(2)}</td>
-                                    <td className="border border-gray-300 p-1 text-center">{qty}</td>
-                                    <td className="border border-gray-300 p-1 text-right">{total.toFixed(2)}</td>
-                                </tr>
-                            )
-                        }) : (
-                            <tr>
-                                <td colSpan={5} className="border p-2 text-center">No items found</td>
-                            </tr>
-                        )}
+                        {(() => {
+                            const items = invoice.items || [];
+                            const minRows = 5;
+                            const rows = [];
+                            
+                            // Add actual items
+                            items.forEach((item, i) => {
+                                const price = parseFloat(item.salePrice);
+                                const qty = item.quantity;
+                                const total = parseFloat(item.totalAmount);
+                                rows.push(
+                                    <tr key={i}>
+                                        <td className="border border-gray-300 p-1">{item.productCode || "-"}</td>
+                                        <td className="border border-gray-300 p-1">{item.productName || "-"}</td>
+                                        <td className="border border-gray-300 p-1 text-right">{price.toFixed(2)}</td>
+                                        <td className="border border-gray-300 p-1 text-center">{qty}</td>
+                                        <td className="border border-gray-300 p-1 text-right">{total.toFixed(2)}</td>
+                                    </tr>
+                                );
+                            });
+                            
+                            // Add empty rows to reach minimum
+                            for (let i = items.length; i < minRows; i++) {
+                                rows.push(
+                                    <tr key={`empty-${i}`}>
+                                        <td className="border border-gray-300 p-1">&nbsp;</td>
+                                        <td className="border border-gray-300 p-1">&nbsp;</td>
+                                        <td className="border border-gray-300 p-1">&nbsp;</td>
+                                        <td className="border border-gray-300 p-1">&nbsp;</td>
+                                        <td className="border border-gray-300 p-1">&nbsp;</td>
+                                    </tr>
+                                );
+                            }
+                            
+                            return rows;
+                        })()}
                         {/* TOTALS ROWS */}
                         <tr>
                             <td className="p-1" colSpan={2}></td>

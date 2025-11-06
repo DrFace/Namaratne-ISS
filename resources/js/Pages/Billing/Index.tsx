@@ -207,6 +207,12 @@ export default function Billing({ products: initialProducts }: any) {
             return;
         }
 
+        // Validate cash amount for cash payments
+        if (status === "approved" && paymentType === "cash" && cashAmount < netTotal) {
+            alert("Cash amount must be greater than or equal to the net total!");
+            return;
+        }
+
         try {
             const res = await axios.post("/billing", {
                 customerId: selectedCustomer?.id,
