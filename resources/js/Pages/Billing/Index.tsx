@@ -142,6 +142,59 @@ export default function Billing({ products: initialProducts }: any) {
         );
     };
 
+    const setDirectQuantity = (id: number, value: string) => {
+        // Allow empty string (user is typing)
+        if (value === "") {
+            setCartItems(
+                cartItems.map((p) =>
+                    p.id === id ? { ...p, quantity: "" as any } : p
+                )
+            );
+            return;
+        }
+        
+        const numValue = parseInt(value);
+        
+        // If not a valid number, don't update
+        if (isNaN(numValue)) {
+            return;
+        }
+        
+        const originalProduct = initialProducts.find((prod: any) => prod.id === id);
+        const maxStock = originalProduct?.quantity || 0;
+        
+        if (numValue > maxStock) {
+            alert(`Cannot add more. Only ${maxStock} items available in stock.`);
+            return;
+        }
+        
+        setCartItems(
+            cartItems.map((p) =>
+                p.id === id ? { ...p, quantity: numValue } : p
+            )
+        );
+    };
+
+    const handleQuantityKeyPress = (id: number, e: React.KeyboardEvent<HTMLInputElement>, currentValue: any) => {
+        if (e.key === "Enter") {
+            const numValue = parseInt(String(currentValue));
+            
+            // Remove item if quantity is less than 1 or invalid
+            if (isNaN(numValue) || numValue < 1) {
+                setCartItems(cartItems.filter((p) => p.id !== id));
+            }
+        }
+    };
+
+    const handleQuantityBlur = (id: number, currentValue: any) => {
+        const numValue = parseInt(String(currentValue));
+        
+        // Remove item if quantity is less than 1 or invalid
+        if (isNaN(numValue) || numValue < 1) {
+            setCartItems(cartItems.filter((p) => p.id !== id));
+        }
+    };
+
     const removeItem = (id: number) => {
         setCartItems(cartItems.filter((p) => p.id !== id));
     };
@@ -530,20 +583,28 @@ export default function Billing({ products: initialProducts }: any) {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <button
-                                                    className="bg-gray-200 p-1 rounded"
+                                                    className="bg-gray-200 p-1 rounded hover:bg-gray-300"
                                                     onClick={() => updateQuantity(p.id, -1)}
                                                 >
                                                     <Minus size={14} />
                                                 </button>
-                                                <span className="font-semibold">{p.quantity}</span>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={p.quantity}
+                                                    onChange={(e) => setDirectQuantity(p.id, e.target.value)}
+                                                    onKeyPress={(e) => handleQuantityKeyPress(p.id, e, p.quantity)}
+                                                    onBlur={() => handleQuantityBlur(p.id, p.quantity)}
+                                                    className="w-16 text-center border rounded p-1 font-semibold"
+                                                />
                                                 <button
-                                                    className="bg-gray-200 p-1 rounded"
+                                                    className="bg-gray-200 p-1 rounded hover:bg-gray-300"
                                                     onClick={() => updateQuantity(p.id, 1)}
                                                 >
                                                     <Plus size={14} />
                                                 </button>
                                                 <button
-                                                    className="bg-red-500 text-white p-1 rounded"
+                                                    className="bg-red-500 text-white p-1 rounded hover:bg-red-600"
                                                     onClick={() => removeItem(p.id)}
                                                 >
                                                     <Trash2 size={14} />
