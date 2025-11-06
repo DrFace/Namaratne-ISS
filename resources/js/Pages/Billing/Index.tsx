@@ -98,12 +98,22 @@ export default function Billing({ products: initialProducts }: any) {
     const addToCart = (product: any) => {
         const existing = cartItems.find((p) => p.id === product.id);
         if (existing) {
+            // Check if adding one more exceeds stock
+            if (existing.quantity + 1 > product.quantity) {
+                alert(`Cannot add more. Only ${product.quantity} items available in stock.`);
+                return;
+            }
             setCartItems(
                 cartItems.map((p) =>
                     p.id === product.id ? { ...p, quantity: p.quantity + 1 } : p
                 )
             );
         } else {
+            // Check if product has stock
+            if (product.quantity < 1) {
+                alert("Product is out of stock.");
+                return;
+            }
             setCartItems([...cartItems, { ...product, quantity: 1 }]);
         }
     };
@@ -111,7 +121,23 @@ export default function Billing({ products: initialProducts }: any) {
     const updateQuantity = (id: number, delta: number) => {
         setCartItems(
             cartItems
-                .map((p) => (p.id === id ? { ...p, quantity: p.quantity + delta } : p))
+                .map((p) => {
+                    if (p.id === id) {
+                        const newQuantity = p.quantity + delta;
+                        // Find the original product to check stock limit
+                        const originalProduct = initialProducts.find((prod: any) => prod.id === id);
+                        const maxStock = originalProduct?.quantity || 0;
+                        
+                        // Prevent exceeding stock
+                        if (newQuantity > maxStock) {
+                            alert(`Cannot add more. Only ${maxStock} items available in stock.`);
+                            return p;
+                        }
+                        
+                        return { ...p, quantity: newQuantity };
+                    }
+                    return p;
+                })
                 .filter((p) => p.quantity > 0)
         );
     };
