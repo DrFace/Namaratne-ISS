@@ -14,10 +14,15 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        $user = auth()->user();
+        
         $dashboardData = [
             'kpis' => $this->getKPIs(),
             'charts' => $this->getChartData(),
             'tables' => $this->getTableData(),
+            'permissions' => $user->getPermissions(),
+            'userRole' => $user->getRoleName(),
+            'isAdmin' => $user->isAdmin(),
         ];
 
         return Inertia::render('Dashboard', $dashboardData);

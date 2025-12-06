@@ -91,8 +91,14 @@ interface DashboardProps {
 }
 
 export default function Dashboard() {
-    const { auth, kpis, charts, tables } = usePage().props as any;
+    const { auth, kpis, charts, tables, permissions, isAdmin } = usePage().props as any;
     const user = auth.user;
+
+    // Helper function to check if user has permission
+    const hasPermission = (permission: string) => {
+        if (isAdmin) return true; // Admins have all permissions
+        return permissions && permissions.includes(permission);
+    };
 
     // Format currency
     const formatCurrency = (amount: number) => {
@@ -179,54 +185,68 @@ export default function Dashboard() {
 
                 {/* KPI Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                    <KPICard
-                        title="Total Stock Value"
-                        value={formatCurrency(kpis?.totalStockValue || 0)}
-                        icon={<DollarSign className="w-6 h-6" />}
-                        color="blue"
-                    />
-                    <KPICard
-                        title="Total Products / SKUs"
-                        value={kpis?.totalProducts || 0}
-                        icon={<Package className="w-6 h-6" />}
-                        color="green"
-                    />
-                    <KPICard
-                        title="Low Stock Items"
-                        value={kpis?.lowStockCount || 0}
-                        icon={<TrendingDown className="w-6 h-6" />}
-                        color="orange"
-                    />
-                    <KPICard
-                        title="Out of Stock Items"
-                        value={kpis?.outOfStockCount || 0}
-                        icon={<AlertTriangle className="w-6 h-6" />}
-                        color="red"
-                    />
+                    {hasPermission('view_total_stock_value') && (
+                        <KPICard
+                            title="Total Stock Value"
+                            value={formatCurrency(kpis?.totalStockValue || 0)}
+                            icon={<DollarSign className="w-6 h-6" />}
+                            color="blue"
+                        />
+                    )}
+                    {hasPermission('view_total_products') && (
+                        <KPICard
+                            title="Total Products / SKUs"
+                            value={kpis?.totalProducts || 0}
+                            icon={<Package className="w-6 h-6" />}
+                            color="green"
+                        />
+                    )}
+                    {hasPermission('view_low_stock_count') && (
+                        <KPICard
+                            title="Low Stock Items"
+                            value={kpis?.lowStockCount || 0}
+                            icon={<TrendingDown className="w-6 h-6" />}
+                            color="orange"
+                        />
+                    )}
+                    {hasPermission('view_out_of_stock_count') && (
+                        <KPICard
+                            title="Out of Stock Items"
+                            value={kpis?.outOfStockCount || 0}
+                            icon={<AlertTriangle className="w-6 h-6" />}
+                            color="red"
+                        />
+                    )}
                 </div>
 
                 {/* Sales KPIs */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <KPICard
-                        title="Today's Sales"
-                        value={formatCurrency(kpis?.todaySalesValue || 0)}
-                        subtitle={`${kpis?.todaySalesCount || 0} invoices`}
-                        icon={<ShoppingCart className="w-6 h-6" />}
-                        color="purple"
-                    />
-                    <KPICard
-                        title="This Month's Sales"
-                        value={formatCurrency(kpis?.thisMonthSales || 0)}
-                        icon={<Calendar className="w-6 h-6" />}
-                        color="indigo"
-                    />
-                    <KPICard
-                        title="This Month's Profit"
-                        value={formatCurrency(kpis?.thisMonthProfit || 0)}
-                        subtitle="Estimated gross profit"
-                        icon={<TrendingUp className="w-6 h-6" />}
-                        color="emerald"
-                    />
+                    {hasPermission('view_today_sales') && (
+                        <KPICard
+                            title="Today's Sales"
+                            value={formatCurrency(kpis?.todaySalesValue || 0)}
+                            subtitle={`${kpis?.todaySalesCount || 0} invoices`}
+                            icon={<ShoppingCart className="w-6 h-6" />}
+                            color="purple"
+                        />
+                    )}
+                    {hasPermission('view_month_sales') && (
+                        <KPICard
+                            title="This Month's Sales"
+                            value={formatCurrency(kpis?.thisMonthSales || 0)}
+                            icon={<Calendar className="w-6 h-6" />}
+                            color="indigo"
+                        />
+                    )}
+                    {hasPermission('view_month_profit') && (
+                        <KPICard
+                            title="This Month's Profit"
+                            value={formatCurrency(kpis?.thisMonthProfit || 0)}
+                            subtitle="Estimated gross profit"
+                            icon={<TrendingUp className="w-6 h-6" />}
+                            color="emerald"
+                        />
+                    )}
                 </div>
 
                 {/* Charts Section */}
@@ -391,10 +411,10 @@ export default function Dashboard() {
                                             </td>
                                             <td className="py-2 px-2 text-center">
                                                 <span className={`px-2 py-1 rounded-full text-xs capitalize ${transaction.status === 'approved'
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : transaction.status === 'pending'
-                                                            ? 'bg-yellow-100 text-yellow-700'
-                                                            : 'bg-gray-100 text-gray-700'
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : transaction.status === 'pending'
+                                                        ? 'bg-yellow-100 text-yellow-700'
+                                                        : 'bg-gray-100 text-gray-700'
                                                     }`}>
                                                     {transaction.status}
                                                 </span>

@@ -39,8 +39,8 @@ const SideNavLinks: React.FC = () => {
             name: "User Role Management",
             link: true,
             border: false,
-            startWith: "/",
-            // route: "admin.user.roles", // ⚠ comment karala
+            startWith: "/admin/users",
+            route: "users.index",
             icon: "UsersIcon",
             count: 0,
         },
@@ -48,8 +48,8 @@ const SideNavLinks: React.FC = () => {
             name: "Manage User Access",
             link: true,
             border: false,
-            startWith: "/",
-            // route: "admin.user.access", // ⚠ comment karala
+            startWith: "/admin/permissions",
+            route: "permissions.index",
             icon: "KeyIcon",
             count: 0,
         },
