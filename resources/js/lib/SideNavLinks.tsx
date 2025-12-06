@@ -1,9 +1,14 @@
 import NavItem from '@/Components/shared/AdminSidebar/partials/NavItem';
-import { usePage } from '@inertiajs/react';
+import { usePage, router } from '@inertiajs/react';
 import React from 'react';  // Import React
+import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 
 const SideNavLinks: React.FC = () => {
     const { openTicketCount }: any = usePage().props;
+
+    const handleLogout = () => {
+        router.post(route('logout'));
+    };
 
     const navigationLinks = [
         { name: "Dashboard", link: false, border: false },
@@ -83,20 +88,33 @@ const SideNavLinks: React.FC = () => {
     ];
 
     return (
-        <div>
-            {navigationLinks.map((item: any, index: number) => (
-                <NavItem
-                    key={item.name + index}
-                    name={item.name}
-                    routeName={item.route ? route(item.route) : "#"} // comment walata fallback "#"
-                    startWith={item.startWith}
-                    icon={item.icon}
-                    link={item.link}
-                    count={item.count}
-                    border={item.border}
-                    children={item.children}
-                />
-            ))}
+        <div className="flex flex-col h-full">
+            <div className="flex-1">
+                {navigationLinks.map((item: any, index: number) => (
+                    <NavItem
+                        key={item.name + index}
+                        name={item.name}
+                        routeName={item.route ? route(item.route) : "#"} // comment walata fallback "#"
+                        startWith={item.startWith}
+                        icon={item.icon}
+                        link={item.link}
+                        count={item.count}
+                        border={item.border}
+                        children={item.children}
+                    />
+                ))}
+            </div>
+
+            {/* Logout Button */}
+            <div className="mt-auto pt-4 pb-4 border-t border-gray-300">
+                <button
+                    onClick={handleLogout}
+                    className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors group"
+                >
+                    <ArrowRightOnRectangleIcon className="w-5 h-5 mr-3 text-gray-500 group-hover:text-red-600" />
+                    <span>Logout</span>
+                </button>
+            </div>
         </div>
     );
 };
