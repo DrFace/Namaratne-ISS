@@ -176,7 +176,7 @@ export default function Dashboard() {
                 {/* Header */}
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold text-gray-800 font-Inter">
-                        Hi, welcome back, {user.first_name}
+                        Hi, {user.first_name}
                     </h1>
                     <p className="text-sm text-gray-600">
                         Here's your inventory overview and analytics
@@ -252,186 +252,198 @@ export default function Dashboard() {
                 {/* Charts Section */}
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     {/* Sales Trend */}
-                    <div className="bg-white rounded-2xl shadow-sm p-6">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                            Sales Trend (Last 30 Days)
-                        </h2>
-                        <div className="h-64">
-                            <Line data={salesChartData} options={chartOptions} />
+                    {hasPermission('view_sales_trend') && (
+                        <div className="bg-white rounded-2xl shadow-sm p-6">
+                            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                                Sales Trend (Last 30 Days)
+                            </h2>
+                            <div className="h-64">
+                                <Line data={salesChartData} options={chartOptions} />
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Stock by Category */}
-                    <div className="bg-white rounded-2xl shadow-sm p-6">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                            Stock by Category
-                        </h2>
-                        <div className="h-64 flex items-center justify-center">
-                            {charts?.stockByCategory?.length > 0 ? (
-                                <Doughnut data={categoryChartData} options={chartOptions} />
-                            ) : (
-                                <p className="text-gray-500">No category data available</p>
-                            )}
+                    {hasPermission('view_stock_by_category') && (
+                        <div className="bg-white rounded-2xl shadow-sm p-6">
+                            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                                Stock by Category
+                            </h2>
+                            <div className="h-64 flex items-center justify-center">
+                                {charts?.stockByCategory?.length > 0 ? (
+                                    <Doughnut data={categoryChartData} options={chartOptions} />
+                                ) : (
+                                    <p className="text-gray-500">No category data available</p>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Top Products Chart */}
-                <div className="bg-white rounded-2xl shadow-sm p-6">
-                    <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                        Top 5 Selling Products (Last 30 Days)
-                    </h2>
-                    <div className="h-64">
-                        {charts?.topProducts?.length > 0 ? (
-                            <Bar
-                                data={topProductsChartData}
-                                options={{
-                                    ...chartOptions,
-                                    indexAxis: 'y' as const,
-                                }}
-                            />
-                        ) : (
-                            <div className="flex items-center justify-center h-full">
-                                <p className="text-gray-500">No sales data available</p>
-                            </div>
-                        )}
+                {hasPermission('view_top_selling_products') && (
+                    <div className="bg-white rounded-2xl shadow-sm p-6">
+                        <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                            Top 5 Selling Products (Last 30 Days)
+                        </h2>
+                        <div className="h-64">
+                            {charts?.topProducts?.length > 0 ? (
+                                <Bar
+                                    data={topProductsChartData}
+                                    options={{
+                                        ...chartOptions,
+                                        indexAxis: 'y' as const,
+                                    }}
+                                />
+                            ) : (
+                                <div className="flex items-center justify-center h-full">
+                                    <p className="text-gray-500">No sales data available</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Tables Section */}
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     {/* Low Stock Table */}
-                    <div className="bg-white rounded-2xl shadow-sm p-6">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                            <TrendingDown className="w-5 h-5 text-orange-500" />
-                            Low Stock Alert
-                        </h2>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b">
-                                        <th className="text-left py-2 px-2 font-medium text-gray-600">Product</th>
-                                        <th className="text-left py-2 px-2 font-medium text-gray-600">Code</th>
-                                        <th className="text-center py-2 px-2 font-medium text-gray-600">Current</th>
-                                        <th className="text-center py-2 px-2 font-medium text-gray-600">Threshold</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {tables?.lowStockItems?.length > 0 ? (
-                                        tables.lowStockItems.map((item: any) => (
-                                            <tr key={item.id} className="border-b hover:bg-gray-50">
-                                                <td className="py-2 px-2">{item.productName}</td>
-                                                <td className="py-2 px-2 text-gray-600">{item.productCode}</td>
-                                                <td className="py-2 px-2 text-center">
-                                                    <span className="text-orange-600 font-semibold">{item.quantity}</span>
-                                                </td>
-                                                <td className="py-2 px-2 text-center text-gray-600">{item.lowStock}</td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td colSpan={4} className="text-center py-4 text-gray-500">
-                                                No low stock items
-                                            </td>
+                    {hasPermission('view_low_stock_alerts') && (
+                        <div className="bg-white rounded-2xl shadow-sm p-6">
+                            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                <TrendingDown className="w-5 h-5 text-orange-500" />
+                                Low Stock Alert
+                            </h2>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b">
+                                            <th className="text-left py-2 px-2 font-medium text-gray-600">Product</th>
+                                            <th className="text-left py-2 px-2 font-medium text-gray-600">Code</th>
+                                            <th className="text-center py-2 px-2 font-medium text-gray-600">Current</th>
+                                            <th className="text-center py-2 px-2 font-medium text-gray-600">Threshold</th>
                                         </tr>
-                                    )}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {tables?.lowStockItems?.length > 0 ? (
+                                            tables.lowStockItems.map((item: any) => (
+                                                <tr key={item.id} className="border-b hover:bg-gray-50">
+                                                    <td className="py-2 px-2">{item.productName}</td>
+                                                    <td className="py-2 px-2 text-gray-600">{item.productCode}</td>
+                                                    <td className="py-2 px-2 text-center">
+                                                        <span className="text-orange-600 font-semibold">{item.quantity}</span>
+                                                    </td>
+                                                    <td className="py-2 px-2 text-center text-gray-600">{item.lowStock}</td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan={4} className="text-center py-4 text-gray-500">
+                                                    No low stock items
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Out of Stock Table */}
-                    <div className="bg-white rounded-2xl shadow-sm p-6">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                            <AlertTriangle className="w-5 h-5 text-red-500" />
-                            Out of Stock
-                        </h2>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b">
-                                        <th className="text-left py-2 px-2 font-medium text-gray-600">Product</th>
-                                        <th className="text-left py-2 px-2 font-medium text-gray-600">Code</th>
-                                        <th className="text-left py-2 px-2 font-medium text-gray-600">Batch</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {tables?.outOfStockItems?.length > 0 ? (
-                                        tables.outOfStockItems.map((item: any) => (
-                                            <tr key={item.id} className="border-b hover:bg-gray-50">
-                                                <td className="py-2 px-2">{item.productName}</td>
-                                                <td className="py-2 px-2 text-gray-600">{item.productCode}</td>
-                                                <td className="py-2 px-2 text-gray-600">{item.batchNumber || 'N/A'}</td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td colSpan={3} className="text-center py-4 text-gray-500">
-                                                No out of stock items
-                                            </td>
+                    {hasPermission('view_out_of_stock_alerts') && (
+                        <div className="bg-white rounded-2xl shadow-sm p-6">
+                            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                <AlertTriangle className="w-5 h-5 text-red-500" />
+                                Out of Stock
+                            </h2>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="border-b">
+                                            <th className="text-left py-2 px-2 font-medium text-gray-600">Product</th>
+                                            <th className="text-left py-2 px-2 font-medium text-gray-600">Code</th>
+                                            <th className="text-left py-2 px-2 font-medium text-gray-600">Batch</th>
                                         </tr>
-                                    )}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {tables?.outOfStockItems?.length > 0 ? (
+                                            tables.outOfStockItems.map((item: any) => (
+                                                <tr key={item.id} className="border-b hover:bg-gray-50">
+                                                    <td className="py-2 px-2">{item.productName}</td>
+                                                    <td className="py-2 px-2 text-gray-600">{item.productCode}</td>
+                                                    <td className="py-2 px-2 text-gray-600">{item.batchNumber || 'N/A'}</td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan={3} className="text-center py-4 text-gray-500">
+                                                    No out of stock items
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Recent Transactions */}
-                <div className="bg-white rounded-2xl shadow-sm p-6">
-                    <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                        Recent Transactions
-                    </h2>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="border-b">
-                                    <th className="text-left py-2 px-2 font-medium text-gray-600">Bill #</th>
-                                    <th className="text-left py-2 px-2 font-medium text-gray-600">Date</th>
-                                    <th className="text-left py-2 px-2 font-medium text-gray-600">Customer</th>
-                                    <th className="text-right py-2 px-2 font-medium text-gray-600">Amount</th>
-                                    <th className="text-center py-2 px-2 font-medium text-gray-600">Payment</th>
-                                    <th className="text-center py-2 px-2 font-medium text-gray-600">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {tables?.recentTransactions?.length > 0 ? (
-                                    tables.recentTransactions.map((transaction: any) => (
-                                        <tr key={transaction.id} className="border-b hover:bg-gray-50">
-                                            <td className="py-2 px-2 font-mono text-xs">{transaction.billNumber}</td>
-                                            <td className="py-2 px-2 text-gray-600">{transaction.date}</td>
-                                            <td className="py-2 px-2">{transaction.customerName}</td>
-                                            <td className="py-2 px-2 text-right font-semibold">
-                                                {formatCurrency(transaction.amount)}
-                                            </td>
-                                            <td className="py-2 px-2 text-center">
-                                                <span className="px-2 py-1 rounded-full text-xs bg-gray-100 capitalize">
-                                                    {transaction.paymentMethod}
-                                                </span>
-                                            </td>
-                                            <td className="py-2 px-2 text-center">
-                                                <span className={`px-2 py-1 rounded-full text-xs capitalize ${transaction.status === 'approved'
-                                                    ? 'bg-green-100 text-green-700'
-                                                    : transaction.status === 'pending'
-                                                        ? 'bg-yellow-100 text-yellow-700'
-                                                        : 'bg-gray-100 text-gray-700'
-                                                    }`}>
-                                                    {transaction.status}
-                                                </span>
+                {hasPermission('view_recent_transactions') && (
+                    <div className="bg-white rounded-2xl shadow-sm p-6">
+                        <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                            Recent Transactions
+                        </h2>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b">
+                                        <th className="text-left py-2 px-2 font-medium text-gray-600">Bill #</th>
+                                        <th className="text-left py-2 px-2 font-medium text-gray-600">Date</th>
+                                        <th className="text-left py-2 px-2 font-medium text-gray-600">Customer</th>
+                                        <th className="text-right py-2 px-2 font-medium text-gray-600">Amount</th>
+                                        <th className="text-center py-2 px-2 font-medium text-gray-600">Payment</th>
+                                        <th className="text-center py-2 px-2 font-medium text-gray-600">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {tables?.recentTransactions?.length > 0 ? (
+                                        tables.recentTransactions.map((transaction: any) => (
+                                            <tr key={transaction.id} className="border-b hover:bg-gray-50">
+                                                <td className="py-2 px-2 font-mono text-xs">{transaction.billNumber}</td>
+                                                <td className="py-2 px-2 text-gray-600">{transaction.date}</td>
+                                                <td className="py-2 px-2">{transaction.customerName}</td>
+                                                <td className="py-2 px-2 text-right font-semibold">
+                                                    {formatCurrency(transaction.amount)}
+                                                </td>
+                                                <td className="py-2 px-2 text-center">
+                                                    <span className="px-2 py-1 rounded-full text-xs bg-gray-100 capitalize">
+                                                        {transaction.paymentMethod}
+                                                    </span>
+                                                </td>
+                                                <td className="py-2 px-2 text-center">
+                                                    <span className={`px-2 py-1 rounded-full text-xs capitalize ${transaction.status === 'approved'
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : transaction.status === 'pending'
+                                                            ? 'bg-yellow-100 text-yellow-700'
+                                                            : 'bg-gray-100 text-gray-700'
+                                                        }`}>
+                                                        {transaction.status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={6} className="text-center py-4 text-gray-500">
+                                                No recent transactions
                                             </td>
                                         </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={6} className="text-center py-4 text-gray-500">
-                                            No recent transactions
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </Authenticated>
     );

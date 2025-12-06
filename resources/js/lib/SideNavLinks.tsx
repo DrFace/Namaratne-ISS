@@ -4,7 +4,18 @@ import React from 'react';  // Import React
 import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 
 const SideNavLinks: React.FC = () => {
-    const { openTicketCount }: any = usePage().props;
+    const { openTicketCount, auth }: any = usePage().props;
+
+    // Get user permissions
+    const user = auth?.user;
+    const permissions = user?.permissions || [];
+    const isAdmin = user?.role === 1; // Admin role ID is 1
+
+    // Helper function to check permissions
+    const hasPermission = (permission: string) => {
+        if (isAdmin) return true;
+        return permissions.includes(permission);
+    };
 
     const handleLogout = () => {
         router.post(route('logout'));
@@ -20,6 +31,7 @@ const SideNavLinks: React.FC = () => {
             route: "dashboard", // ⚠ comment karala
             icon: "ChartPieIcon",
             count: 0,
+            disabled: false, // Dashboard is always accessible
         },
         {
             name: "Inventory",
@@ -29,6 +41,7 @@ const SideNavLinks: React.FC = () => {
             route: "products.index", // ✅ match Laravel route name
             icon: "ArchiveBoxIcon",
             count: 0,
+            disabled: false, // Accessible to all, actions restricted on page
         },
 
         {
@@ -39,6 +52,7 @@ const SideNavLinks: React.FC = () => {
             // route: "admin.reports", // ⚠ comment karala
             icon: "DocumentChartBarIcon",
             count: 0,
+            disabled: false, // Accessible to all
         },
         {
             name: "User Role Management",
@@ -48,6 +62,7 @@ const SideNavLinks: React.FC = () => {
             route: "users.index",
             icon: "UsersIcon",
             count: 0,
+            disabled: !isAdmin, // Only admins can manage users
         },
         {
             name: "Manage User Access",
@@ -57,6 +72,7 @@ const SideNavLinks: React.FC = () => {
             route: "permissions.index",
             icon: "KeyIcon",
             count: 0,
+            disabled: !isAdmin, // Only admins can manage permissions
         },
         {
             name: "Customers",
@@ -66,6 +82,7 @@ const SideNavLinks: React.FC = () => {
             route: "customer.index", // ⚠ comment karala
             icon: "UserGroupIcon",
             count: 0,
+            disabled: false, // Accessible to all, actions restricted on page
         },
         {
             name: "Billing",
@@ -75,6 +92,7 @@ const SideNavLinks: React.FC = () => {
             route: "billing.index", // ⚠ comment karala
             icon: "CurrencyDollarIcon",
             count: 0,
+            disabled: false, // Accessible to all
         },
         {
             name: "Settings",
@@ -84,6 +102,7 @@ const SideNavLinks: React.FC = () => {
             // route: "admin.settings", // ⚠ comment karala
             icon: "Cog6ToothIcon",
             count: 0,
+            disabled: false, // Accessible to all
         },
     ];
 
@@ -101,6 +120,7 @@ const SideNavLinks: React.FC = () => {
                         count={item.count}
                         border={item.border}
                         children={item.children}
+                        disabled={item.disabled}
                     />
                 ))}
             </div>

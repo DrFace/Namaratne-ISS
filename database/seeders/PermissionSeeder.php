@@ -53,6 +53,44 @@ class PermissionSeeder extends Seeder
                 'category' => 'dashboard',
                 'description' => 'Can view this month\'s profit KPI on dashboard',
             ],
+
+            // Dashboard Widgets
+            [
+                'name' => 'View Low Stock Alerts',
+                'slug' => 'view_low_stock_alerts',
+                'category' => 'dashboard',
+                'description' => 'Can view low stock items list on dashboard',
+            ],
+            [
+                'name' => 'View Out of Stock Alerts',
+                'slug' => 'view_out_of_stock_alerts',
+                'category' => 'dashboard',
+                'description' => 'Can view out of stock items list on dashboard',
+            ],
+            [
+                'name' => 'View Recent Transactions',
+                'slug' => 'view_recent_transactions',
+                'category' => 'dashboard',
+                'description' => 'Can view recent transactions list on dashboard',
+            ],
+            [
+                'name' => 'View Top Selling Products',
+                'slug' => 'view_top_selling_products',
+                'category' => 'dashboard',
+                'description' => 'Can view top selling products chart on dashboard',
+            ],
+            [
+                'name' => 'View Sales Trend',
+                'slug' => 'view_sales_trend',
+                'category' => 'dashboard',
+                'description' => 'Can view sales trend chart on dashboard',
+            ],
+            [
+                'name' => 'View Stock by Category',
+                'slug' => 'view_stock_by_category',
+                'category' => 'dashboard',
+                'description' => 'Can view stock by category chart on dashboard',
+            ],
             
             // Actions
             [
@@ -86,10 +124,60 @@ class PermissionSeeder extends Seeder
                 'description' => 'Can delete products from inventory',
             ],
             [
+                'name' => 'Edit Products',
+                'slug' => 'edit_products',
+                'category' => 'action',
+                'description' => 'Can edit products in inventory',
+            ],
+            [
+                'name' => 'Delete Customers',
+                'slug' => 'delete_customers',
+                'category' => 'action',
+                'description' => 'Can delete customers',
+            ],
+            [
+                'name' => 'Edit Customers',
+                'slug' => 'edit_customers',
+                'category' => 'action',
+                'description' => 'Can edit customers',
+            ],
+            [
                 'name' => 'Promote to Admin',
                 'slug' => 'promote_to_admin',
                 'category' => 'action',
                 'description' => 'Can promote users to admin role (admin only)',
+            ],
+            
+            // View Permissions
+            [
+                'name' => 'View Inventory',
+                'slug' => 'view_inventory',
+                'category' => 'view',
+                'description' => 'Can view inventory page',
+            ],
+            [
+                'name' => 'View Customers',
+                'slug' => 'view_customers',
+                'category' => 'view',
+                'description' => 'Can view customers page',
+            ],
+            [
+                'name' => 'View Reports',
+                'slug' => 'view_reports',
+                'category' => 'view',
+                'description' => 'Can view reports page',
+            ],
+            [
+                'name' => 'View Billing',
+                'slug' => 'view_billing',
+                'category' => 'view',
+                'description' => 'Can view billing page',
+            ],
+            [
+                'name' => 'View Settings',
+                'slug' => 'view_settings',
+                'category' => 'view',
+                'description' => 'Can view settings page',
             ],
         ];
 

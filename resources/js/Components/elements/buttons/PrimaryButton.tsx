@@ -15,9 +15,8 @@ export function PrimaryButton({
     return (
         <button
             {...props}
-            className={` ${classes} ${
-                disabled && disabledClasses
-            } ${className}`}
+            className={` ${classes} ${disabled && disabledClasses
+                } ${className}`}
             disabled={disabled}
         >
             {children}
@@ -39,14 +38,13 @@ export function PrimaryLink({
 }) {
     return (
         <Link
-            href={href}
+            href={disabled ? "#" : href}
             {...props}
-            className={` ${classes} ${
-                disabled && disabledClasses
-            } ${className}`}
-            disabled={disabled}
+            className={` ${classes} ${disabled && disabledClasses
+                } ${className}`}
+            onClick={(e) => disabled && e.preventDefault()}
         >
-            {disabled ? <span className="animate-ping">...</span> : children}
+            {children}
         </Link>
     );
 }
