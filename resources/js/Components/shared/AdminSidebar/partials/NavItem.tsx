@@ -16,6 +16,7 @@ const NavItem = ({
     icon,
     count,
     children,
+    disabled = false,
 }: {
     startWith?: string;
     routeName?: any;
@@ -25,6 +26,7 @@ const NavItem = ({
     icon: any;
     count: number;
     children: any;
+    disabled?: boolean;
 }) => {
     const { url, component } = usePage();
 
@@ -53,6 +55,7 @@ const NavItem = ({
                         routeName={routeName}
                         icon={icon}
                         count={count}
+                        disabled={disabled}
                     />
                 )
             ) : border ? (

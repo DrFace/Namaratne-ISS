@@ -7,7 +7,7 @@ export default function ConfirmButton({
     disabled,
     label,
     url,
-    message="Are you sure ?",
+    message = "Are you sure ?",
     yesText,
     noText,
     ...props
@@ -33,7 +33,7 @@ export default function ConfirmButton({
         >
             {collapse && (
                 <span className="self-center mr-4 text-red-900">
-                    {message?? t("confirmButton.danger.message")}
+                    {message ?? t("confirmButton.danger.message")}
                 </span>
             )}
             <div className="ml-auto ">
@@ -49,14 +49,12 @@ export default function ConfirmButton({
                     </Link>
                 )}
                 <span
-                    onClick={() => setCollapse(!collapse)}
+                    onClick={() => !disabled && setCollapse(!collapse)}
                     className={
-                        `${
-                            collapse
-                                ? " bg-slate-600 hover:bg-slate-500 active:bg-slate-700 rounded-r-md focus:outline-none focus:ring-2 focus:ring-slate-500 "
-                                : " bg-red-600 hover:bg-red-500 active:bg-red-700 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 "
-                        } inline-flex cursor-pointer items-center px-4 py-2   border border-transparent font-semibold text-xs text-white uppercase tracking-widest  focus:ring-offset-2 transition ease-in-out duration-150 ${
-                            disabled && "opacity-25"
+                        `${collapse
+                            ? " bg-slate-600 hover:bg-slate-500 active:bg-slate-700 rounded-r-md focus:outline-none focus:ring-2 focus:ring-slate-500 "
+                            : " bg-red-600 hover:bg-red-500 active:bg-red-700 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 "
+                        } inline-flex cursor-pointer items-center px-4 py-2   border border-transparent font-semibold text-xs text-white uppercase tracking-widest  focus:ring-offset-2 transition ease-in-out duration-150 ${disabled ? "cursor-not-allowed opacity-25" : ""
                         } ` + className
                     }
                 >

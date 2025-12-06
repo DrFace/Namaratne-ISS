@@ -4,18 +4,28 @@ import Authenticated from "@/Layouts/AuthenticatedLayout";
 import MasterTable, { TableBody, TableTd } from "@/Components/elements/tables/masterTable";
 import CreateCustomerModal from "./CreateCustomerModal";
 import { PencilIcon } from "@heroicons/react/20/solid";
+import { LockClosedIcon } from "@heroicons/react/24/outline";
 import ConfirmButton from "@/Components/elements/buttons/ConfirmButton";
 import { PrimaryLink } from "@/Components/elements/buttons/PrimaryButton";
 import EditCustomerModal from "./EditCustomerModal";
 import axios from "axios";
 
 export default function CustomersIndexPage() {
-    const { customers: initialCustomers } = usePage().props as any;
+    const { customers: initialCustomers, permissions, isAdmin } = usePage().props as any;
     const [customers, setCustomers] = useState(initialCustomers);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const filters = {}; // currently empty
     const createLink = undefined; // or route("products.create")
     const search = { placeholder: "Search Customer" };
+
+    // Helper function to check permissions
+    const hasPermission = (permission: string) => {
+        if (isAdmin) return true;
+        return permissions && permissions.includes(permission);
+    };
+
+    const canAddCustomer = hasPermission('add_customers');
+
     const handleCustomerCreated = (newCustomer: any) => {
         setCustomers({ ...customers, data: [...customers.data, newCustomer] });
     };
@@ -35,7 +45,7 @@ export default function CustomersIndexPage() {
 
     const handleSettleCredit = async (customer: any) => {
         const creditAmount = Number(customer.currentCreditSpend || 0);
-        
+
         if (creditAmount <= 0) {
             alert("No outstanding credit to settle");
             return;
@@ -49,13 +59,13 @@ export default function CustomersIndexPage() {
 
         try {
             const response = await axios.post(`/customer/${customer.id}/settle-credit`);
-            
+
             // Update the local state
             setCustomers({
                 ...customers,
-                data: customers.data.map((c: any) => 
-                    c.id === customer.id 
-                        ? { ...c, currentCreditSpend: 0 } 
+                data: customers.data.map((c: any) =>
+                    c.id === customer.id
+                        ? { ...c, currentCreditSpend: 0 }
                         : c
                 ),
             });
@@ -85,12 +95,24 @@ export default function CustomersIndexPage() {
             <div className="flex-1 p-6">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold">Customers</h2>
-                    <button
-                        onClick={() => setIsModalOpen(true)}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg"
-                    >
-                        Add Customer
-                    </button>
+                    <div className="relative group">
+                        <button
+                            onClick={() => canAddCustomer && setIsModalOpen(true)}
+                            disabled={!canAddCustomer}
+                            className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${canAddCustomer
+                                ? 'bg-blue-500 text-white hover:bg-blue-600 cursor-pointer'
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                }`}
+                        >
+                            {!canAddCustomer && <LockClosedIcon className="w-4 h-4" />}
+                            Add Customer
+                        </button>
+                        {!canAddCustomer && (
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                You don't have permission to add customers
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <MasterTable
@@ -105,9 +127,13 @@ export default function CustomersIndexPage() {
                             key={c.id}
                             buttons={
                                 <>
-                                     <button
+                                    <button
                                         onClick={() => openEditModal(c)}
-                                        className="flex items-center text-blue-600 hover:underline"
+                                        disabled={!hasPermission('edit_customers')}
+                                        className={`flex items-center ${hasPermission('edit_customers')
+                                                ? 'text-blue-600 hover:underline'
+                                                : 'text-gray-400 cursor-not-allowed'
+                                            }`}
                                     >
                                         <PencilIcon className="w-4 h-4 mr-1" />
                                         Edit
@@ -115,12 +141,20 @@ export default function CustomersIndexPage() {
                                     {Number(c.currentCreditSpend || 0) > 0 && (
                                         <button
                                             onClick={() => handleSettleCredit(c)}
-                                            className="flex items-center text-green-600 hover:underline font-medium"
+                                            disabled={!hasPermission('edit_customers')}
+                                            className={`flex items-center font-medium ${hasPermission('edit_customers')
+                                                    ? 'text-green-600 hover:underline'
+                                                    : 'text-gray-400 cursor-not-allowed'
+                                                }`}
                                         >
                                             Settle Credit
                                         </button>
                                     )}
-                                    <ConfirmButton url={`/customer/${c.id}`} label="Delete" />
+                                    <ConfirmButton
+                                        url={`/customer/${c.id}`}
+                                        label="Delete"
+                                        disabled={!hasPermission('delete_customers')}
+                                    />
                                 </>
                             }
                         >

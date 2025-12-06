@@ -14,8 +14,15 @@ class CustomerController extends Controller
     {
         $customers = Customer::latest()->paginate(10);
 
+        // Get user permissions
+        $user = auth()->user();
+        $permissions = $user->getPermissions();
+        $isAdmin = $user->isAdmin();
+
         return Inertia::render('Customer/Index', [
             'customers' => $customers,
+            'permissions' => $permissions,
+            'isAdmin' => $isAdmin,
         ]);
     }
 

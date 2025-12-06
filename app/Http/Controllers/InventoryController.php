@@ -26,9 +26,16 @@ class InventoryController extends Controller
         // Fetch series list
         $seriasList = SeriasNumber::select(['id', 'seriasNo'])->get()->toArray();
 
+        // Get user permissions
+        $user = auth()->user();
+        $permissions = $user->getPermissions();
+        $isAdmin = $user->isAdmin();
+
         return Inertia::render('Inventory/Index', [
             'products'   => $products,
             'seriasList' => $seriasList,
+            'permissions' => $permissions,
+            'isAdmin' => $isAdmin,
         ]);
     }
 

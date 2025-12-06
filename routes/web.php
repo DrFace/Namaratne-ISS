@@ -2,8 +2,11 @@
 
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -11,9 +14,9 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -44,6 +47,16 @@ Route::middleware('auth')->group(function () {
     // Route::post('/billing/{billing}', [BillingController::class, 'update'])->name('billing.update');
     // Route::delete('/billing/{billing}', [BillingController::class, 'destroy'])->name('billing.destroy');
 
+    // Admin routes
+    Route::middleware('admin')->group(function () {
+        Route::get('/admin/permissions', [PermissionController::class, 'index'])->name('permissions.index');
+        Route::post('/admin/permissions', [PermissionController::class, 'update'])->name('permissions.update');
+        Route::get('/admin/users', [UserManagementController::class, 'index'])->name('users.index');
+        Route::post('/admin/users/{id}/role', [UserManagementController::class, 'updateRole'])->name('users.updateRole');
+    });
+
+    // API route for getting user permissions
+    Route::get('/api/user/permissions', [PermissionController::class, 'getUserPermissions']);
 });
 
 require __DIR__ . '/auth.php';
