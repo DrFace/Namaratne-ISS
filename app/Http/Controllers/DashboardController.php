@@ -66,14 +66,16 @@ class DashboardController extends Controller
             ->whereMonth('sales.created_at', Carbon::now()->month)
             ->whereYear('sales.created_at', Carbon::now()->year)
             ->where('sales.status', 'approved')
+            ->whereNotNull('products.buyingPrice')
+            ->select(
+                'sales_details.quantity',
+                'sales_details.salePrice',
+                'products.buyingPrice'
+            )
             ->get()
             ->sum(function ($detail) {
-                $product = Product::find($detail->productId);
-                if ($product && $product->buyingPrice) {
-                    $profit = ($detail->salePrice - $product->buyingPrice) * $detail->quantity;
-                    return $profit;
-                }
-                return 0;
+                $profit = ($detail->salePrice - $detail->buyingPrice) * $detail->quantity;
+                return $profit;
             });
 
         return [
