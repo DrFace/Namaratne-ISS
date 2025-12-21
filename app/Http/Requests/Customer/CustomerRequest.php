@@ -26,6 +26,7 @@ class CustomerRequest extends FormRequest
             'email'         => 'nullable|email|max:255',
             'address'       => 'nullable|string|max:500',
             'creditLimit'   => 'nullable|numeric|min:0',
+            'creditPeriod'  => 'required|in:15 days,30 days,50 days,60 days',
             'discountValue' => 'nullable|numeric|min:0',
             'discountType'  => 'nullable|in:amount,percentage',
             'netBalance'    => 'nullable|numeric|min:0',

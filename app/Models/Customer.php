@@ -15,6 +15,7 @@ class Customer extends Model
         'email',
         'address',
         'creditLimit',
+        'creditPeriod',
         'currentCreditSpend',
         'netBalance',
         'cashBalance',

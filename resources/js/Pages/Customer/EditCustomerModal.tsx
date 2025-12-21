@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated }: any) {
+export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated, permissions, isAdmin }: any) {
     const [form, setForm] = useState({
         customerId: "",
         name: "",
@@ -8,6 +8,7 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
         email: "",
         address: "",
         creditLimit: "",
+        creditPeriod: "30 days",
         netBalance: "",
         cashBalance: "",
         creditBalance: "",
@@ -21,6 +22,12 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
     const [errors, setErrors] = useState<{ [key: string]: string[] }>({});
     const [loading, setLoading] = useState(false);
 
+    // Helper function to check permissions
+    const hasPermission = (permission: string) => {
+        if (isAdmin) return true;
+        return permissions && permissions.includes(permission);
+    };
+
     // Load customer data into form when modal opens
     useEffect(() => {
         if (customer) {
@@ -31,6 +38,7 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
                 email: customer.email || "",
                 address: customer.address || "",
                 creditLimit: customer.creditLimit || "",
+                creditPeriod: customer.creditPeriod || "30 days",
                 netBalance: customer.netBalance || "",
                 cashBalance: customer.cashBalance || "",
                 creditBalance: customer.creditBalance || "",
@@ -59,7 +67,7 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
         try {
             const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
             const res = await fetch(`/customer/${customer.id}`, {
-                method: "PUT",
+                method: "POST",
                 headers: {
                     "Accept": "application/json",
                     "X-CSRF-TOKEN": token,
@@ -147,6 +155,23 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
                             className="w-full border p-2 rounded"
                         />
                     </div>
+
+                    {hasPermission('change_customer_credit_period') && (
+                        <div>
+                            <label className="block text-sm font-medium">Credit Period</label>
+                            <select
+                                name="creditPeriod"
+                                value={form.creditPeriod}
+                                onChange={handleChange}
+                                className="w-full border p-2 rounded"
+                            >
+                                <option value="15 days">15 days</option>
+                                <option value="30 days">30 days</option>
+                                <option value="50 days">50 days</option>
+                                <option value="60 days">60 days</option>
+                            </select>
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>

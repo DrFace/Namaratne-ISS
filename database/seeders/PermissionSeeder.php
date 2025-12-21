@@ -142,6 +142,12 @@ class PermissionSeeder extends Seeder
                 'description' => 'Can edit customers',
             ],
             [
+                'name' => 'Change Customer Credit Period',
+                'slug' => 'change_customer_credit_period',
+                'category' => 'action',
+                'description' => 'Can change customer credit period',
+            ],
+            [
                 'name' => 'Promote to Admin',
                 'slug' => 'promote_to_admin',
                 'category' => 'action',

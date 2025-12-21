@@ -79,15 +79,12 @@ export default function CustomersIndexPage() {
     const tableColumns = [
         { label: "", sortField: "", sortable: true },
         { label: "ID", sortField: "id", sortable: true },
-        { label: "Customer ID", sortField: "customerId", sortable: true },
         { label: "Name", sortField: "name", sortable: true },
         { label: "Contact", sortField: "contactNumber", sortable: true },
         { label: "Credit Limit", sortField: "creditLimit", sortable: true },
         { label: "Current Credit Spend", sortField: "currentCreditSpend", sortable: true },
-        { label: "Available Credit", sortField: "availableCredit", sortable: false },
         { label: "Net Balance", sortField: "netBalance", sortable: true },
         { label: "Status", sortField: "status", sortable: true },
-        { label: "Availability", sortField: "availability", sortable: true },
     ];
 
     return (
@@ -131,8 +128,8 @@ export default function CustomersIndexPage() {
                                         onClick={() => openEditModal(c)}
                                         disabled={!hasPermission('edit_customers')}
                                         className={`flex items-center ${hasPermission('edit_customers')
-                                                ? 'text-blue-600 hover:underline'
-                                                : 'text-gray-400 cursor-not-allowed'
+                                            ? 'text-blue-600 hover:underline'
+                                            : 'text-gray-400 cursor-not-allowed'
                                             }`}
                                     >
                                         <PencilIcon className="w-4 h-4 mr-1" />
@@ -143,8 +140,8 @@ export default function CustomersIndexPage() {
                                             onClick={() => handleSettleCredit(c)}
                                             disabled={!hasPermission('edit_customers')}
                                             className={`flex items-center font-medium ${hasPermission('edit_customers')
-                                                    ? 'text-green-600 hover:underline'
-                                                    : 'text-gray-400 cursor-not-allowed'
+                                                ? 'text-green-600 hover:underline'
+                                                : 'text-gray-400 cursor-not-allowed'
                                                 }`}
                                         >
                                             Settle Credit
@@ -159,23 +156,12 @@ export default function CustomersIndexPage() {
                             }
                         >
                             <TableTd>{c.id}</TableTd>
-                            <TableTd>{c.customerId}</TableTd>
                             <TableTd>{c.name}</TableTd>
                             <TableTd>{c.contactNumber}</TableTd>
                             <TableTd>Rs. {Number(c.creditLimit || 0).toLocaleString()}</TableTd>
                             <TableTd>Rs. {Number(c.currentCreditSpend || 0).toLocaleString()}</TableTd>
-                            <TableTd>
-                                <span className="font-semibold text-blue-600">
-                                    Rs. {(Number(c.creditLimit || 0) - Number(c.currentCreditSpend || 0)).toLocaleString()}
-                                </span>
-                            </TableTd>
                             <TableTd>Rs. {Number(c.netBalance || 0).toLocaleString()}</TableTd>
                             <TableTd>{c.status}</TableTd>
-                            <TableTd>
-                                <span className={c.availability ? "text-green-600" : "text-red-600"}>
-                                    {c.availability ? "Available" : "Unavailable"}
-                                </span>
-                            </TableTd>
                         </TableBody>
                     ))}
                 </MasterTable>
@@ -184,12 +170,16 @@ export default function CustomersIndexPage() {
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     onCreated={handleCustomerCreated}
+                    permissions={permissions}
+                    isAdmin={isAdmin}
                 />
                 <EditCustomerModal
                     isOpen={isEditModalOpen}
                     onClose={() => setIsEditModalOpen(false)}
                     customer={selectedCustomer}
                     onUpdated={handleCustomerUpdated}
+                    permissions={permissions}
+                    isAdmin={isAdmin}
                 />
             </div>
         </Authenticated>

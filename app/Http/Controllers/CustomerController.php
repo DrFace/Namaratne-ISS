@@ -48,7 +48,10 @@ class CustomerController extends Controller
         $customer->netBalance = $customer->creditBalance ?? $customer->netBalance ?? 0;
         $customer->save();
 
-        return redirect()->back()->with('success', 'Customer Update successfully!');
+        return response()->json([
+            'message'  => 'Customer updated successfully!',
+            'customer' => $customer,
+        ]);
 
     }
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function CreateCustomerModal({ isOpen, onClose, onCreated }: any) {
+export default function CreateCustomerModal({ isOpen, onClose, onCreated, permissions, isAdmin }: any) {
     const [form, setForm] = useState({
         customerId: "",
         name: "",
@@ -8,6 +8,7 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated }: any)
         email: "",
         address: "",
         creditLimit: "",
+        creditPeriod: "30 days",
         netBalance: "",
         cashBalance: "",
         creditBalance: "",
@@ -20,6 +21,12 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated }: any)
 
     const [errors, setErrors] = useState<{ [key: string]: string[] }>({});
     const [loading, setLoading] = useState(false);
+
+    // Helper function to check permissions
+    const hasPermission = (permission: string) => {
+        if (isAdmin) return true;
+        return permissions && permissions.includes(permission);
+    };
 
     const handleChange = (e: any) => {
         const { name, value, type, checked } = e.target;
@@ -123,6 +130,23 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated }: any)
                             className="w-full border p-2 rounded"
                         />
                     </div>
+
+                    {hasPermission('change_customer_credit_period') && (
+                        <div>
+                            <label className="block text-sm font-medium">Credit Period</label>
+                            <select
+                                name="creditPeriod"
+                                value={form.creditPeriod}
+                                onChange={handleChange}
+                                className="w-full border p-2 rounded"
+                            >
+                                <option value="15 days">15 days</option>
+                                <option value="30 days">30 days</option>
+                                <option value="50 days">50 days</option>
+                                <option value="60 days">60 days</option>
+                            </select>
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>
