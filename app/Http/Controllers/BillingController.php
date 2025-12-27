@@ -124,7 +124,7 @@ class BillingController extends Controller
     {
         $sale = Sales::with([
             'items.product:id,productName,productCode',
-            'customer:id,name,contactNumber,email,address'
+            'customer:id,name,contactNumber,email,address,vatNumber'
         ])->findOrFail($id);
         
         $sale->items->transform(function ($item) {
@@ -139,11 +139,16 @@ class BillingController extends Controller
             $sale->customer_contact = $sale->customer->contactNumber;
             $sale->customer_email = $sale->customer->email;
             $sale->customer_address = $sale->customer->address;
+            $sale->customer_vat_number = $sale->customer->vatNumber;
             unset($sale->customer);
         }
         
+        // Get company VAT number from settings
+        $vatNumber = \App\Models\Setting::getSetting('company_vat_number', '');
+        
         return Inertia::render('Billing/InvoicePrint', [
             'invoice' => $sale,
+            'vatNumber' => $vatNumber,
         ]);
     }
     /**

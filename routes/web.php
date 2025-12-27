@@ -53,6 +53,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/admin/permissions', [PermissionController::class, 'update'])->name('permissions.update');
         Route::get('/admin/users', [UserManagementController::class, 'index'])->name('users.index');
         Route::post('/admin/users/{id}/role', [UserManagementController::class, 'updateRole'])->name('users.updateRole');
+        
+        // Settings routes
+        Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('settings.index');
+        Route::post('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('settings.update');
     });
 
     // API route for getting user permissions

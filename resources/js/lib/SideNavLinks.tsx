@@ -98,11 +98,11 @@ const SideNavLinks: React.FC = () => {
             name: "Settings",
             link: true,
             border: false,
-            startWith: "/",
-            // route: "admin.settings", // ⚠ comment karala
+            startWith: "/settings",
+            route: "settings.index",
             icon: "Cog6ToothIcon",
             count: 0,
-            disabled: false, // Accessible to all
+            disabled: !isAdmin, // Only admins can access settings
         },
     ];
 

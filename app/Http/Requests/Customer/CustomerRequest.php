@@ -25,6 +25,7 @@ class CustomerRequest extends FormRequest
             'contactNumber' => 'required|string|max:20',
             'email'         => 'nullable|email|max:255',
             'address'       => 'nullable|string|max:500',
+            'vatNumber'     => 'nullable|string|max:50',
             'creditLimit'   => 'nullable|numeric|min:0',
             'creditPeriod'  => 'required|in:15 days,30 days,50 days,60 days',
             'discountValue' => 'nullable|numeric|min:0',

@@ -14,6 +14,7 @@ class Customer extends Model
         'contactNumber',
         'email',
         'address',
+        'vatNumber',
         'creditLimit',
         'creditPeriod',
         'currentCreditSpend',

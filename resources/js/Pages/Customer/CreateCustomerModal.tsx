@@ -7,6 +7,7 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated, permis
         contactNumber: "",
         email: "",
         address: "",
+        vatNumber: "",
         creditLimit: "",
         creditPeriod: "30 days",
         netBalance: "",
@@ -114,6 +115,18 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated, permis
                             name="address"
                             placeholder="Address"
                             value={form.address}
+                            onChange={handleChange}
+                            className="w-full border p-2 rounded"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium">VAT Number (Optional)</label>
+                        <input
+                            type="text"
+                            name="vatNumber"
+                            placeholder="VAT Registration Number"
+                            value={form.vatNumber}
                             onChange={handleChange}
                             className="w-full border p-2 rounded"
                         />

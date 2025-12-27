@@ -40,9 +40,10 @@ interface InvoiceData {
     company?: string;
     customer_email?: string;
     customer_address?: string;
+    customer_vat_number?: string;
 }
 
-export default function InvoicePrint({ invoice }: { invoice: InvoiceData }) {
+export default function InvoicePrint({ invoice, vatNumber }: { invoice: InvoiceData; vatNumber?: string }) {
     useEffect(() => {
         setTimeout(() => window.print(), 500);
     }, []);
@@ -59,14 +60,14 @@ export default function InvoicePrint({ invoice }: { invoice: InvoiceData }) {
                         <h6 className="text-sm font-bold text-black">Direct importers and island-wide distributors for ESP shock absorbers</h6>
                     </div>
                     <div className="flex">
-                        <img 
-                            src="/images/eep_logo.jpeg" 
-                            alt="EEP Logo" 
+                        <img
+                            src="/images/eep_logo.jpeg"
+                            alt="EEP Logo"
                             className="h-48 w-auto object-contain"
                         />
-                        <img 
-                            src="/images/nmd_logo.png" 
-                            alt="NMD logo" 
+                        <img
+                            src="/images/nmd_logo.png"
+                            alt="NMD logo"
                             className="h-48 w-auto object-contain"
                         />
                     </div>
@@ -90,7 +91,7 @@ export default function InvoicePrint({ invoice }: { invoice: InvoiceData }) {
                         <p>Phone No: {invoice.customer_contact || "____________________________"}</p>
                         <p>Email: {invoice.customer_email || "_______________________________"}</p>
                         <p>Address: {invoice.customer_address || "_____________________________"}</p>
-                        <p>VAT No: __________________________</p>
+                        <p>VAT No: {invoice.customer_vat_number || "__________________________"}</p>
                     </div>
                     <div className="w-1/2 p-3">
                         <p className="font-semibold mb-2">Invoice From:</p>
@@ -98,7 +99,7 @@ export default function InvoicePrint({ invoice }: { invoice: InvoiceData }) {
                         <p>143/19B, Salawa Rd, Mirihana</p>
                         <p>Tel: 0777756095</p>
                         <p>Email: saleinfo.nmd@gmail.com</p>
-                        <p>VAT No: ___________________</p>
+                        <p>VAT No: {vatNumber || "___________________"}</p>
                     </div>
                 </div>
 
@@ -118,7 +119,7 @@ export default function InvoicePrint({ invoice }: { invoice: InvoiceData }) {
                             const items = invoice.items || [];
                             const minRows = 5;
                             const rows = [];
-                            
+
                             // Add actual items
                             items.forEach((item, i) => {
                                 const price = parseFloat(item.salePrice);
@@ -134,7 +135,7 @@ export default function InvoicePrint({ invoice }: { invoice: InvoiceData }) {
                                     </tr>
                                 );
                             });
-                            
+
                             // Add empty rows to reach minimum
                             for (let i = items.length; i < minRows; i++) {
                                 rows.push(
@@ -147,7 +148,7 @@ export default function InvoicePrint({ invoice }: { invoice: InvoiceData }) {
                                     </tr>
                                 );
                             }
-                            
+
                             return rows;
                         })()}
                         {/* TOTALS ROWS */}

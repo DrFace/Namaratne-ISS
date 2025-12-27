@@ -7,6 +7,7 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
         contactNumber: "",
         email: "",
         address: "",
+        vatNumber: "",
         creditLimit: "",
         creditPeriod: "30 days",
         netBalance: "",
@@ -37,6 +38,7 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
                 contactNumber: customer.contactNumber || "",
                 email: customer.email || "",
                 address: customer.address || "",
+                vatNumber: customer.vatNumber || "",
                 creditLimit: customer.creditLimit || "",
                 creditPeriod: customer.creditPeriod || "30 days",
                 netBalance: customer.netBalance || "",
@@ -139,6 +141,18 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
                             name="address"
                             placeholder="Address"
                             value={form.address}
+                            onChange={handleChange}
+                            className="w-full border p-2 rounded"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium">VAT Number (Optional)</label>
+                        <input
+                            type="text"
+                            name="vatNumber"
+                            placeholder="VAT Registration Number"
+                            value={form.vatNumber}
                             onChange={handleChange}
                             className="w-full border p-2 rounded"
                         />
