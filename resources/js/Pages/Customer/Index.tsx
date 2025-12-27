@@ -1,10 +1,10 @@
 import { usePage } from "@inertiajs/react";
 import { useState } from "react";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
-import MasterTable, { TableBody, TableTd } from "@/Components/elements/tables/masterTable";
+import MasterTable, { TableTd } from "@/Components/elements/tables/masterTable";
 import CreateCustomerModal from "./CreateCustomerModal";
 import { PencilIcon } from "@heroicons/react/20/solid";
-import { LockClosedIcon } from "@heroicons/react/24/outline";
+import { LockClosedIcon, TrashIcon, CurrencyDollarIcon, ClockIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import ConfirmButton from "@/Components/elements/buttons/ConfirmButton";
 import { PrimaryLink } from "@/Components/elements/buttons/PrimaryButton";
 import EditCustomerModal from "./EditCustomerModal";
@@ -77,14 +77,17 @@ export default function CustomersIndexPage() {
     };
 
     const tableColumns = [
-        { label: "", sortField: "", sortable: true },
         { label: "ID", sortField: "id", sortable: true },
         { label: "Name", sortField: "name", sortable: true },
         { label: "Contact", sortField: "contactNumber", sortable: true },
         { label: "Credit Limit", sortField: "creditLimit", sortable: true },
         { label: "Current Credit Spend", sortField: "currentCreditSpend", sortable: true },
+        { label: "Credit Status", sortField: "", sortable: false },
         { label: "Net Balance", sortField: "netBalance", sortable: true },
         { label: "Status", sortField: "status", sortable: true },
+        { label: "", sortField: "", sortable: false },
+        { label: "", sortField: "", sortable: false },
+        { label: "", sortField: "", sortable: false },
     ];
 
     return (
@@ -118,51 +121,87 @@ export default function CustomersIndexPage() {
                     url={route("customer.index")}
                     createLink={createLink}
                     links={customers?.meta?.links}
+                    hideDateRange={true}
                 >
                     {customers.data.map((c: any) => (
-                        <TableBody
-                            key={c.id}
-                            buttons={
-                                <>
+                        <tbody key={c.id} className="bg-white">
+                            <tr>
+                                <TableTd>{c.id}</TableTd>
+                                <TableTd>{c.name}</TableTd>
+                                <TableTd>{c.contactNumber}</TableTd>
+                                <TableTd>Rs. {Number(c.creditLimit || 0).toLocaleString()}</TableTd>
+                                <TableTd>Rs. {Number(c.currentCreditSpend || 0).toLocaleString()}</TableTd>
+                                <TableTd>
+                                    {c.canPurchase === false ? (
+                                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            <ClockIcon className="w-4 h-4" />
+                                            Period Expired
+                                        </span>
+                                    ) : c.creditPeriodExpiresAt ? (
+                                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                            <ClockIcon className="w-4 h-4" />
+                                            {Math.max(0, Math.floor((new Date(c.creditPeriodExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days left
+                                        </span>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <CheckCircleIcon className="w-4 h-4" />
+                                            Good
+                                        </span>
+                                    )}
+                                </TableTd>
+                                <TableTd>Rs. {Number(c.netBalance || 0).toLocaleString()}</TableTd>
+                                <TableTd>{c.status}</TableTd>
+                                <TableTd>
                                     <button
                                         onClick={() => openEditModal(c)}
                                         disabled={!hasPermission('edit_customers')}
-                                        className={`flex items-center ${hasPermission('edit_customers')
-                                            ? 'text-blue-600 hover:underline'
-                                            : 'text-gray-400 cursor-not-allowed'
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${hasPermission('edit_customers')
+                                            ? 'bg-green-600 text-white hover:bg-green-700 shadow-sm hover:shadow-md'
+                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                             }`}
                                     >
-                                        <PencilIcon className="w-4 h-4 mr-1" />
+                                        <PencilIcon className="w-4 h-4" />
                                         Edit
                                     </button>
-                                    {Number(c.currentCreditSpend || 0) > 0 && (
-                                        <button
-                                            onClick={() => handleSettleCredit(c)}
-                                            disabled={!hasPermission('edit_customers')}
-                                            className={`flex items-center font-medium ${hasPermission('edit_customers')
-                                                ? 'text-green-600 hover:underline'
-                                                : 'text-gray-400 cursor-not-allowed'
-                                                }`}
-                                        >
-                                            Settle Credit
-                                        </button>
-                                    )}
-                                    <ConfirmButton
-                                        url={`/customer/${c.id}`}
-                                        label="Delete"
+                                </TableTd>
+                                <TableTd>
+                                    <button
+                                        onClick={() => Number(c.currentCreditSpend || 0) > 0 && handleSettleCredit(c)}
+                                        disabled={!hasPermission('edit_customers') || Number(c.currentCreditSpend || 0) <= 0}
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${hasPermission('edit_customers') && Number(c.currentCreditSpend || 0) > 0
+                                            ? 'bg-green-600 text-white hover:bg-green-700 shadow-sm hover:shadow-md'
+                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                            }`}
+                                    >
+                                        <CurrencyDollarIcon className="w-4 h-4" />
+                                        {Number(c.currentCreditSpend || 0) > 0 ? 'Settle Credit' : 'All Settled'}
+                                    </button>
+                                </TableTd>
+                                <TableTd>
+                                    <button
+                                        onClick={() => {
+                                            if (!hasPermission('delete_customers')) return;
+                                            if (window.confirm('Are you sure you want to delete this customer?')) {
+                                                fetch(`/customer/${c.id}`, {
+                                                    method: 'DELETE',
+                                                    headers: {
+                                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                                                    },
+                                                }).then(() => window.location.reload());
+                                            }
+                                        }}
                                         disabled={!hasPermission('delete_customers')}
-                                    />
-                                </>
-                            }
-                        >
-                            <TableTd>{c.id}</TableTd>
-                            <TableTd>{c.name}</TableTd>
-                            <TableTd>{c.contactNumber}</TableTd>
-                            <TableTd>Rs. {Number(c.creditLimit || 0).toLocaleString()}</TableTd>
-                            <TableTd>Rs. {Number(c.currentCreditSpend || 0).toLocaleString()}</TableTd>
-                            <TableTd>Rs. {Number(c.netBalance || 0).toLocaleString()}</TableTd>
-                            <TableTd>{c.status}</TableTd>
-                        </TableBody>
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${hasPermission('delete_customers')
+                                            ? 'bg-red-600 text-white hover:bg-red-700 shadow-sm hover:shadow-md'
+                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                            }`}
+                                    >
+                                        <TrashIcon className="w-4 h-4" />
+                                        Delete
+                                    </button>
+                                </TableTd>
+                            </tr>
+                        </tbody>
                     ))}
                 </MasterTable>
 

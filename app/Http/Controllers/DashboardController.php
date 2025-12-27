@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sales;
 use App\Models\SalesDetails;
@@ -16,6 +17,17 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         
+        // Get customers with expired credit periods who cannot purchase
+        $expiredCreditCustomers = Customer::where('canPurchase', false)
+            ->whereNotNull('creditPeriodExpiresAt')
+            ->where('creditPeriodExpiresAt', '<', now())
+            ->select('id', 'name', 'creditPeriodExpiresAt', 'currentCreditSpend', 'creditLimit')
+            ->get()
+            ->map(function ($customer) {
+                $customer->daysOverdue = now()->diffInDays($customer->creditPeriodExpiresAt);
+                return $customer;
+            });
+
         $dashboardData = [
             'kpis' => $this->getKPIs(),
             'charts' => $this->getChartData(),
@@ -23,6 +35,7 @@ class DashboardController extends Controller
             'permissions' => $user->getPermissions(),
             'userRole' => $user->getRoleName(),
             'isAdmin' => $user->isAdmin(),
+            'expiredCreditCustomers' => $expiredCreditCustomers,
         ];
 
         return Inertia::render('Dashboard', $dashboardData);

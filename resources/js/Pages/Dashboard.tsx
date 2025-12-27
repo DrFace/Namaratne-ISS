@@ -22,6 +22,7 @@ import {
     Legend,
 } from 'chart.js';
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
+import ExpiredCreditCustomersWidget from '@/Components/Dashboard/ExpiredCreditCustomersWidget';
 
 // Register ChartJS components
 ChartJS.register(
@@ -248,6 +249,9 @@ export default function Dashboard() {
                         />
                     )}
                 </div>
+
+                {/* Expired Credit Customers Widget */}
+                <ExpiredCreditCustomersWidget />
 
                 {/* Charts Section */}
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">

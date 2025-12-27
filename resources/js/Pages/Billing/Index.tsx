@@ -37,12 +37,9 @@ export default function Billing({ products: initialProducts }: any) {
 
     const paidAmount = paymentType === "cash" ? cashAmount : netTotal;
 
-    // Check if credit limit is exceeded
-    const customerCreditLimit = selectedCustomer?.creditLimit || 0;
-    const customerCurrentCreditSpend = selectedCustomer?.currentCreditSpend || 0;
-    const customerRemainingCredit = customerCreditLimit - customerCurrentCreditSpend;
-    const creditAfterTransaction = customerRemainingCredit - netTotal;
-    const isCreditLimitExceeded = paymentType === "credit" && netTotal > customerRemainingCredit;
+    // Check if customer can purchase (credit period not expired)
+    const canCustomerPurchase = selectedCustomer?.canPurchase !== false;
+    const creditPeriodExpired = paymentType === "credit" && !canCustomerPurchase;
 
     useEffect(() => {
         setBalance(netTotal - paidAmount);
@@ -59,7 +56,7 @@ export default function Billing({ products: initialProducts }: any) {
     // Customer search
     useEffect(() => {
         const query = customerContact || customerName;
-        
+
         // Set loading state immediately when user types
         if (query.length >= 2) {
             setIsSearchingCustomer(true);
@@ -80,7 +77,7 @@ export default function Billing({ products: initialProducts }: any) {
                 }
             }
         };
-        
+
         const debounceTimer = setTimeout(fetchCustomers, 300);
         return () => clearTimeout(debounceTimer);
     }, [customerContact, customerName]);
@@ -127,13 +124,13 @@ export default function Billing({ products: initialProducts }: any) {
                         // Find the original product to check stock limit
                         const originalProduct = initialProducts.find((prod: any) => prod.id === id);
                         const maxStock = originalProduct?.quantity || 0;
-                        
+
                         // Prevent exceeding stock
                         if (newQuantity > maxStock) {
                             alert(`Cannot add more. Only ${maxStock} items available in stock.`);
                             return p;
                         }
-                        
+
                         return { ...p, quantity: newQuantity };
                     }
                     return p;
@@ -152,22 +149,22 @@ export default function Billing({ products: initialProducts }: any) {
             );
             return;
         }
-        
+
         const numValue = parseInt(value);
-        
+
         // If not a valid number, don't update
         if (isNaN(numValue)) {
             return;
         }
-        
+
         const originalProduct = initialProducts.find((prod: any) => prod.id === id);
         const maxStock = originalProduct?.quantity || 0;
-        
+
         if (numValue > maxStock) {
             alert(`Cannot add more. Only ${maxStock} items available in stock.`);
             return;
         }
-        
+
         setCartItems(
             cartItems.map((p) =>
                 p.id === id ? { ...p, quantity: numValue } : p
@@ -178,7 +175,7 @@ export default function Billing({ products: initialProducts }: any) {
     const handleQuantityKeyPress = (id: number, e: React.KeyboardEvent<HTMLInputElement>, currentValue: any) => {
         if (e.key === "Enter") {
             const numValue = parseInt(String(currentValue));
-            
+
             // Remove item if quantity is less than 1 or invalid
             if (isNaN(numValue) || numValue < 1) {
                 setCartItems(cartItems.filter((p) => p.id !== id));
@@ -188,7 +185,7 @@ export default function Billing({ products: initialProducts }: any) {
 
     const handleQuantityBlur = (id: number, currentValue: any) => {
         const numValue = parseInt(String(currentValue));
-        
+
         // Remove item if quantity is less than 1 or invalid
         if (isNaN(numValue) || numValue < 1) {
             setCartItems(cartItems.filter((p) => p.id !== id));
@@ -201,9 +198,9 @@ export default function Billing({ products: initialProducts }: any) {
 
     // Save sale
     const saveSale = async (status: "draft" | "approved") => {
-        // Validate credit limit for approved sales
-        if (status === "approved" && isCreditLimitExceeded) {
-            alert("Cannot approve sale: Credit limit exceeded!");
+        // Validate credit period for approved sales
+        if (status === "approved" && creditPeriodExpired) {
+            alert("Cannot approve sale: Customer's credit period has expired! Please settle outstanding credit first.");
             return;
         }
 
@@ -519,26 +516,24 @@ export default function Billing({ products: initialProducts }: any) {
                                                 <p className="text-sm text-blue-700">
                                                     Full amount (Rs. {netTotal.toLocaleString()}) will be paid through credit
                                                 </p>
-                                                <div className="text-xs text-blue-600 space-y-1 pt-2 border-t border-blue-200">
-                                                    <div className="flex justify-between">
-                                                        <span>Available Credit:</span>
-                                                        <span className="font-semibold">Rs. {customerRemainingCredit.toLocaleString()}</span>
+                                                {selectedCustomer?.creditPeriodExpiresAt && (
+                                                    <div className="text-xs text-blue-600 pt-2 border-t border-blue-200">
+                                                        <div className="flex justify-between">
+                                                            <span>Credit Period Expires:</span>
+                                                            <span className="font-semibold">
+                                                                {new Date(selectedCustomer.creditPeriodExpiresAt).toLocaleDateString()}
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex justify-between">
-                                                        <span>Credit After Transaction:</span>
-                                                        <span className={`font-semibold ${creditAfterTransaction < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                                            Rs. {creditAfterTransaction.toLocaleString()}
-                                                        </span>
-                                                    </div>
-                                                </div>
+                                                )}
                                             </div>
-                                            {isCreditLimitExceeded && (
+                                            {creditPeriodExpired && (
                                                 <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded">
                                                     <p className="text-sm text-red-700 font-semibold">
-                                                        Credit limit exceeded!
+                                                        ⚠️ Credit period expired!
                                                     </p>
                                                     <p className="text-xs text-red-600 mt-1">
-                                                        Bill total (Rs. {netTotal.toLocaleString()}) exceeds available credit (Rs. {customerRemainingCredit.toLocaleString()})
+                                                        This customer cannot make credit purchases. Please settle outstanding credit first.
                                                     </p>
                                                 </div>
                                             )}
@@ -630,12 +625,11 @@ export default function Billing({ products: initialProducts }: any) {
                                     </button>
                                     <button
                                         onClick={() => saveSale("approved")}
-                                        disabled={isCreditLimitExceeded}
-                                        className={`py-2 rounded-lg font-medium ${
-                                            isCreditLimitExceeded
+                                        disabled={creditPeriodExpired}
+                                        className={`py-2 rounded-lg font-medium ${creditPeriodExpired
                                                 ? "bg-gray-400 cursor-not-allowed text-gray-200"
                                                 : "bg-green-600 hover:bg-green-700 text-white"
-                                        }`}
+                                            }`}
                                     >
                                         Print Bill
                                     </button>

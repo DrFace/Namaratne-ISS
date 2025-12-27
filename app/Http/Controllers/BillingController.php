@@ -36,6 +36,18 @@ class BillingController extends Controller
     {
         $validated = $request->validated();
 
+        // Check if customer's credit period has expired before allowing credit purchase
+        if ($validated['paymentMethod'] === 'credit' && $validated['customerId']) {
+            $customer = Customer::find($validated['customerId']);
+            
+            if ($customer && !$customer->canPurchase) {
+                return response()->json([
+                    'message' => 'This customer cannot make credit purchases. Credit period has expired. Please settle outstanding credit first.',
+                    'error' => 'credit_period_expired'
+                ], 403);
+            }
+        }
+
         return DB::transaction(function () use ($validated) {
 
             $sale = Sales::create([
@@ -71,8 +83,13 @@ class BillingController extends Controller
 
                 // Update customer's currentCreditSpend if payment method is credit
                 if ($validated['paymentMethod'] === 'credit' && $validated['customerId']) {
-                    Customer::where('id', $validated['customerId'])
-                        ->increment('currentCreditSpend', $validated['creditAmount'] ?? 0);
+                    $customer = Customer::find($validated['customerId']);
+                    if ($customer) {
+                        $customer->increment('currentCreditSpend', $validated['creditAmount'] ?? 0);
+                        // Update credit period status after purchase
+                        $customer->refresh();
+                        $customer->updateCreditPeriodStatus();
+                    }
                 }
             }
 
@@ -98,7 +115,7 @@ class BillingController extends Controller
         $customers = Customer::where('contactNumber', 'like', "%$query%")
             ->orWhere('name', 'like', "%$query%")
             ->limit(5)
-            ->get(['id', 'name', 'contactNumber', 'email', 'discountValue', 'discountType', 'creditBalance', 'creditLimit', 'currentCreditSpend']);
+            ->get(['id', 'name', 'contactNumber', 'email', 'discountValue', 'discountType', 'creditBalance', 'creditLimit', 'currentCreditSpend', 'canPurchase', 'creditPeriodExpiresAt']);
 
         return response()->json($customers);
     }
