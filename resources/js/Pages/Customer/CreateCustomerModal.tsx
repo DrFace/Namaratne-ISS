@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 export default function CreateCustomerModal({ isOpen, onClose, onCreated, permissions, isAdmin }: any) {
     const [form, setForm] = useState({
@@ -54,6 +55,7 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated, permis
 
             if (res.ok) {
                 const data = await res.json();
+                toast.success("Customer created successfully!");
                 onCreated(data.customer);
                 onClose();
             } else if (res.status === 422) {

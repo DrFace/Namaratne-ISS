@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { router, usePage } from "@inertiajs/react";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
+import { toast } from "react-toastify";
 
 export default function SettingsIndex() {
   const props = usePage().props as any;
@@ -16,11 +17,11 @@ export default function SettingsIndex() {
       { vat_number: vatNumber },
       {
         onSuccess: () => {
-          alert("Settings updated successfully!");
+          toast.success("Settings updated successfully!");
           setIsSaving(false);
         },
-        onError: () => {
-          alert("Error updating settings");
+        onError: (errors) => {
+          toast.error("Error updating settings");
           setIsSaving(false);
         },
       }

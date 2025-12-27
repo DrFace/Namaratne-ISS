@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 
 export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated, permissions, isAdmin }: any) {
     const [form, setForm] = useState({
@@ -80,6 +81,7 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
 
             if (res.ok) {
                 const data = await res.json();
+                toast.success("Customer updated successfully!");
                 onUpdated(data.customer);
                 onClose();
             } else if (res.status === 422) {

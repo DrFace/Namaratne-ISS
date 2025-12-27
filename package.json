@@ -45,6 +45,7 @@
         "react-router-dom": "^7.9.3",
         "react-select": "^5.10.2",
         "react-simple-star-rating": "^5.1.7",
+        "react-toastify": "^11.0.5",
         "react-usestateref": "^1.0.9",
         "use-debounce": "^10.0.6"
     }

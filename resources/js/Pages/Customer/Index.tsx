@@ -9,6 +9,7 @@ import ConfirmButton from "@/Components/elements/buttons/ConfirmButton";
 import { PrimaryLink } from "@/Components/elements/buttons/PrimaryButton";
 import EditCustomerModal from "./EditCustomerModal";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 export default function CustomersIndexPage() {
     const { customers: initialCustomers, permissions, isAdmin } = usePage().props as any;
@@ -47,7 +48,7 @@ export default function CustomersIndexPage() {
         const creditAmount = Number(customer.currentCreditSpend || 0);
 
         if (creditAmount <= 0) {
-            alert("No outstanding credit to settle");
+            toast.info("No outstanding credit to settle");
             return;
         }
 
@@ -70,9 +71,9 @@ export default function CustomersIndexPage() {
                 ),
             });
 
-            alert(response.data.message || "Credit settled successfully");
+            toast.success(response.data.message || "Credit settled successfully");
         } catch (error: any) {
-            alert(error.response?.data?.message || "Error settling credit");
+            toast.error(error.response?.data?.message || "Error settling credit");
         }
     };
 

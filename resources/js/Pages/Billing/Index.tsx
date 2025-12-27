@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Trash2, Plus, Minus } from "lucide-react";
 import axios from "axios";
 import { router } from "@inertiajs/react";
+import { toast } from "react-toastify";
 
 export default function Billing({ products: initialProducts }: any) {
     const [searchName, setSearchName] = useState("");
@@ -97,7 +98,7 @@ export default function Billing({ products: initialProducts }: any) {
         if (existing) {
             // Check if adding one more exceeds stock
             if (existing.quantity + 1 > product.quantity) {
-                alert(`Cannot add more. Only ${product.quantity} items available in stock.`);
+                toast.warning(`Cannot add more. Only ${product.quantity} items available in stock.`);
                 return;
             }
             setCartItems(
@@ -108,7 +109,7 @@ export default function Billing({ products: initialProducts }: any) {
         } else {
             // Check if product has stock
             if (product.quantity < 1) {
-                alert("Product is out of stock.");
+                toast.error("Product is out of stock.");
                 return;
             }
             setCartItems([...cartItems, { ...product, quantity: 1 }]);
@@ -127,7 +128,7 @@ export default function Billing({ products: initialProducts }: any) {
 
                         // Prevent exceeding stock
                         if (newQuantity > maxStock) {
-                            alert(`Cannot add more. Only ${maxStock} items available in stock.`);
+                            toast.warning(`Cannot add more. Only ${maxStock} items available in stock.`);
                             return p;
                         }
 
@@ -161,7 +162,7 @@ export default function Billing({ products: initialProducts }: any) {
         const maxStock = originalProduct?.quantity || 0;
 
         if (numValue > maxStock) {
-            alert(`Cannot add more. Only ${maxStock} items available in stock.`);
+            toast.warning(`Cannot add more. Only ${maxStock} items available in stock.`);
             return;
         }
 
@@ -200,13 +201,13 @@ export default function Billing({ products: initialProducts }: any) {
     const saveSale = async (status: "draft" | "approved") => {
         // Validate credit period for approved sales
         if (status === "approved" && creditPeriodExpired) {
-            alert("Cannot approve sale: Customer's credit period has expired! Please settle outstanding credit first.");
+            toast.error("Cannot approve sale: Customer's credit period has expired! Please settle outstanding credit first.");
             return;
         }
 
         // Validate cash amount for cash payments
         if (status === "approved" && paymentType === "cash" && cashAmount < netTotal) {
-            alert("Cash amount must be greater than or equal to the net total!");
+            toast.error("Cash amount must be greater than or equal to the net total!");
             return;
         }
 
@@ -231,7 +232,7 @@ export default function Billing({ products: initialProducts }: any) {
             });
 
             const saleId = res.data.sale?.id;
-            alert(res.data.message);
+            toast.success(res.data.message);
 
             if (status === "approved" && saleId) {
                 window.open(`/billing/print/${saleId}`, "_blank");
@@ -245,7 +246,7 @@ export default function Billing({ products: initialProducts }: any) {
                 setDiscountValue(0);
             }
         } catch (err: any) {
-            alert(err.response?.data?.message || "Error saving sale");
+            toast.error(err.response?.data?.message || "Error saving sale");
         }
     };
 
@@ -627,8 +628,8 @@ export default function Billing({ products: initialProducts }: any) {
                                         onClick={() => saveSale("approved")}
                                         disabled={creditPeriodExpired}
                                         className={`py-2 rounded-lg font-medium ${creditPeriodExpired
-                                                ? "bg-gray-400 cursor-not-allowed text-gray-200"
-                                                : "bg-green-600 hover:bg-green-700 text-white"
+                                            ? "bg-gray-400 cursor-not-allowed text-gray-200"
+                                            : "bg-green-600 hover:bg-green-700 text-white"
                                             }`}
                                     >
                                         Print Bill
