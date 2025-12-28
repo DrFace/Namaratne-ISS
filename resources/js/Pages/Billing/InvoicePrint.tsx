@@ -41,6 +41,9 @@ interface InvoiceData {
     customer_email?: string;
     customer_address?: string;
     customer_vat_number?: string;
+    discount_category_name?: string;
+    discount_category_type?: string;
+    discount_category_value?: number;
 }
 
 export default function InvoicePrint({ invoice, vatNumber }: { invoice: InvoiceData; vatNumber?: string }) {
@@ -158,9 +161,13 @@ export default function InvoicePrint({ invoice, vatNumber }: { invoice: InvoiceD
                             <td className="border border-gray-300 p-1 text-right">{parseFloat(invoice.totalAmount).toFixed(2)}</td>
                         </tr>
                         <tr>
-                            <td className="p-1" colSpan={2}></td>
-                            <td className="border border-gray-300 p-1 font-medium text-left" colSpan={2}>DISCOUNT</td>
-                            <td className="border border-gray-300 p-1 text-right">- {(invoice.discount_value ?? 0).toFixed(2)}</td>
+                            <td colSpan={3} className="border border-gray-300 p-1 text-right font-semibold">
+                                Discount
+                                {invoice.discount_category_name && (
+                                    <span className="font-normal text-xs"> ({invoice.discount_category_name})</span>
+                                )}
+                            </td>
+                            <td className="border border-gray-300 p-1 text-right">- {parseFloat(String(invoice.discount_value || 0)).toFixed(2)}</td>
                         </tr>
                         <tr>
                             <td className="p-1" colSpan={2}></td>

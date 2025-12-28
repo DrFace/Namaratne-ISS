@@ -11,12 +11,6 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
         vatNumber: "",
         creditLimit: "",
         creditPeriod: "30 days",
-        netBalance: "",
-        cashBalance: "",
-        creditBalance: "",
-        cardBalance: "",
-        discountValue: "",
-        discountType: "amount",
         status: "active",
         availability: true,
     });
@@ -42,12 +36,6 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
                 vatNumber: customer.vatNumber || "",
                 creditLimit: customer.creditLimit || "",
                 creditPeriod: customer.creditPeriod || "30 days",
-                netBalance: customer.netBalance || "",
-                cashBalance: customer.cashBalance || "",
-                creditBalance: customer.creditBalance || "",
-                cardBalance: customer.cardBalance || "",
-                discountValue: customer.discountValue || "",
-                discountType: customer.discountType || "amount",
                 status: customer.status || "active",
                 availability: customer.availability ?? true,
             });
@@ -188,32 +176,6 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
                             </select>
                         </div>
                     )}
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-sm font-medium">Discount Type</label>
-                            <select
-                                name="discountType"
-                                value={form.discountType}
-                                onChange={handleChange}
-                                className="w-full border p-2 rounded"
-                            >
-                                <option value="amount">Amount</option>
-                                <option value="percentage">Percentage</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium">Discount Value</label>
-                            <input
-                                type="number"
-                                name="discountValue"
-                                placeholder="Discount"
-                                value={form.discountValue}
-                                onChange={handleChange}
-                                className="w-full border p-2 rounded"
-                            />
-                        </div>
-                    </div>
 
                     <div className="flex justify-between items-center">
                         <label className="flex items-center gap-2">

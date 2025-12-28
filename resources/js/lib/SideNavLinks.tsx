@@ -104,6 +104,16 @@ const SideNavLinks: React.FC = () => {
             count: 0,
             disabled: !isAdmin, // Only admins can access settings
         },
+        {
+            name: "Discount Categories",
+            link: true,
+            border: false,
+            startWith: "/discount-categories",
+            route: "discount-categories.index",
+            icon: "TagIcon",
+            count: 0,
+            disabled: !isAdmin, // Only admins can access discount categories
+        },
     ];
 
     return (

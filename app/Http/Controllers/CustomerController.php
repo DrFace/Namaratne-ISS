@@ -12,7 +12,7 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        $customers = Customer::latest()->paginate(10);
+        $customers = Customer::with('discountCategory')->latest()->paginate(10);
 
         // Get user permissions
         $user = auth()->user();

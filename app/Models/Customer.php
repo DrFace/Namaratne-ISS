@@ -15,6 +15,7 @@ class Customer extends Model
         'email',
         'address',
         'vatNumber',
+        'discount_category_id',
         'creditLimit',
         'creditPeriod',
         'currentCreditSpend',
@@ -23,8 +24,6 @@ class Customer extends Model
         'creditBalance',
         'cardBalance',
         'totalBalance',
-        'discountValue',
-        'discountType',
         'status',
         'availability',
         'creditLimitReachedAt',
@@ -41,23 +40,17 @@ class Customer extends Model
         'creditBalance'           => 'decimal:2',
         'cardBalance'             => 'decimal:2',
         'totalBalance'            => 'decimal:2',
-        'discountValue'           => 'decimal:2',
         'creditLimitReachedAt'    => 'datetime',
         'creditPeriodExpiresAt'   => 'datetime',
         'canPurchase'             => 'boolean',
     ];
-    /**
-     * Accessor for formatted discount display
-     */
-    public function getFormattedDiscountAttribute()
-    {
-        if (is_null($this->discountValue)) {
-            return '-';
-        }
 
-        return $this->discountType === 'percentage'
-            ? "{$this->discountValue}%"
-            : 'Rs. ' . number_format($this->discountValue, 2);
+    /**
+     * Get the discount category for this customer
+     */
+    public function discountCategory()
+    {
+        return $this->belongsTo(\App\Models\DiscountCategory::class);
     }
 
     /**

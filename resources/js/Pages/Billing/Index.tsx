@@ -83,13 +83,21 @@ export default function Billing({ products: initialProducts }: any) {
         return () => clearTimeout(debounceTimer);
     }, [customerContact, customerName]);
 
-    const handleSelectCustomer = (customer: any) => {
+    const selectCustomer = (customer: any) => {
+        setSelectedCustomer(customer);
         setCustomerName(customer.name);
         setCustomerContact(customer.contactNumber);
-        setDiscountValue(customer.discountValue || 0);
-        setDiscountType(customer.discountType || "fixed");
-        setSelectedCustomer(customer);
         setCustomerSuggestions([]);
+        setIsSearchingCustomer(false);
+
+        // Set discount from category if available
+        if (customer.discount_category) {
+            setDiscountValue(customer.discount_category.value || 0);
+            setDiscountType(customer.discount_category.type === 'percentage' ? 'percentage' : 'fixed');
+        } else {
+            setDiscountValue(0);
+            setDiscountType('fixed');
+        }
     };
 
     // Cart actions
@@ -220,6 +228,7 @@ export default function Billing({ products: initialProducts }: any) {
                 totalAmount: total,
                 discountValue,
                 discountType,
+                discountAmount,
                 creditUsed: customerCredit,
                 netTotal,
                 paidAmount,
@@ -274,7 +283,7 @@ export default function Billing({ products: initialProducts }: any) {
                                             {customerSuggestions.map((customer) => (
                                                 <div
                                                     key={customer.id}
-                                                    onClick={() => handleSelectCustomer(customer)}
+                                                    onClick={() => selectCustomer(customer)}
                                                     className="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-all"
                                                 >
                                                     <div className="font-semibold text-lg text-gray-800">
@@ -466,9 +475,18 @@ export default function Billing({ products: initialProducts }: any) {
                                 <div className="text-sm text-gray-700 mb-2">
                                     Discount:{" "}
                                     <span className="font-semibold">
-                                        {discountType === "percentage"
-                                            ? `${discountValue}%`
-                                            : `Rs. ${discountValue}`}
+                                        {selectedCustomer?.discount_category ? (
+                                            <>
+                                                {selectedCustomer.discount_category.name} (
+                                                {discountType === "percentage"
+                                                    ? `${discountValue}%`
+                                                    : `Rs. ${discountValue}`})
+                                            </>
+                                        ) : (
+                                            discountType === "percentage"
+                                                ? `${discountValue}%`
+                                                : `Rs. ${discountValue}`
+                                        )}
                                     </span>
                                 </div>
 

@@ -60,6 +60,7 @@ class BillingController extends Controller
                 'cashAmount'    => $validated['cashAmount'] ?? 0,
                 'cardAmount'    => $validated['cardAmount'] ?? 0,
                 'creditAmount'  => $validated['creditAmount'] ?? 0,
+                'discount_value'=> $validated['discountAmount'] ?? 0,
                 'paymentMethod' => $validated['paymentMethod'],
                 'status'        => $validated['status'],
                 'billNumber'    => 'BILL-' . time(),
@@ -112,10 +113,11 @@ class BillingController extends Controller
             return response()->json([]);
         }
 
-        $customers = Customer::where('contactNumber', 'like', "%$query%")
+        $customers = Customer::with('discountCategory:id,name,type,value')
+            ->where('contactNumber', 'like', "%$query%")
             ->orWhere('name', 'like', "%$query%")
             ->limit(5)
-            ->get(['id', 'name', 'contactNumber', 'email', 'discountValue', 'discountType', 'creditBalance', 'creditLimit', 'currentCreditSpend', 'canPurchase', 'creditPeriodExpiresAt']);
+            ->get(['id', 'name', 'contactNumber', 'email', 'discount_category_id', 'creditBalance', 'creditLimit', 'currentCreditSpend', 'canPurchase', 'creditPeriodExpiresAt']);
 
         return response()->json($customers);
     }
@@ -124,7 +126,8 @@ class BillingController extends Controller
     {
         $sale = Sales::with([
             'items.product:id,productName,productCode',
-            'customer:id,name,contactNumber,email,address,vatNumber'
+            'customer:id,name,contactNumber,email,address,vatNumber,discount_category_id',
+            'customer.discountCategory:id,name,type,value'
         ])->findOrFail($id);
         
         $sale->items->transform(function ($item) {
@@ -134,12 +137,21 @@ class BillingController extends Controller
             return $item;
         });
         
+        
         if ($sale->customer) {
             $sale->customer_name = $sale->customer->name;
             $sale->customer_contact = $sale->customer->contactNumber;
             $sale->customer_email = $sale->customer->email;
             $sale->customer_address = $sale->customer->address;
             $sale->customer_vat_number = $sale->customer->vatNumber;
+            
+            // Add discount category info
+            if ($sale->customer->discountCategory) {
+                $sale->discount_category_name = $sale->customer->discountCategory->name;
+                $sale->discount_category_type = $sale->customer->discountCategory->type;
+                $sale->discount_category_value = $sale->customer->discountCategory->value;
+            }
+            
             unset($sale->customer);
         }
         
