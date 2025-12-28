@@ -161,8 +161,9 @@ export default function InvoicePrint({ invoice, vatNumber }: { invoice: InvoiceD
                             <td className="border border-gray-300 p-1 text-right">{parseFloat(invoice.totalAmount).toFixed(2)}</td>
                         </tr>
                         <tr>
-                            <td colSpan={3} className="border border-gray-300 p-1 text-right font-semibold">
-                                Discount
+                            <td className="p-1" colSpan={2}></td>
+                            <td className="border border-gray-300 p-1 font-medium text-left" colSpan={2}>
+                                DISCOUNT
                                 {invoice.discount_category_name && (
                                     <span className="font-normal text-xs"> ({invoice.discount_category_name})</span>
                                 )}
@@ -172,17 +173,17 @@ export default function InvoicePrint({ invoice, vatNumber }: { invoice: InvoiceD
                         <tr>
                             <td className="p-1" colSpan={2}></td>
                             <td className="border border-gray-300 p-1 font-medium text-left" colSpan={2}>TOTAL</td>
-                            <td className="border border-gray-300 p-1 text-right">{parseFloat(invoice.creditAmount).toFixed(2)}</td>
+                            <td className="border border-gray-300 p-1 text-right">{(parseFloat(invoice.creditAmount) / 1.18).toFixed(2)}</td>
                         </tr>
                         <tr>
                             <td className="p-1" colSpan={2}></td>
                             <td className="border border-gray-300 p-1 font-medium text-left" colSpan={2}>VAT 18%</td>
-                            <td className="border border-gray-300 p-1 text-right">{(parseFloat(invoice.totalAmount) * 0.18).toFixed(2)}</td>
+                            <td className="border border-gray-300 p-1 text-right">{((parseFloat(invoice.creditAmount) / 1.18) * 0.18).toFixed(2)}</td>
                         </tr>
                         <tr className="font-bold">
                             <td className="p-1" colSpan={2}></td>
                             <td className="border border-gray-300 bg-pink-100 p-1 text-left" colSpan={2}>GRAND TOTAL</td>
-                            <td className="border border-gray-300 bg-pink-100 p-1 text-right">{(parseFloat(invoice.totalAmount) * 1.18).toFixed(2)}</td>
+                            <td className="border border-gray-300 bg-pink-100 p-1 text-right">{parseFloat(invoice.creditAmount).toFixed(2)}</td>
                         </tr>
                     </tbody>
                 </table>
