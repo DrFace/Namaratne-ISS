@@ -14,42 +14,43 @@ class Customer extends Model
         'contactNumber',
         'email',
         'address',
+        'vatNumber',
+        'discount_category_id',
         'creditLimit',
+        'creditPeriod',
         'currentCreditSpend',
         'netBalance',
         'cashBalance',
         'creditBalance',
         'cardBalance',
         'totalBalance',
-        'discountValue',
-        'discountType',
         'status',
         'availability',
+        'creditLimitReachedAt',
+        'creditPeriodExpiresAt',
+        'canPurchase',
     ];
 
     protected $casts = [
-        'availability'        => 'boolean',
-        'creditLimit'         => 'decimal:2',
-        'currentCreditSpend'  => 'decimal:2',
-        'netBalance'          => 'decimal:2',
-        'cashBalance'         => 'decimal:2',
-        'creditBalance'       => 'decimal:2',
-        'cardBalance'         => 'decimal:2',
-        'totalBalance'        => 'decimal:2',
-        'discountValue'       => 'decimal:2',
+        'availability'            => 'boolean',
+        'creditLimit'             => 'decimal:2',
+        'currentCreditSpend'      => 'decimal:2',
+        'netBalance'              => 'decimal:2',
+        'cashBalance'             => 'decimal:2',
+        'creditBalance'           => 'decimal:2',
+        'cardBalance'             => 'decimal:2',
+        'totalBalance'            => 'decimal:2',
+        'creditLimitReachedAt'    => 'datetime',
+        'creditPeriodExpiresAt'   => 'datetime',
+        'canPurchase'             => 'boolean',
     ];
-    /**
-     * Accessor for formatted discount display
-     */
-    public function getFormattedDiscountAttribute()
-    {
-        if (is_null($this->discountValue)) {
-            return '-';
-        }
 
-        return $this->discountType === 'percentage'
-            ? "{$this->discountValue}%"
-            : 'Rs. ' . number_format($this->discountValue, 2);
+    /**
+     * Get the discount category for this customer
+     */
+    public function discountCategory()
+    {
+        return $this->belongsTo(\App\Models\DiscountCategory::class);
     }
 
     /**
@@ -94,5 +95,63 @@ class Customer extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /**
+     * Check if credit period has expired
+     */
+    public function getIsCreditPeriodExpiredAttribute()
+    {
+        if (!$this->creditPeriodExpiresAt) {
+            return false;
+        }
+        
+        return now()->gt($this->creditPeriodExpiresAt);
+    }
+
+    /**
+     * Get days remaining or overdue for credit period
+     */
+    public function getCreditPeriodDaysAttribute()
+    {
+        if (!$this->creditPeriodExpiresAt) {
+            return null;
+        }
+        
+        $days = now()->diffInDays($this->creditPeriodExpiresAt, false);
+        return (int) $days;
+    }
+
+    /**
+     * Update credit period status based on current balance and dates
+     */
+    public function updateCreditPeriodStatus()
+    {
+        // If customer has no credit, reset everything
+        if ($this->currentCreditSpend == 0) {
+            $this->creditLimitReachedAt = null;
+            $this->creditPeriodExpiresAt = null;
+            $this->canPurchase = true;
+            $this->save();
+            return;
+        }
+
+        // If customer exceeded limit and period not set yet
+        if ($this->currentCreditSpend > $this->creditLimit && !$this->creditLimitReachedAt) {
+            $this->creditLimitReachedAt = now();
+            
+            // Calculate expiration date
+            $days = (int) str_replace(' days', '', $this->creditPeriod);
+            $this->creditPeriodExpiresAt = now()->addDays($days);
+        }
+
+        // Check if period has expired
+        if ($this->creditPeriodExpiresAt && now()->gt($this->creditPeriodExpiresAt)) {
+            $this->canPurchase = false;
+        } else {
+            $this->canPurchase = true;
+        }
+
+        $this->save();
     }
 }

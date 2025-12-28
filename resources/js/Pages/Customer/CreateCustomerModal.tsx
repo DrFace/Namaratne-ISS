@@ -1,25 +1,32 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 
-export default function CreateCustomerModal({ isOpen, onClose, onCreated }: any) {
+export default function CreateCustomerModal({ isOpen, onClose, onCreated, permissions, isAdmin }: any) {
     const [form, setForm] = useState({
         customerId: "",
         name: "",
         contactNumber: "",
         email: "",
         address: "",
+        vatNumber: "",
         creditLimit: "",
+        creditPeriod: "30 days",
         netBalance: "",
         cashBalance: "",
         creditBalance: "",
         cardBalance: "",
-        discountValue: "",
-        discountType: "amount",
         status: "active",
         availability: true,
     });
 
     const [errors, setErrors] = useState<{ [key: string]: string[] }>({});
     const [loading, setLoading] = useState(false);
+
+    // Helper function to check permissions
+    const hasPermission = (permission: string) => {
+        if (isAdmin) return true;
+        return permissions && permissions.includes(permission);
+    };
 
     const handleChange = (e: any) => {
         const { name, value, type, checked } = e.target;
@@ -46,6 +53,7 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated }: any)
 
             if (res.ok) {
                 const data = await res.json();
+                toast.success("Customer created successfully!");
                 onCreated(data.customer);
                 onClose();
             } else if (res.status === 422) {
@@ -113,6 +121,18 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated }: any)
                     </div>
 
                     <div>
+                        <label className="block text-sm font-medium">VAT Number (Optional)</label>
+                        <input
+                            type="text"
+                            name="vatNumber"
+                            placeholder="VAT Registration Number"
+                            value={form.vatNumber}
+                            onChange={handleChange}
+                            className="w-full border p-2 rounded"
+                        />
+                    </div>
+
+                    <div>
                         <label className="block text-sm font-medium">Credit Limit</label>
                         <input
                             type="number"
@@ -124,32 +144,22 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated }: any)
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    {hasPermission('change_customer_credit_period') && (
                         <div>
-                            <label className="block text-sm font-medium">Discount Type</label>
+                            <label className="block text-sm font-medium">Credit Period</label>
                             <select
-                                name="discountType"
-                                value={form.discountType}
+                                name="creditPeriod"
+                                value={form.creditPeriod}
                                 onChange={handleChange}
                                 className="w-full border p-2 rounded"
                             >
-                                <option value="amount">Amount</option>
-                                <option value="percentage">Percentage</option>
+                                <option value="15 days">15 days</option>
+                                <option value="30 days">30 days</option>
+                                <option value="50 days">50 days</option>
+                                <option value="60 days">60 days</option>
                             </select>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium">Discount Value</label>
-                            <input
-                                type="number"
-                                name="discountValue"
-                                placeholder="Discount"
-                                value={form.discountValue}
-                                onChange={handleChange}
-                                className="w-full border p-2 rounded"
-                            />
-                        </div>
-                    </div>
-
+                    )}
                     <div className="flex justify-between items-center">
                         <label className="flex items-center gap-2">
                             <input

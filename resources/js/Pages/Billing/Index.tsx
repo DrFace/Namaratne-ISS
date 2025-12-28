@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Trash2, Plus, Minus } from "lucide-react";
 import axios from "axios";
 import { router } from "@inertiajs/react";
+import { toast } from "react-toastify";
 
 export default function Billing({ products: initialProducts }: any) {
     const [searchName, setSearchName] = useState("");
@@ -37,12 +38,9 @@ export default function Billing({ products: initialProducts }: any) {
 
     const paidAmount = paymentType === "cash" ? cashAmount : netTotal;
 
-    // Check if credit limit is exceeded
-    const customerCreditLimit = selectedCustomer?.creditLimit || 0;
-    const customerCurrentCreditSpend = selectedCustomer?.currentCreditSpend || 0;
-    const customerRemainingCredit = customerCreditLimit - customerCurrentCreditSpend;
-    const creditAfterTransaction = customerRemainingCredit - netTotal;
-    const isCreditLimitExceeded = paymentType === "credit" && netTotal > customerRemainingCredit;
+    // Check if customer can purchase (credit period not expired)
+    const canCustomerPurchase = selectedCustomer?.canPurchase !== false;
+    const creditPeriodExpired = paymentType === "credit" && !canCustomerPurchase;
 
     useEffect(() => {
         setBalance(netTotal - paidAmount);
@@ -59,7 +57,7 @@ export default function Billing({ products: initialProducts }: any) {
     // Customer search
     useEffect(() => {
         const query = customerContact || customerName;
-        
+
         // Set loading state immediately when user types
         if (query.length >= 2) {
             setIsSearchingCustomer(true);
@@ -80,18 +78,26 @@ export default function Billing({ products: initialProducts }: any) {
                 }
             }
         };
-        
+
         const debounceTimer = setTimeout(fetchCustomers, 300);
         return () => clearTimeout(debounceTimer);
     }, [customerContact, customerName]);
 
-    const handleSelectCustomer = (customer: any) => {
+    const selectCustomer = (customer: any) => {
+        setSelectedCustomer(customer);
         setCustomerName(customer.name);
         setCustomerContact(customer.contactNumber);
-        setDiscountValue(customer.discountValue || 0);
-        setDiscountType(customer.discountType || "fixed");
-        setSelectedCustomer(customer);
         setCustomerSuggestions([]);
+        setIsSearchingCustomer(false);
+
+        // Set discount from category if available
+        if (customer.discount_category) {
+            setDiscountValue(customer.discount_category.value || 0);
+            setDiscountType(customer.discount_category.type === 'percentage' ? 'percentage' : 'fixed');
+        } else {
+            setDiscountValue(0);
+            setDiscountType('fixed');
+        }
     };
 
     // Cart actions
@@ -100,7 +106,7 @@ export default function Billing({ products: initialProducts }: any) {
         if (existing) {
             // Check if adding one more exceeds stock
             if (existing.quantity + 1 > product.quantity) {
-                alert(`Cannot add more. Only ${product.quantity} items available in stock.`);
+                toast.warning(`Cannot add more. Only ${product.quantity} items available in stock.`);
                 return;
             }
             setCartItems(
@@ -111,7 +117,7 @@ export default function Billing({ products: initialProducts }: any) {
         } else {
             // Check if product has stock
             if (product.quantity < 1) {
-                alert("Product is out of stock.");
+                toast.error("Product is out of stock.");
                 return;
             }
             setCartItems([...cartItems, { ...product, quantity: 1 }]);
@@ -127,13 +133,13 @@ export default function Billing({ products: initialProducts }: any) {
                         // Find the original product to check stock limit
                         const originalProduct = initialProducts.find((prod: any) => prod.id === id);
                         const maxStock = originalProduct?.quantity || 0;
-                        
+
                         // Prevent exceeding stock
                         if (newQuantity > maxStock) {
-                            alert(`Cannot add more. Only ${maxStock} items available in stock.`);
+                            toast.warning(`Cannot add more. Only ${maxStock} items available in stock.`);
                             return p;
                         }
-                        
+
                         return { ...p, quantity: newQuantity };
                     }
                     return p;
@@ -152,22 +158,22 @@ export default function Billing({ products: initialProducts }: any) {
             );
             return;
         }
-        
+
         const numValue = parseInt(value);
-        
+
         // If not a valid number, don't update
         if (isNaN(numValue)) {
             return;
         }
-        
+
         const originalProduct = initialProducts.find((prod: any) => prod.id === id);
         const maxStock = originalProduct?.quantity || 0;
-        
+
         if (numValue > maxStock) {
-            alert(`Cannot add more. Only ${maxStock} items available in stock.`);
+            toast.warning(`Cannot add more. Only ${maxStock} items available in stock.`);
             return;
         }
-        
+
         setCartItems(
             cartItems.map((p) =>
                 p.id === id ? { ...p, quantity: numValue } : p
@@ -178,7 +184,7 @@ export default function Billing({ products: initialProducts }: any) {
     const handleQuantityKeyPress = (id: number, e: React.KeyboardEvent<HTMLInputElement>, currentValue: any) => {
         if (e.key === "Enter") {
             const numValue = parseInt(String(currentValue));
-            
+
             // Remove item if quantity is less than 1 or invalid
             if (isNaN(numValue) || numValue < 1) {
                 setCartItems(cartItems.filter((p) => p.id !== id));
@@ -188,7 +194,7 @@ export default function Billing({ products: initialProducts }: any) {
 
     const handleQuantityBlur = (id: number, currentValue: any) => {
         const numValue = parseInt(String(currentValue));
-        
+
         // Remove item if quantity is less than 1 or invalid
         if (isNaN(numValue) || numValue < 1) {
             setCartItems(cartItems.filter((p) => p.id !== id));
@@ -201,15 +207,15 @@ export default function Billing({ products: initialProducts }: any) {
 
     // Save sale
     const saveSale = async (status: "draft" | "approved") => {
-        // Validate credit limit for approved sales
-        if (status === "approved" && isCreditLimitExceeded) {
-            alert("Cannot approve sale: Credit limit exceeded!");
+        // Validate credit period for approved sales
+        if (status === "approved" && creditPeriodExpired) {
+            toast.error("Cannot approve sale: Customer's credit period has expired! Please settle outstanding credit first.");
             return;
         }
 
         // Validate cash amount for cash payments
         if (status === "approved" && paymentType === "cash" && cashAmount < netTotal) {
-            alert("Cash amount must be greater than or equal to the net total!");
+            toast.error("Cash amount must be greater than or equal to the net total!");
             return;
         }
 
@@ -222,6 +228,7 @@ export default function Billing({ products: initialProducts }: any) {
                 totalAmount: total,
                 discountValue,
                 discountType,
+                discountAmount,
                 creditUsed: customerCredit,
                 netTotal,
                 paidAmount,
@@ -234,7 +241,7 @@ export default function Billing({ products: initialProducts }: any) {
             });
 
             const saleId = res.data.sale?.id;
-            alert(res.data.message);
+            toast.success(res.data.message);
 
             if (status === "approved" && saleId) {
                 window.open(`/billing/print/${saleId}`, "_blank");
@@ -248,7 +255,7 @@ export default function Billing({ products: initialProducts }: any) {
                 setDiscountValue(0);
             }
         } catch (err: any) {
-            alert(err.response?.data?.message || "Error saving sale");
+            toast.error(err.response?.data?.message || "Error saving sale");
         }
     };
 
@@ -276,7 +283,7 @@ export default function Billing({ products: initialProducts }: any) {
                                             {customerSuggestions.map((customer) => (
                                                 <div
                                                     key={customer.id}
-                                                    onClick={() => handleSelectCustomer(customer)}
+                                                    onClick={() => selectCustomer(customer)}
                                                     className="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-all"
                                                 >
                                                     <div className="font-semibold text-lg text-gray-800">
@@ -468,9 +475,18 @@ export default function Billing({ products: initialProducts }: any) {
                                 <div className="text-sm text-gray-700 mb-2">
                                     Discount:{" "}
                                     <span className="font-semibold">
-                                        {discountType === "percentage"
-                                            ? `${discountValue}%`
-                                            : `Rs. ${discountValue}`}
+                                        {selectedCustomer?.discount_category ? (
+                                            <>
+                                                {selectedCustomer.discount_category.name} (
+                                                {discountType === "percentage"
+                                                    ? `${discountValue}%`
+                                                    : `Rs. ${discountValue}`})
+                                            </>
+                                        ) : (
+                                            discountType === "percentage"
+                                                ? `${discountValue}%`
+                                                : `Rs. ${discountValue}`
+                                        )}
                                     </span>
                                 </div>
 
@@ -519,26 +535,24 @@ export default function Billing({ products: initialProducts }: any) {
                                                 <p className="text-sm text-blue-700">
                                                     Full amount (Rs. {netTotal.toLocaleString()}) will be paid through credit
                                                 </p>
-                                                <div className="text-xs text-blue-600 space-y-1 pt-2 border-t border-blue-200">
-                                                    <div className="flex justify-between">
-                                                        <span>Available Credit:</span>
-                                                        <span className="font-semibold">Rs. {customerRemainingCredit.toLocaleString()}</span>
+                                                {selectedCustomer?.creditPeriodExpiresAt && (
+                                                    <div className="text-xs text-blue-600 pt-2 border-t border-blue-200">
+                                                        <div className="flex justify-between">
+                                                            <span>Credit Period Expires:</span>
+                                                            <span className="font-semibold">
+                                                                {new Date(selectedCustomer.creditPeriodExpiresAt).toLocaleDateString()}
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex justify-between">
-                                                        <span>Credit After Transaction:</span>
-                                                        <span className={`font-semibold ${creditAfterTransaction < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                                            Rs. {creditAfterTransaction.toLocaleString()}
-                                                        </span>
-                                                    </div>
-                                                </div>
+                                                )}
                                             </div>
-                                            {isCreditLimitExceeded && (
+                                            {creditPeriodExpired && (
                                                 <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded">
                                                     <p className="text-sm text-red-700 font-semibold">
-                                                        Credit limit exceeded!
+                                                        ⚠️ Credit period expired!
                                                     </p>
                                                     <p className="text-xs text-red-600 mt-1">
-                                                        Bill total (Rs. {netTotal.toLocaleString()}) exceeds available credit (Rs. {customerRemainingCredit.toLocaleString()})
+                                                        This customer cannot make credit purchases. Please settle outstanding credit first.
                                                     </p>
                                                 </div>
                                             )}
@@ -630,12 +644,11 @@ export default function Billing({ products: initialProducts }: any) {
                                     </button>
                                     <button
                                         onClick={() => saveSale("approved")}
-                                        disabled={isCreditLimitExceeded}
-                                        className={`py-2 rounded-lg font-medium ${
-                                            isCreditLimitExceeded
-                                                ? "bg-gray-400 cursor-not-allowed text-gray-200"
-                                                : "bg-green-600 hover:bg-green-700 text-white"
-                                        }`}
+                                        disabled={creditPeriodExpired}
+                                        className={`py-2 rounded-lg font-medium ${creditPeriodExpired
+                                            ? "bg-gray-400 cursor-not-allowed text-gray-200"
+                                            : "bg-green-600 hover:bg-green-700 text-white"
+                                            }`}
                                     >
                                         Print Bill
                                     </button>

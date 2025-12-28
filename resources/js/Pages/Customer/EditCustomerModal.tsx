@@ -1,25 +1,28 @@
 import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 
-export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated }: any) {
+export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated, permissions, isAdmin }: any) {
     const [form, setForm] = useState({
         customerId: "",
         name: "",
         contactNumber: "",
         email: "",
         address: "",
+        vatNumber: "",
         creditLimit: "",
-        netBalance: "",
-        cashBalance: "",
-        creditBalance: "",
-        cardBalance: "",
-        discountValue: "",
-        discountType: "amount",
+        creditPeriod: "30 days",
         status: "active",
         availability: true,
     });
 
     const [errors, setErrors] = useState<{ [key: string]: string[] }>({});
     const [loading, setLoading] = useState(false);
+
+    // Helper function to check permissions
+    const hasPermission = (permission: string) => {
+        if (isAdmin) return true;
+        return permissions && permissions.includes(permission);
+    };
 
     // Load customer data into form when modal opens
     useEffect(() => {
@@ -30,13 +33,9 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
                 contactNumber: customer.contactNumber || "",
                 email: customer.email || "",
                 address: customer.address || "",
+                vatNumber: customer.vatNumber || "",
                 creditLimit: customer.creditLimit || "",
-                netBalance: customer.netBalance || "",
-                cashBalance: customer.cashBalance || "",
-                creditBalance: customer.creditBalance || "",
-                cardBalance: customer.cardBalance || "",
-                discountValue: customer.discountValue || "",
-                discountType: customer.discountType || "amount",
+                creditPeriod: customer.creditPeriod || "30 days",
                 status: customer.status || "active",
                 availability: customer.availability ?? true,
             });
@@ -59,7 +58,7 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
         try {
             const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
             const res = await fetch(`/customer/${customer.id}`, {
-                method: "PUT",
+                method: "POST",
                 headers: {
                     "Accept": "application/json",
                     "X-CSRF-TOKEN": token,
@@ -70,6 +69,7 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
 
             if (res.ok) {
                 const data = await res.json();
+                toast.success("Customer updated successfully!");
                 onUpdated(data.customer);
                 onClose();
             } else if (res.status === 422) {
@@ -137,6 +137,18 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
                     </div>
 
                     <div>
+                        <label className="block text-sm font-medium">VAT Number (Optional)</label>
+                        <input
+                            type="text"
+                            name="vatNumber"
+                            placeholder="VAT Registration Number"
+                            value={form.vatNumber}
+                            onChange={handleChange}
+                            className="w-full border p-2 rounded"
+                        />
+                    </div>
+
+                    <div>
                         <label className="block text-sm font-medium">Credit Limit</label>
                         <input
                             type="number"
@@ -148,31 +160,22 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    {hasPermission('change_customer_credit_period') && (
                         <div>
-                            <label className="block text-sm font-medium">Discount Type</label>
+                            <label className="block text-sm font-medium">Credit Period</label>
                             <select
-                                name="discountType"
-                                value={form.discountType}
+                                name="creditPeriod"
+                                value={form.creditPeriod}
                                 onChange={handleChange}
                                 className="w-full border p-2 rounded"
                             >
-                                <option value="amount">Amount</option>
-                                <option value="percentage">Percentage</option>
+                                <option value="15 days">15 days</option>
+                                <option value="30 days">30 days</option>
+                                <option value="50 days">50 days</option>
+                                <option value="60 days">60 days</option>
                             </select>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium">Discount Value</label>
-                            <input
-                                type="number"
-                                name="discountValue"
-                                placeholder="Discount"
-                                value={form.discountValue}
-                                onChange={handleChange}
-                                className="w-full border p-2 rounded"
-                            />
-                        </div>
-                    </div>
+                    )}
 
                     <div className="flex justify-between items-center">
                         <label className="flex items-center gap-2">

@@ -53,6 +53,18 @@ Route::middleware('auth')->group(function () {
         Route::post('/admin/permissions', [PermissionController::class, 'update'])->name('permissions.update');
         Route::get('/admin/users', [UserManagementController::class, 'index'])->name('users.index');
         Route::post('/admin/users/{id}/role', [UserManagementController::class, 'updateRole'])->name('users.updateRole');
+        
+        // Settings routes
+        Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('settings.index');
+        Route::post('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('settings.update');
+        
+        // Discount Categories routes
+        Route::get('/discount-categories', [\App\Http\Controllers\DiscountCategoryController::class, 'index'])->name('discount-categories.index');
+        Route::post('/discount-categories', [\App\Http\Controllers\DiscountCategoryController::class, 'store'])->name('discount-categories.store');
+        Route::put('/discount-categories/{id}', [\App\Http\Controllers\DiscountCategoryController::class, 'update'])->name('discount-categories.update');
+        Route::delete('/discount-categories/{id}', [\App\Http\Controllers\DiscountCategoryController::class, 'destroy'])->name('discount-categories.destroy');
+        Route::post('/discount-categories/{id}/customers', [\App\Http\Controllers\DiscountCategoryController::class, 'assignCustomer'])->name('discount-categories.assign-customer');
+        Route::delete('/discount-categories/{id}/customers/{customerId}', [\App\Http\Controllers\DiscountCategoryController::class, 'removeCustomer'])->name('discount-categories.remove-customer');
     });
 
     // API route for getting user permissions

@@ -12,7 +12,7 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        $customers = Customer::latest()->paginate(10);
+        $customers = Customer::with('discountCategory')->latest()->paginate(10);
 
         // Get user permissions
         $user = auth()->user();
@@ -47,8 +47,14 @@ class CustomerController extends Controller
         $customer->update($data);
         $customer->netBalance = $customer->creditBalance ?? $customer->netBalance ?? 0;
         $customer->save();
+        
+        // Update credit period status after changes
+        $customer->updateCreditPeriodStatus();
 
-        return redirect()->back()->with('success', 'Customer Update successfully!');
+        return response()->json([
+            'message'  => 'Customer updated successfully!',
+            'customer' => $customer,
+        ]);
 
     }
 
@@ -78,6 +84,9 @@ class CustomerController extends Controller
         // Reset the current credit spend to 0
         $customer->currentCreditSpend = 0;
         $customer->save();
+        
+        // Update credit period status (will reset periods since credit = 0)
+        $customer->updateCreditPeriodStatus();
 
         return response()->json([
             'message' => "Credit of Rs. {$creditAmount} settled successfully for {$customer->name}",

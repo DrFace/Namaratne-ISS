@@ -20,6 +20,7 @@ class Sales extends Model
         'creditAmount',
         'cardAmount',
         'cashAmount',
+        'discount_value',
         'paymentMethod',
         'createdBy',
         'status',
@@ -34,6 +35,7 @@ class Sales extends Model
         'creditAmount' => 'decimal:2',
         'cardAmount' => 'decimal:2',
         'cashAmount' => 'decimal:2',
+        'discount_value' => 'decimal:2',
     ];
 
     public function customer()

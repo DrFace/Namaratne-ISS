@@ -28,6 +28,7 @@ class SaleStoreRequest extends FormRequest
             'cartItems.*.sellingPrice' => 'required|numeric|min:0',
             'totalAmount'              => 'required|numeric|min:0',
             'discountValue'            => 'nullable|numeric|min:0',
+            'discountAmount'           => 'nullable|numeric|min:0',
             'cashAmount'               => 'nullable|numeric|min:0',
             'cardAmount'               => 'nullable|numeric|min:0',
             'creditAmount'             => 'nullable|numeric|min:0',

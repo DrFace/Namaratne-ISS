@@ -142,6 +142,18 @@ class PermissionSeeder extends Seeder
                 'description' => 'Can edit customers',
             ],
             [
+                'name' => 'Change Customer Credit Period',
+                'slug' => 'change_customer_credit_period',
+                'category' => 'action',
+                'description' => 'Can change customer credit period',
+            ],
+           [
+                'name' => 'View Expired Credit Customers',
+                'slug' => 'view_expired_credit_customers',
+                'category' => 'view',
+                'description' => 'Can view dashboard widget showing customers with expired credit periods',
+            ],
+            [
                 'name' => 'Promote to Admin',
                 'slug' => 'promote_to_admin',
                 'category' => 'action',
