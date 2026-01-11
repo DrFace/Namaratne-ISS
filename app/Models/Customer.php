@@ -54,6 +54,14 @@ class Customer extends Model
     }
 
     /**
+     * Get all sales for this customer
+     */
+    public function sales()
+    {
+        return $this->hasMany(\App\Models\Sales::class, 'customerId', 'id');
+    }
+
+    /**
      * Check if the customer is active and available
      */
     public function getIsActiveAttribute()

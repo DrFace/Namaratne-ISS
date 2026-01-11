@@ -12,7 +12,16 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        $customers = Customer::with('discountCategory')->latest()->paginate(10);
+        $customers = Customer::with('discountCategory')
+            ->withSum('sales', 'totalAmount')
+            ->latest()
+            ->paginate(10);
+
+        // Add totalSales attribute to each customer
+        $customers->getCollection()->transform(function ($customer) {
+            $customer->totalSales = $customer->sales_sum_totalamount ?? 0;
+            return $customer;
+        });
 
         // Get user permissions
         $user = auth()->user();
