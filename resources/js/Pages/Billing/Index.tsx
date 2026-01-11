@@ -26,6 +26,44 @@ export default function Billing({ products: initialProducts }: any) {
     const [cashAmount, setCashAmount] = useState(0);
     const [balance, setBalance] = useState(0);
 
+    // Currency selection
+    const [displayCurrency, setDisplayCurrency] = useState<"LKR" | "USD">("LKR");
+    const [exchangeRate, setExchangeRate] = useState(320);
+
+    // Fetch exchange rate on mount
+    useEffect(() => {
+        const fetchExchangeRate = async () => {
+            try {
+                const response = await axios.get("/api/currency/rate");
+                setExchangeRate(response.data.rate || 320);
+            } catch (error) {
+                console.error("Error fetching exchange rate:", error);
+            }
+        };
+        fetchExchangeRate();
+    }, []);
+
+    // Helper functions for currency conversion
+    const convertPrice = (lkrAmount: number | string): number => {
+        const amount = typeof lkrAmount === 'string' ? parseFloat(lkrAmount) : lkrAmount;
+        if (isNaN(amount)) return 0;
+
+        if (displayCurrency === "USD") {
+            return amount / exchangeRate;
+        }
+        return amount;
+    };
+
+    const formatCurrency = (amount: number | string): string => {
+        const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+        if (isNaN(num)) return displayCurrency === "USD" ? "$0.00" : "Rs. 0.00";
+
+        if (displayCurrency === "USD") {
+            return `$${num.toFixed(2)}`;
+        }
+        return `Rs. ${num.toFixed(2)}`;
+    };
+
     // Totals
     const total = cartItems.reduce((sum, p) => sum + p.sellingPrice * p.quantity, 0);
 
@@ -244,7 +282,8 @@ export default function Billing({ products: initialProducts }: any) {
             toast.success(res.data.message);
 
             if (status === "approved" && saleId) {
-                window.open(`/billing/print/${saleId}`, "_blank");
+                const currencyParam = displayCurrency === "USD" ? "?currency=USD" : "";
+                window.open(`/billing/print/${saleId}${currencyParam}`, "_blank");
                 // Reset
                 setCartItems([]);
                 setCustomerName("");
@@ -384,7 +423,7 @@ export default function Billing({ products: initialProducts }: any) {
                                             <div>
                                                 <div className="font-semibold">{product.productName}</div>
                                                 <div className="text-sm text-gray-500">
-                                                    Rs. {product.sellingPrice}
+                                                    {formatCurrency(convertPrice(product.sellingPrice))}
                                                 </div>
                                                 <div className="text-xs text-gray-400">
                                                     Stock: {product.quantity}
@@ -560,32 +599,64 @@ export default function Billing({ products: initialProducts }: any) {
                                     )}
                                 </div>
 
+                                {/* Currency Selector */}
+                                <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Invoice Display Currency
+                                    </label>
+                                    <div className="flex gap-3">
+                                        <label className="flex items-center cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                value="LKR"
+                                                checked={displayCurrency === "LKR"}
+                                                onChange={(e) => setDisplayCurrency(e.target.value as "LKR")}
+                                                className="mr-2"
+                                            />
+                                            <span className="text-sm">LKR (රු)</span>
+                                        </label>
+                                        <label className="flex items-center cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                value="USD"
+                                                checked={displayCurrency === "USD"}
+                                                onChange={(e) => setDisplayCurrency(e.target.value as "USD")}
+                                                className="mr-2"
+                                            />
+                                            <span className="text-sm">USD ($)</span>
+                                        </label>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-2">
+                                        Select currency for invoice display (stored as LKR)
+                                    </p>
+                                </div>
+
                                 {/* Totals */}
                                 <div className="flex justify-between mb-1">
                                     <span>Total:</span>
-                                    <span className="font-semibold">Rs. {total}</span>
+                                    <span className="font-semibold">{formatCurrency(convertPrice(total))}</span>
                                 </div>
                                 <div className="flex justify-between mb-1">
                                     <span>Discount:</span>
                                     <span className="font-semibold text-green-600">
-                                        - Rs. {discountAmount}
+                                        - {formatCurrency(convertPrice(discountAmount))}
                                     </span>
                                 </div>
                                 {selectedCustomer && selectedCustomer.creditBalance > 0 && (
                                     <div className="flex justify-between mb-1">
                                         <span>Credit Used:</span>
                                         <span className="font-semibold text-blue-600">
-                                            - Rs. {selectedCustomer.creditBalance}
+                                            - {formatCurrency(convertPrice(selectedCustomer.creditBalance))}
                                         </span>
                                     </div>
                                 )}
                                 <div className="flex justify-between mb-1">
                                     <span>Net Total:</span>
-                                    <span className="font-bold text-blue-600">Rs. {netTotal}</span>
+                                    <span className="font-bold text-blue-600">{formatCurrency(convertPrice(netTotal))}</span>
                                 </div>
                                 <div className="flex justify-between mb-4">
                                     <span>Balance:</span>
-                                    <span className="font-bold text-red-500">Rs. {balance}</span>
+                                    <span className="font-bold text-red-500">{formatCurrency(convertPrice(balance))}</span>
                                 </div>
 
                                 {/* Cart Items */}
@@ -598,7 +669,7 @@ export default function Billing({ products: initialProducts }: any) {
                                             <div>
                                                 <div className="font-medium">{p.productName}</div>
                                                 <div className="text-sm text-gray-500">
-                                                    Rs. {p.sellingPrice}
+                                                    {formatCurrency(convertPrice(p.sellingPrice))}
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">

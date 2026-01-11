@@ -82,7 +82,7 @@ export default function CustomersIndexPage() {
         { label: "Name", sortField: "name", sortable: true },
         { label: "Contact", sortField: "contactNumber", sortable: true },
         { label: "Credit Limit", sortField: "creditLimit", sortable: true },
-        { label: "Current Credit Spend", sortField: "currentCreditSpend", sortable: true },
+        { label: "Total Sales", sortField: "totalSales", sortable: true },
         { label: "Credit Status", sortField: "", sortable: false },
         { label: "Net Balance", sortField: "netBalance", sortable: true },
         { label: "Status", sortField: "status", sortable: true },
@@ -131,7 +131,7 @@ export default function CustomersIndexPage() {
                                 <TableTd>{c.name}</TableTd>
                                 <TableTd>{c.contactNumber}</TableTd>
                                 <TableTd>Rs. {Number(c.creditLimit || 0).toLocaleString()}</TableTd>
-                                <TableTd>Rs. {Number(c.currentCreditSpend || 0).toLocaleString()}</TableTd>
+                                <TableTd>Rs. {Number(c.totalSales || 0).toLocaleString()}</TableTd>
                                 <TableTd>
                                     {c.canPurchase === false ? (
                                         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">

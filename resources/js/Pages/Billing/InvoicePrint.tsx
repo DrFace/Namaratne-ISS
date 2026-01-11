@@ -46,10 +46,37 @@ interface InvoiceData {
     discount_category_value?: number;
 }
 
-export default function InvoicePrint({ invoice, vatNumber }: { invoice: InvoiceData; vatNumber?: string }) {
+export default function InvoicePrint({
+    invoice,
+    vatNumber,
+    currency = 'LKR',
+    exchangeRate
+}: {
+    invoice: InvoiceData;
+    vatNumber?: string;
+    currency?: string;
+    exchangeRate?: number | null;
+}) {
     useEffect(() => {
         setTimeout(() => window.print(), 500);
     }, []);
+
+    // Helper function to convert LKR to USD
+    const convertPrice = (lkrAmount: string | number): number => {
+        const amount = typeof lkrAmount === 'string' ? parseFloat(lkrAmount) : lkrAmount;
+        if (currency === 'USD' && exchangeRate) {
+            return amount / exchangeRate;
+        }
+        return amount;
+    };
+
+    // Helper function to format currency
+    const formatCurrency = (amount: number): string => {
+        if (currency === 'USD') {
+            return `$${amount.toFixed(2)}`;
+        }
+        return `Rs. ${amount.toFixed(2)}`;
+    };
 
     const allItems = invoice.items || [];
     const itemsPerPage = 5;
@@ -148,16 +175,16 @@ export default function InvoicePrint({ invoice, vatNumber }: { invoice: InvoiceD
 
                                         // Add actual items for this page
                                         pageItems.forEach((item, i) => {
-                                            const price = parseFloat(item.salePrice);
+                                            const price = convertPrice(item.salePrice);
                                             const qty = item.quantity;
-                                            const total = parseFloat(item.totalAmount);
+                                            const total = convertPrice(item.totalAmount);
                                             rows.push(
                                                 <tr key={i}>
                                                     <td className="border border-gray-300 p-1">{item.productCode || "-"}</td>
                                                     <td className="border border-gray-300 p-1">{item.productName || "-"}</td>
-                                                    <td className="border border-gray-300 p-1 text-right">{price.toFixed(2)}</td>
+                                                    <td className="border border-gray-300 p-1 text-right">{formatCurrency(price)}</td>
                                                     <td className="border border-gray-300 p-1 text-center">{qty}</td>
-                                                    <td className="border border-gray-300 p-1 text-right">{total.toFixed(2)}</td>
+                                                    <td className="border border-gray-300 p-1 text-right">{formatCurrency(total)}</td>
                                                 </tr>
                                             );
                                         });
@@ -184,7 +211,7 @@ export default function InvoicePrint({ invoice, vatNumber }: { invoice: InvoiceD
                                             <tr>
                                                 <td className="p-1" colSpan={2}></td>
                                                 <td className="border border-gray-300 p-1 font-medium text-left" colSpan={2}>GOODS VALUE</td>
-                                                <td className="border border-gray-300 p-1 text-right">{parseFloat(invoice.totalAmount).toFixed(2)}</td>
+                                                <td className="border border-gray-300 p-1 text-right">{formatCurrency(convertPrice(invoice.totalAmount))}</td>
                                             </tr>
                                             <tr>
                                                 <td className="p-1" colSpan={2}></td>
@@ -194,22 +221,22 @@ export default function InvoicePrint({ invoice, vatNumber }: { invoice: InvoiceD
                                                         <span className="font-normal text-xs"> ({invoice.discount_category_name})</span>
                                                     )}
                                                 </td>
-                                                <td className="border border-gray-300 p-1 text-right">- {parseFloat(String(invoice.discount_value || 0)).toFixed(2)}</td>
+                                                <td className="border border-gray-300 p-1 text-right">- {formatCurrency(convertPrice(String(invoice.discount_value || 0)))}</td>
                                             </tr>
                                             <tr>
                                                 <td className="p-1" colSpan={2}></td>
                                                 <td className="border border-gray-300 p-1 font-medium text-left" colSpan={2}>TOTAL</td>
-                                                <td className="border border-gray-300 p-1 text-right">{(parseFloat(invoice.creditAmount) / 1.18).toFixed(2)}</td>
+                                                <td className="border border-gray-300 p-1 text-right">{formatCurrency(convertPrice((parseFloat(invoice.creditAmount) / 1.18).toFixed(2)))}</td>
                                             </tr>
                                             <tr>
                                                 <td className="p-1" colSpan={2}></td>
                                                 <td className="border border-gray-300 p-1 font-medium text-left" colSpan={2}>VAT 18%</td>
-                                                <td className="border border-gray-300 p-1 text-right">{((parseFloat(invoice.creditAmount) / 1.18) * 0.18).toFixed(2)}</td>
+                                                <td className="border border-gray-300 p-1 text-right">{formatCurrency(convertPrice(((parseFloat(invoice.creditAmount) / 1.18) * 0.18).toFixed(2)))}</td>
                                             </tr>
                                             <tr className="font-bold">
                                                 <td className="p-1" colSpan={2}></td>
                                                 <td className="border border-gray-300 bg-pink-100 p-1 text-left" colSpan={2}>GRAND TOTAL</td>
-                                                <td className="border border-gray-300 bg-pink-100 p-1 text-right">{parseFloat(invoice.creditAmount).toFixed(2)}</td>
+                                                <td className="border border-gray-300 bg-pink-100 p-1 text-right">{formatCurrency(convertPrice(invoice.creditAmount))}</td>
                                             </tr>
                                         </>
                                     )}

@@ -3,9 +3,28 @@ import { router, usePage } from "@inertiajs/react";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
 import { toast } from "react-toastify";
 
+interface CurrencyRate {
+  id: number;
+  from_currency: string;
+  to_currency: string;
+  rate: string;
+  updated_by: number | null;
+  created_at: string;
+  updated_at: string;
+  updated_by_user?: {
+    name: string;
+  };
+}
+
+interface Props {
+  vatNumber: string;
+  currencyRate: CurrencyRate;
+}
+
 export default function SettingsIndex() {
-  const props = usePage().props as any;
-  const [vatNumber, setVatNumber] = useState(props.vatNumber || "");
+  const { vatNumber: initialVatNumber, currencyRate } = usePage().props as unknown as Props;
+  const [vatNumber, setVatNumber] = useState(initialVatNumber || "");
+  const [exchangeRate, setExchangeRate] = useState(currencyRate?.rate || "320.00");
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -14,7 +33,10 @@ export default function SettingsIndex() {
 
     router.post(
       route("settings.update"),
-      { vat_number: vatNumber },
+      {
+        vat_number: vatNumber,
+        exchange_rate: exchangeRate,
+      },
       {
         onSuccess: () => {
           toast.success("Settings updated successfully!");
@@ -36,6 +58,7 @@ export default function SettingsIndex() {
 
           <div className="bg-white rounded-lg shadow p-6">
             <form onSubmit={handleSubmit}>
+              {/* VAT Number Section */}
               <div className="mb-6">
                 <label
                   htmlFor="vatNumber"
@@ -54,6 +77,38 @@ export default function SettingsIndex() {
                 <p className="mt-2 text-sm text-gray-500">
                   This VAT number will be displayed on all invoices in the "Invoice From" section.
                 </p>
+              </div>
+
+              {/* Currency Exchange Rate Section */}
+              <div className="mb-6 pt-6 border-t border-gray-200">
+                <label
+                  htmlFor="exchangeRate"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Currency Exchange Rate
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-700">1 USD =</span>
+                  <input
+                    type="number"
+                    id="exchangeRate"
+                    step="0.01"
+                    min="0.01"
+                    value={exchangeRate}
+                    onChange={(e) => setExchangeRate(e.target.value)}
+                    className="flex-1 max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="320.00"
+                  />
+                  <span className="text-gray-700">LKR</span>
+                </div>
+                <p className="mt-2 text-sm text-gray-500">
+                  This rate will be used when entering product prices in USD and displaying invoices in different currencies.
+                </p>
+                {currencyRate?.updated_at && (
+                  <p className="mt-2 text-xs text-gray-400">
+                    Last updated: {new Date(currencyRate.updated_at).toLocaleString()}
+                  </p>
+                )}
               </div>
 
               <div className="flex justify-end">

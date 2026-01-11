@@ -5,6 +5,7 @@ import MasterTable, { TableBody, TableTd } from "@/Components/elements/tables/ma
 import CreateProductModal from "./CreateProductModal";
 import CreateSeriasModal from "./CreateSeriasModal";
 import AddStockModal from "./AddStockModal";
+import EditProductModal from "./EditProductModal";
 import { PencilIcon } from "@heroicons/react/20/solid";
 import { LockClosedIcon } from "@heroicons/react/24/outline";
 import ConfirmButton from "@/Components/elements/buttons/ConfirmButton";
@@ -18,6 +19,8 @@ export default function ProductsIndexPage() {
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
     const [isSeriasModalOpen, setIsSeriasModalOpen] = useState(false);
     const [isStockModalOpen, setIsStockModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
     // Helper function to check permissions
     const hasPermission = (permission: string) => {
@@ -141,15 +144,24 @@ export default function ProductsIndexPage() {
                     {products.data.map((product: any) => (
                         <TableBody
                             key={product.id}
+                            id={product.id}
                             buttons={
                                 <>
-                                    <PrimaryLink
-                                        className="!py-2"
-                                        href={`/products/${product.id}/edit`}
+                                    <button
+                                        onClick={() => {
+                                            if (hasPermission('edit_products')) {
+                                                setSelectedProduct(product);
+                                                setIsEditModalOpen(true);
+                                            }
+                                        }}
                                         disabled={!hasPermission('edit_products')}
+                                        className={`flex items-center gap-1 px-3 py-2 text-sm rounded ${hasPermission('edit_products')
+                                            ? 'bg-blue-500 text-white hover:bg-blue-600 cursor-pointer'
+                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                            }`}
                                     >
-                                        <PencilIcon className="w-3 h-3 mr-2" /> Edit
-                                    </PrimaryLink>
+                                        <PencilIcon className="w-3 h-3" /> Edit
+                                    </button>
                                     <ConfirmButton
                                         className="!py-2"
                                         url={`/products/${product.id}`}
@@ -195,6 +207,13 @@ export default function ProductsIndexPage() {
                     onClose={() => setIsStockModalOpen(false)}
                     onStockAdded={handleStockAdded}
                     productsList={products.data}
+                />
+                <EditProductModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => setIsEditModalOpen(false)}
+                    onUpdated={() => window.location.reload()}
+                    product={selectedProduct}
+                    seriasList={seriasList}
                 />
             </div>
         </Authenticated>

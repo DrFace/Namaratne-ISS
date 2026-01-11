@@ -15,7 +15,7 @@ export default function AddStockModal({
     const [stockMode, setStockMode] = useState<"new" | "existing">("new");
     const [availableBatches, setAvailableBatches] = useState<any[]>([]);
     const [selectedBatch, setSelectedBatch] = useState<any>(null);
-    
+
     const [form, setForm] = useState({
         productId: "",
         buyingPrice: "",
@@ -26,29 +26,49 @@ export default function AddStockModal({
         batchNumber: "",
         purchaseDate: "",
     });
+    const [currency, setCurrency] = useState<"LKR" | "USD">("LKR");
+    const [exchangeRate, setExchangeRate] = useState(320);
 
     const [errors, setErrors] = useState<{ [key: string]: string[] }>({});
     const [loading, setLoading] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [successMsg, setSuccessMsg] = useState("");
 
+    // Fetch exchange rate on mount
+    useEffect(() => {
+        fetchExchangeRate();
+    }, []);
+
+    const fetchExchangeRate = async () => {
+        try {
+            const response = await axios.get("/api/currency/rate");
+            setExchangeRate(response.data.rate || 320);
+        } catch (error) {
+            console.error("Error fetching exchange rate:", error);
+        }
+    };
+
     // Auto-calculate selling price
     useEffect(() => {
         if (stockMode === "new") {
-            const buying = parseFloat(form.buyingPrice) || 0;
+            // Convert buying price to LKR if USD is selected
+            const buyingInLKR = currency === "USD"
+                ? parseFloat(form.buyingPrice) * exchangeRate
+                : parseFloat(form.buyingPrice);
+
             const taxPercent = parseFloat(form.tax) || 0;
             const profitPercent = parseFloat(form.profitMargin) || 0;
-            
-            const taxAmount = (buying * taxPercent) / 100;
-            const profitAmount = (buying * profitPercent) / 100;
-            const calculated = buying + taxAmount + profitAmount;
-            
+
+            const taxAmount = (buyingInLKR * taxPercent) / 100;
+            const profitAmount = (buyingInLKR * profitPercent) / 100;
+            const calculated = buyingInLKR + taxAmount + profitAmount;
+
             setForm((prev) => ({
                 ...prev,
                 sellingPrice: calculated > 0 ? calculated.toFixed(2) : "",
             }));
         }
-    }, [form.buyingPrice, form.tax, form.profitMargin, stockMode]);
+    }, [form.buyingPrice, form.tax, form.profitMargin, stockMode, currency, exchangeRate]);
 
     // Fetch batches when product is selected in existing mode
     useEffect(() => {
@@ -70,7 +90,7 @@ export default function AddStockModal({
     const handleBatchSelection = (batchId: string) => {
         const batch = availableBatches.find((b) => b.id === parseInt(batchId));
         setSelectedBatch(batch);
-        
+
         if (batch) {
             setForm((prev) => ({
                 ...prev,
@@ -92,6 +112,30 @@ export default function AddStockModal({
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
         setErrors((prev) => ({ ...prev, [name]: [] }));
+    };
+
+    const handleClose = () => {
+        // Check if there are any errors
+        if (Object.keys(errors).length > 0) {
+            // Show alert or just return without closing
+            alert("Please fix the errors before closing");
+            return;
+        }
+        // Reset form and errors
+        setErrors({});
+        setForm({
+            productId: "",
+            buyingPrice: "",
+            tax: "",
+            profitMargin: "",
+            sellingPrice: "",
+            quantity: "",
+            batchNumber: "",
+            purchaseDate: "",
+        });
+        setCurrency("LKR");
+        setSelectedBatch(null);
+        onClose();
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -147,17 +191,29 @@ export default function AddStockModal({
             await axios.get("/sanctum/csrf-cookie");
 
             const formData = new FormData();
-            
+
             if (stockMode === "existing") {
                 // For existing batch, only send productId (batch ID) and quantity
                 formData.append("batchId", selectedBatch.id);
                 formData.append("quantity", form.quantity);
                 formData.append("mode", "existing");
             } else {
-                // For new batch, send all fields
+                // For new batch, convert buying price to LKR if USD selected
+                console.log("Currency:", currency);
+                console.log("Exchange Rate:", exchangeRate);
+                console.log("Buying Price (input):", form.buyingPrice);
+
+                const buyingPriceInLKR = currency === "USD"
+                    ? (parseFloat(form.buyingPrice) * exchangeRate).toFixed(2)
+                    : form.buyingPrice;
+
+                console.log("Buying Price in LKR:", buyingPriceInLKR);
+
+                // Send all fields with converted price
                 Object.entries(form).forEach(([key, value]) => {
                     if (value !== "" && value !== null) {
-                        formData.append(key, value as any);
+                        const finalValue = key === "buyingPrice" ? buyingPriceInLKR : value;
+                        formData.append(key, finalValue as any);
                     }
                 });
                 formData.append("mode", "new");
@@ -173,6 +229,19 @@ export default function AddStockModal({
 
             setTimeout(() => {
                 setShowSuccess(false);
+                setErrors({});
+                setForm({
+                    productId: "",
+                    buyingPrice: "",
+                    tax: "",
+                    profitMargin: "",
+                    sellingPrice: "",
+                    quantity: "",
+                    batchNumber: "",
+                    purchaseDate: "",
+                });
+                setCurrency("LKR");
+                setSelectedBatch(null);
                 onClose();
             }, 1500);
         } catch (error: any) {
@@ -311,149 +380,183 @@ export default function AddStockModal({
                         {/* Show all fields for new batch mode */}
                         {stockMode === "new" && (
                             <>
+                                {/* Currency Selection */}
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-medium mb-2">
+                                        Price Currency
+                                    </label>
+                                    <div className="flex gap-4">
+                                        <label className="flex items-center cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                value="LKR"
+                                                checked={currency === "LKR"}
+                                                onChange={(e) => setCurrency(e.target.value as "LKR")}
+                                                className="mr-2"
+                                            />
+                                            <span className="text-sm">LKR (Sri Lankan Rupee)</span>
+                                        </label>
+                                        <label className="flex items-center cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                value="USD"
+                                                checked={currency === "USD"}
+                                                onChange={(e) => setCurrency(e.target.value as "USD")}
+                                                className="mr-2"
+                                            />
+                                            <span className="text-sm">USD (US Dollar)</span>
+                                        </label>
+                                    </div>
+                                </div>
+
                                 <div>
-                            <label className="block text-sm font-medium">
-                                Buying Price <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                name="buyingPrice"
-                                value={form.buyingPrice}
-                                onChange={handleChange}
-                                placeholder="Buying Price"
-                                className="w-full border p-2 rounded"
-                                required
-                            />
-                            {errors.buyingPrice && (
-                                <p className="text-red-500 text-sm">
-                                    {errors.buyingPrice[0]}
-                                </p>
-                            )}
-                        </div>
+                                    <label className="block text-sm font-medium">
+                                        Buying Price ({currency}) <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        name="buyingPrice"
+                                        value={form.buyingPrice}
+                                        onChange={handleChange}
+                                        placeholder={`Buying Price in ${currency}`}
+                                        className="w-full border p-2 rounded"
+                                        required
+                                    />
+                                    {currency === "USD" && form.buyingPrice && (
+                                        <p className="text-xs text-gray-600 mt-1">
+                                            ≈ LKR {(parseFloat(form.buyingPrice) * exchangeRate).toFixed(2)}
+                                        </p>
+                                    )}
+                                    {errors.buyingPrice && (
+                                        <p className="text-red-500 text-sm">
+                                            {errors.buyingPrice[0]}
+                                        </p>
+                                    )}
+                                </div>
 
-                        <div>
-                            <label className="block text-sm font-medium">
-                                Tax (%) <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                name="tax"
-                                value={form.tax}
-                                onChange={handleChange}
-                                placeholder="Tax %"
-                                className="w-full border p-2 rounded"
-                                required
-                                min="0"
-                            />
-                            {errors.tax && (
-                                <p className="text-red-500 text-sm">
-                                    {errors.tax[0]}
-                                </p>
-                            )}
-                        </div>
+                                <div>
+                                    <label className="block text-sm font-medium">
+                                        Tax (%) <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        name="tax"
+                                        value={form.tax}
+                                        onChange={handleChange}
+                                        placeholder="Tax %"
+                                        className="w-full border p-2 rounded"
+                                        required
+                                        min="0"
+                                    />
+                                    {errors.tax && (
+                                        <p className="text-red-500 text-sm">
+                                            {errors.tax[0]}
+                                        </p>
+                                    )}
+                                </div>
 
-                        <div>
-                            <label className="block text-sm font-medium">
-                                Profit Margin (%) <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                name="profitMargin"
-                                value={form.profitMargin}
-                                onChange={handleChange}
-                                placeholder="Profit Margin %"
-                                className="w-full border p-2 rounded"
-                                required
-                                min="0"
-                            />
-                            {errors.profitMargin && (
-                                <p className="text-red-500 text-sm">
-                                    {errors.profitMargin[0]}
-                                </p>
-                            )}
-                        </div>
+                                <div>
+                                    <label className="block text-sm font-medium">
+                                        Profit Margin (%) <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        name="profitMargin"
+                                        value={form.profitMargin}
+                                        onChange={handleChange}
+                                        placeholder="Profit Margin %"
+                                        className="w-full border p-2 rounded"
+                                        required
+                                        min="0"
+                                    />
+                                    {errors.profitMargin && (
+                                        <p className="text-red-500 text-sm">
+                                            {errors.profitMargin[0]}
+                                        </p>
+                                    )}
+                                </div>
 
-                        <div>
-                            <label className="block text-sm font-medium">
-                                Selling Price (Auto) <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                name="sellingPrice"
-                                value={form.sellingPrice}
-                                readOnly
-                                className="w-full border p-2 rounded bg-gray-100 text-gray-600"
-                            />
-                            {errors.sellingPrice && (
-                                <p className="text-red-500 text-sm">
-                                    {errors.sellingPrice[0]}
-                                </p>
-                            )}
-                        </div>
+                                <div>
+                                    <label className="block text-sm font-medium">
+                                        Selling Price (Auto) <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        name="sellingPrice"
+                                        value={form.sellingPrice}
+                                        readOnly
+                                        className="w-full border p-2 rounded bg-gray-100 text-gray-600"
+                                    />
+                                    {errors.sellingPrice && (
+                                        <p className="text-red-500 text-sm">
+                                            {errors.sellingPrice[0]}
+                                        </p>
+                                    )}
+                                </div>
 
-                        <div>
-                            <label className="block text-sm font-medium">
-                                Quantity <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="number"
-                                name="quantity"
-                                value={form.quantity}
-                                onChange={handleChange}
-                                placeholder="Quantity"
-                                className="w-full border p-2 rounded"
-                                required
-                                min="1"
-                            />
-                            {errors.quantity && (
-                                <p className="text-red-500 text-sm">
-                                    {errors.quantity[0]}
-                                </p>
-                            )}
-                        </div>
+                                <div>
+                                    <label className="block text-sm font-medium">
+                                        Quantity <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="quantity"
+                                        value={form.quantity}
+                                        onChange={handleChange}
+                                        placeholder="Quantity"
+                                        className="w-full border p-2 rounded"
+                                        required
+                                        min="1"
+                                    />
+                                    {errors.quantity && (
+                                        <p className="text-red-500 text-sm">
+                                            {errors.quantity[0]}
+                                        </p>
+                                    )}
+                                </div>
 
-                        <div>
-                            <label className="block text-sm font-medium">
-                                Batch Number <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="batchNumber"
-                                value={form.batchNumber}
-                                onChange={handleChange}
-                                placeholder="Batch Number"
-                                className="w-full border p-2 rounded"
-                                required
-                            />
-                            {errors.batchNumber && (
-                                <p className="text-red-500 text-sm">
-                                    {errors.batchNumber[0]}
-                                </p>
-                            )}
-                        </div>
+                                <div>
+                                    <label className="block text-sm font-medium">
+                                        Batch Number <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="batchNumber"
+                                        value={form.batchNumber}
+                                        onChange={handleChange}
+                                        placeholder="Batch Number"
+                                        className="w-full border p-2 rounded"
+                                        required
+                                    />
+                                    {errors.batchNumber && (
+                                        <p className="text-red-500 text-sm">
+                                            {errors.batchNumber[0]}
+                                        </p>
+                                    )}
+                                </div>
 
-                        <div>
-                            <label className="block text-sm font-medium">
-                                Purchase Date <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="date"
-                                name="purchaseDate"
-                                value={form.purchaseDate}
-                                onChange={handleChange}
-                                className="w-full border p-2 rounded"
-                                required
-                            />
-                            {errors.purchaseDate && (
-                                <p className="text-red-500 text-sm">
-                                    {errors.purchaseDate[0]}
-                                </p>
-                            )}
-                        </div>
+                                <div>
+                                    <label className="block text-sm font-medium">
+                                        Purchase Date <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="date"
+                                        name="purchaseDate"
+                                        value={form.purchaseDate}
+                                        onChange={handleChange}
+                                        className="w-full border p-2 rounded"
+                                        required
+                                    />
+                                    {errors.purchaseDate && (
+                                        <p className="text-red-500 text-sm">
+                                            {errors.purchaseDate[0]}
+                                        </p>
+                                    )}
+                                </div>
                             </>
                         )}
 
@@ -488,7 +591,7 @@ export default function AddStockModal({
                     <div className="flex justify-end gap-2 mt-4">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={handleClose}
                             className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
                         >
                             Cancel

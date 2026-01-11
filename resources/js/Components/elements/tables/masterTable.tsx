@@ -18,19 +18,19 @@ import "react-date-range/dist/styles.css"; // main style file
 import "react-date-range/dist/theme/default.css";
 
 export function TableBody({
-    key,
+    id,
     children,
     buttons,
 }: {
-    key: any;
+    id: any;
     children: any;
     buttons: any;
 }) {
     return (
-        <Disclosure as="tbody" className="w-full bg-white " key={key}>
+        <Disclosure as="tbody" className="w-full bg-white " key={id}>
             {({ open }) => (
                 <>
-                    <tr key={key + "p"}>
+                    <tr key={id + "p"}>
                         <TableTd width={10}>
                             <Disclosure.Button className="w-12 text-gray-900">
                                 <span className="flex items-center">
@@ -50,7 +50,7 @@ export function TableBody({
                         </TableTd>
                         {children}
                     </tr>
-                    <tr key={key + "c"}>
+                    <tr key={id + "c"}>
                         <Disclosure.Panel
                             as="td"
                             colSpan={100}
