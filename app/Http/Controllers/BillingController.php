@@ -122,7 +122,7 @@ class BillingController extends Controller
         return response()->json($customers);
     }
 
-    public function invoice($id)
+    public function invoice($id, Request $request)
     {
         $sale = Sales::with([
             'items.product:id,productName,productCode',
@@ -158,9 +158,21 @@ class BillingController extends Controller
         // Get company VAT number from settings
         $vatNumber = \App\Models\Setting::getSetting('company_vat_number', '');
         
+        // Get currency from query parameter (default to LKR)
+        $currency = strtoupper($request->query('currency', 'LKR'));
+        
+        // Get exchange rate if USD is requested
+        $exchangeRate = null;
+        if ($currency === 'USD') {
+            $rate = \App\Models\CurrencyRate::getCurrentRate('USD', 'LKR');
+            $exchangeRate = $rate ?? 320; // Default to 320 if not set
+        }
+        
         return Inertia::render('Billing/InvoicePrint', [
             'invoice' => $sale,
             'vatNumber' => $vatNumber,
+            'currency' => $currency,
+            'exchangeRate' => $exchangeRate,
         ]);
     }
     /**

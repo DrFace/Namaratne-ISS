@@ -141,6 +141,7 @@ export default function ProductsIndexPage() {
                     {products.data.map((product: any) => (
                         <TableBody
                             key={product.id}
+                            id={product.id}
                             buttons={
                                 <>
                                     <PrimaryLink

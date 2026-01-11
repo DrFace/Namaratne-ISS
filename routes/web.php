@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\CurrencyRateController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
@@ -43,6 +44,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/billing', [BillingController::class, 'store'])->name('billing.store');
     Route::get('/customers/search', [BillingController::class, 'search']);
     Route::get('/billing/print/{id}', [BillingController::class, 'invoice']);
+
+    // Currency routes
+    Route::get('/settings/currency', [CurrencyRateController::class, 'index'])->name('currency.index');
+    Route::post('/settings/currency', [CurrencyRateController::class, 'update'])->name('currency.update');
+    Route::get('/api/currency/rate', [CurrencyRateController::class, 'getCurrentRate']);
+    Route::post('/api/currency/convert', [CurrencyRateController::class, 'convert']);
     // Route::get('/billing/{billing}/edit', [BillingController::class, 'edit'])->name('billing.edit');
     // Route::post('/billing/{billing}', [BillingController::class, 'update'])->name('billing.update');
     // Route::delete('/billing/{billing}', [BillingController::class, 'destroy'])->name('billing.destroy');
