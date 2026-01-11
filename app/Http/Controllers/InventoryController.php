@@ -14,6 +14,7 @@ class InventoryController extends Controller
         $products = Product::select([
             'id',
             'productName',
+            'productCode',
             'seriasId',
             'batchNumber',
             'buyingPrice',
