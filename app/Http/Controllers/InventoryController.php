@@ -193,23 +193,13 @@ class InventoryController extends Controller
         }
 
         $validated = $request->validate([
-            'productName'        => 'nullable|string|max:255',
-            'productCode'        => 'required|string|max:255',
-            'productImage'       => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,webp|max:10240',
-            'productDescription' => 'nullable|string',
-            'buyingPrice'        => 'required|numeric',
-            'sellingPrice'       => 'required|numeric',
-            'quantity'           => 'required|integer',
-            'unit'               => 'nullable|string',
-            'brand'              => 'nullable|string',
-            'tax'                => 'nullable|numeric',
-            'profitMargin'       => 'nullable|numeric',
+            'productCode'        => 'nullable|string|max:255',
+            'productDescription' => 'nullable|string|max:1000',
+            'unit'               => 'nullable|string|max:50',
+            'brand'              => 'nullable|string|max:255',
             'seriasId'           => 'nullable|integer',
-            'lowStock'           => 'nullable|integer',
-            'supplier_id'        => 'nullable|integer',
-            'batchNumber'        => 'nullable|string',
-            'expiryDate'         => 'nullable|date',
-            'purchaseDate'       => 'required|date',
+            'lowStock'           => 'nullable|integer|min:0',
+            'productImage'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         // Handle image upload
