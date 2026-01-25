@@ -105,23 +105,33 @@ export default function InvoicePrint({
 
                             {/* HEADER */}
 
-                            <div className="flex justify-between items-center">
-                                <div className="flex flex-col justify-between h-48">
-                                    <h1 className="text-6xl font-bold text-black tracking-wide flex items-center flex-1">TAX INVOICE</h1>
-                                    <h6 className="text-sm font-bold text-black">Direct importers and island-wide distributors for ESP shock absorbers</h6>
-                                </div>
-                                <div className="flex">
+                            {/* First Row: Logos and Company Info */}
+                            <div className="flex items-center gap-4 mb-3">
+                                {/* Logos on the LEFT */}
+                                <div className="flex gap-2">
                                     <img
                                         src="/images/eep_logo.jpeg"
                                         alt="EEP Logo"
-                                        className="h-48 w-auto object-contain"
+                                        className="h-36 w-auto object-contain"
                                     />
                                     <img
                                         src="/images/nmd_logo.png"
                                         alt="NMD logo"
-                                        className="h-48 w-auto object-contain"
+                                        className="h-36 w-auto object-contain"
                                     />
                                 </div>
+
+                                {/* Company Name and Details */}
+                                <div className="flex flex-col">
+                                    <h1 className="text-4xl font-bold text-black tracking-wide leading-tight">NAMARATNA</h1>
+                                    <h2 className="text-xl font-semibold text-gray-800 leading-tight">Motor Distributors</h2>
+                                    <p className="text-xs text-gray-600 mt-1">Direct importers and island-wide distributors for ESP shock absorbers</p>
+                                </div>
+                            </div>
+
+                            {/* Second Row: Tax Invoice - Left Aligned */}
+                            <div className="mb-2">
+                                <p className="text-lg font-semibold text-gray-900">Tax Invoice</p>
                             </div>
                             <div className="flex justify-between items-start border-b-2 border-pink-600 pb-2 mb-2">
                                 <div className="mt-2 space-y-1 text-xs">
