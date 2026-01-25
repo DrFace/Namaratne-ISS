@@ -1,4 +1,5 @@
 import { usePage } from '@inertiajs/react';
+import { useState, useRef } from 'react';
 import {
     Package,
     TrendingDown,
@@ -6,7 +7,8 @@ import {
     DollarSign,
     ShoppingCart,
     TrendingUp,
-    Calendar
+    Calendar,
+    X
 } from 'lucide-react';
 import Authenticated from '@/Layouts/AuthenticatedLayout';
 import {
@@ -59,6 +61,7 @@ interface DashboardProps {
         }>;
         topProducts: Array<{
             productName: string;
+            productCode: string;
             totalSold: number;
         }>;
     };
@@ -70,13 +73,19 @@ interface DashboardProps {
             quantity: number;
             lowStock: number;
             batchNumber: string;
+            buyingPrice: number;
+            sellingPrice: number;
+            series: string;
         }>;
         outOfStockItems: Array<{
             id: number;
             productName: string;
             productCode: string;
             batchNumber: string;
+            buyingPrice: number;
+            sellingPrice: number;
             updated_at: string;
+            series: string;
         }>;
         recentTransactions: Array<{
             id: number;
@@ -94,11 +103,30 @@ interface DashboardProps {
 export default function Dashboard() {
     const { auth, kpis, charts, tables, permissions, isAdmin } = usePage().props as any;
     const user = auth.user;
+    const [selectedProduct, setSelectedProduct] = useState<any>(null);
+    const [showProductModal, setShowProductModal] = useState(false);
+    const lowStockRef = useRef<HTMLDivElement>(null);
+    const outOfStockRef = useRef<HTMLDivElement>(null);
 
     // Helper function to check if user has permission
     const hasPermission = (permission: string) => {
         if (isAdmin) return true; // Admins have all permissions
         return permissions && permissions.includes(permission);
+    };
+
+    // Handle product click
+    const handleProductClick = (product: any) => {
+        setSelectedProduct(product);
+        setShowProductModal(true);
+    };
+
+    // Scroll to section with offset for fixed header
+    const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
+        if (ref.current) {
+            const yOffset = -120; // Offset for fixed header/navbar
+            const y = ref.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }
     };
 
     // Format currency
@@ -149,7 +177,7 @@ export default function Dashboard() {
 
     // Top Products Chart Data
     const topProductsChartData = {
-        labels: charts?.topProducts?.map((item: any) => item.productName) || [],
+        labels: charts?.topProducts?.map((item: any) => `${item.productName} (${item.productCode})`) || [],
         datasets: [
             {
                 label: 'Units Sold',
@@ -203,20 +231,24 @@ export default function Dashboard() {
                         />
                     )}
                     {hasPermission('view_low_stock_count') && (
-                        <KPICard
-                            title="Low Stock Items"
-                            value={kpis?.lowStockCount || 0}
-                            icon={<TrendingDown className="w-6 h-6" />}
-                            color="orange"
-                        />
+                        <div onClick={() => scrollToSection(lowStockRef)} className="cursor-pointer">
+                            <KPICard
+                                title="Low Stock Items"
+                                value={kpis?.lowStockCount || 0}
+                                icon={<TrendingDown className="w-6 h-6" />}
+                                color="orange"
+                            />
+                        </div>
                     )}
                     {hasPermission('view_out_of_stock_count') && (
-                        <KPICard
-                            title="Out of Stock Items"
-                            value={kpis?.outOfStockCount || 0}
-                            icon={<AlertTriangle className="w-6 h-6" />}
-                            color="red"
-                        />
+                        <div onClick={() => scrollToSection(outOfStockRef)} className="cursor-pointer">
+                            <KPICard
+                                title="Out of Stock Items"
+                                value={kpis?.outOfStockCount || 0}
+                                icon={<AlertTriangle className="w-6 h-6" />}
+                                color="red"
+                            />
+                        </div>
                     )}
                 </div>
 
@@ -312,7 +344,7 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     {/* Low Stock Table */}
                     {hasPermission('view_low_stock_alerts') && (
-                        <div className="bg-white rounded-2xl shadow-sm p-6">
+                        <div className="bg-white rounded-2xl shadow-sm p-6" ref={lowStockRef}>
                             <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                                 <TrendingDown className="w-5 h-5 text-orange-500" />
                                 Low Stock Alert
@@ -323,6 +355,7 @@ export default function Dashboard() {
                                         <tr className="border-b">
                                             <th className="text-left py-2 px-2 font-medium text-gray-600">Product</th>
                                             <th className="text-left py-2 px-2 font-medium text-gray-600">Code</th>
+                                            <th className="text-left py-2 px-2 font-medium text-gray-600">Series</th>
                                             <th className="text-center py-2 px-2 font-medium text-gray-600">Current</th>
                                             <th className="text-center py-2 px-2 font-medium text-gray-600">Threshold</th>
                                         </tr>
@@ -330,18 +363,23 @@ export default function Dashboard() {
                                     <tbody>
                                         {tables?.lowStockItems?.length > 0 ? (
                                             tables.lowStockItems.map((item: any) => (
-                                                <tr key={item.id} className="border-b hover:bg-gray-50">
-                                                    <td className="py-2 px-2">{item.productName}</td>
-                                                    <td className="py-2 px-2 text-gray-600">{item.productCode}</td>
+                                                <tr
+                                                    key={item.id}
+                                                    className="border-b hover:bg-blue-50 cursor-pointer transition"
+                                                    onClick={() => handleProductClick(item)}
+                                                >
+                                                    <td className="py-2 px-2">{item.productName || '_'}</td>
+                                                    <td className="py-2 px-2 text-gray-600">{item.productCode || '_'}</td>
+                                                    <td className="py-2 px-2 text-gray-600">{item.series || '_'}</td>
                                                     <td className="py-2 px-2 text-center">
-                                                        <span className="text-orange-600 font-semibold">{item.quantity}</span>
+                                                        <span className="text-orange-600 font-semibold">{item.quantity ?? '_'}</span>
                                                     </td>
-                                                    <td className="py-2 px-2 text-center text-gray-600">{item.lowStock}</td>
+                                                    <td className="py-2 px-2 text-center text-gray-600">{item.lowStock ?? '_'}</td>
                                                 </tr>
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan={4} className="text-center py-4 text-gray-500">
+                                                <td colSpan={5} className="text-center py-4 text-gray-500">
                                                     No low stock items
                                                 </td>
                                             </tr>
@@ -354,7 +392,7 @@ export default function Dashboard() {
 
                     {/* Out of Stock Table */}
                     {hasPermission('view_out_of_stock_alerts') && (
-                        <div className="bg-white rounded-2xl shadow-sm p-6">
+                        <div className="bg-white rounded-2xl shadow-sm p-6" ref={outOfStockRef}>
                             <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                                 <AlertTriangle className="w-5 h-5 text-red-500" />
                                 Out of Stock
@@ -365,21 +403,27 @@ export default function Dashboard() {
                                         <tr className="border-b">
                                             <th className="text-left py-2 px-2 font-medium text-gray-600">Product</th>
                                             <th className="text-left py-2 px-2 font-medium text-gray-600">Code</th>
+                                            <th className="text-left py-2 px-2 font-medium text-gray-600">Series</th>
                                             <th className="text-left py-2 px-2 font-medium text-gray-600">Batch</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {tables?.outOfStockItems?.length > 0 ? (
                                             tables.outOfStockItems.map((item: any) => (
-                                                <tr key={item.id} className="border-b hover:bg-gray-50">
-                                                    <td className="py-2 px-2">{item.productName}</td>
-                                                    <td className="py-2 px-2 text-gray-600">{item.productCode}</td>
-                                                    <td className="py-2 px-2 text-gray-600">{item.batchNumber || 'N/A'}</td>
+                                                <tr
+                                                    key={item.id}
+                                                    className="border-b hover:bg-blue-50 cursor-pointer transition"
+                                                    onClick={() => handleProductClick(item)}
+                                                >
+                                                    <td className="py-2 px-2">{item.productName || '_'}</td>
+                                                    <td className="py-2 px-2 text-gray-600">{item.productCode || '_'}</td>
+                                                    <td className="py-2 px-2 text-gray-600">{item.series || '_'}</td>
+                                                    <td className="py-2 px-2 text-gray-600">{item.batchNumber || '_'}</td>
                                                 </tr>
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan={3} className="text-center py-4 text-gray-500">
+                                                <td colSpan={4} className="text-center py-4 text-gray-500">
                                                     No out of stock items
                                                 </td>
                                             </tr>
@@ -449,7 +493,70 @@ export default function Dashboard() {
                     </div>
                 )}
             </div>
-        </Authenticated>
+
+            {/* Product Details Modal */}
+            {showProductModal && selectedProduct && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowProductModal(false)}>
+                    <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-xl font-bold text-gray-800">Product Details</h3>
+                            <button
+                                onClick={() => setShowProductModal(false)}
+                                className="text-gray-400 hover:text-gray-600 transition"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="flex justify-between py-2 border-b">
+                                <span className="text-gray-600 font-medium">Product Name:</span>
+                                <span className="text-gray-800 font-semibold">{selectedProduct.productName}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b">
+                                <span className="text-gray-600 font-medium">Product Code:</span>
+                                <span className="text-gray-800 font-mono text-sm">{selectedProduct.productCode}</span>
+                            </div>
+                            <div className="flex justify-between py-2 border-b">
+                                <span className="text-gray-600 font-medium">Batch Number:</span>
+                                <span className="text-gray-800">{selectedProduct.batchNumber || '_'}</span>
+                            </div>
+                            {selectedProduct.quantity !== undefined && (
+                                <div className="flex justify-between py-2 border-b">
+                                    <span className="text-gray-600 font-medium">Current Stock:</span>
+                                    <span className="text-gray-800 font-bold">{selectedProduct.quantity}</span>
+                                </div>
+                            )}
+                            {selectedProduct.lowStock && (
+                                <div className="flex justify-between py-2 border-b">
+                                    <span className="text-gray-600 font-medium">Low Stock Threshold:</span>
+                                    <span className="text-gray-800">{selectedProduct.lowStock}</span>
+                                </div>
+                            )}
+                            {selectedProduct.buyingPrice && (
+                                <div className="flex justify-between py-2 border-b">
+                                    <span className="text-gray-600 font-medium">Buying Price:</span>
+                                    <span className="text-gray-800">{formatCurrency(selectedProduct.buyingPrice)}</span>
+                                </div>
+                            )}
+                            {selectedProduct.sellingPrice && (
+                                <div className="flex justify-between py-2 border-b">
+                                    <span className="text-gray-600 font-medium">Selling Price:</span>
+                                    <span className="text-gray-800 font-semibold">{formatCurrency(selectedProduct.sellingPrice)}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <button
+                            onClick={() => setShowProductModal(false)}
+                            className="mt-6 w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
+        </Authenticated >
     );
 }
 

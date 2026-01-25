@@ -140,8 +140,8 @@ class DashboardController extends Controller
             ->join('products', 'sales_details.productId', '=', 'products.id')
             ->where('sales.created_at', '>=', Carbon::now()->subDays(30))
             ->where('sales.status', 'approved')
-            ->select('products.productName', DB::raw('SUM(sales_details.quantity) as totalSold'))
-            ->groupBy('products.id', 'products.productName')
+            ->select('products.productName', 'products.productCode', DB::raw('SUM(sales_details.quantity) as totalSold'))
+            ->groupBy('products.id', 'products.productName', 'products.productCode')
             ->orderByDesc('totalSold')
             ->limit(5)
             ->get()
@@ -160,24 +160,51 @@ class DashboardController extends Controller
     private function getTableData()
     {
         // Low Stock Items
-        $lowStockItems = Product::whereColumn('quantity', '<=', 'lowStock')
+        $lowStockItems = Product::with('serias:id,seriasNo')
+            ->whereColumn('quantity', '<=', 'lowStock')
             ->where('quantity', '>', 0)
             ->whereNotNull('lowStock')
-            ->select('id', 'productName', 'productCode', 'quantity', 'lowStock', 'batchNumber')
+            ->select('id', 'productName', 'productCode', 'quantity', 'lowStock', 'batchNumber', 'buyingPrice', 'sellingPrice', 'seriasId')
             ->orderBy('quantity')
             ->limit(10)
             ->get()
+            ->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'productName' => $product->productName,
+                    'productCode' => $product->productCode,
+                    'quantity' => $product->quantity,
+                    'lowStock' => $product->lowStock,
+                    'batchNumber' => $product->batchNumber,
+                    'buyingPrice' => $product->buyingPrice,
+                    'sellingPrice' => $product->sellingPrice,
+                    'series' => $product->serias->seriasNo ?? 'N/A',
+                ];
+            })
             ->toArray();
 
         // Out of Stock Items
-        $outOfStockItems = Product::where(function ($query) {
-            $query->where('quantity', 0)
-                ->orWhereNull('quantity');
-        })
-            ->select('id', 'productName', 'productCode', 'batchNumber', 'updated_at')
+        $outOfStockItems = Product::with('serias:id,seriasNo')
+            ->where(function ($query) {
+                $query->where('quantity', 0)
+                    ->orWhereNull('quantity');
+            })
+            ->select('id', 'productName', 'productCode', 'batchNumber', 'buyingPrice', 'sellingPrice', 'updated_at', 'seriasId')
             ->orderBy('updated_at', 'desc')
             ->limit(10)
             ->get()
+            ->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'productName' => $product->productName,
+                    'productCode' => $product->productCode,
+                    'batchNumber' => $product->batchNumber,
+                    'buyingPrice' => $product->buyingPrice,
+                    'sellingPrice' => $product->sellingPrice,
+                    'updated_at' => $product->updated_at,
+                    'series' => $product->serias->seriasNo ?? 'N/A',
+                ];
+            })
             ->toArray();
 
         // Recent Transactions (Sales only - last 10)

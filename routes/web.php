@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -53,6 +54,13 @@ Route::middleware('auth')->group(function () {
     // Route::get('/billing/{billing}/edit', [BillingController::class, 'edit'])->name('billing.edit');
     // Route::post('/billing/{billing}', [BillingController::class, 'update'])->name('billing.update');
     // Route::delete('/billing/{billing}', [BillingController::class, 'destroy'])->name('billing.destroy');
+
+    // Report routes
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/customers', [ReportController::class, 'customerReport'])->name('reports.customers');
+    Route::get('/reports/payments', [ReportController::class, 'paymentReport'])->name('reports.payments');
+    Route::get('/reports/inventory', [ReportController::class, 'inventoryReport'])->name('reports.inventory');
+    Route::get('/reports/sales-movement', [ReportController::class, 'salesMovementReport'])->name('reports.sales-movement');
 
     // Admin routes
     Route::middleware('admin')->group(function () {
