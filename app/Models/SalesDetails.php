@@ -30,6 +30,11 @@ class SalesDetails extends Model
         return $this->belongsTo(Sales::class, 'salesId');
     }
 
+    public function sale()
+    {
+        return $this->belongsTo(Sales::class, 'salesId');
+    }
+
     public function product()
     {
         return $this->belongsTo(Product::class, 'productId');

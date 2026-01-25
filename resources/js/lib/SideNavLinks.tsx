@@ -48,8 +48,8 @@ const SideNavLinks: React.FC = () => {
             name: "Reports",
             link: true,
             border: false,
-            startWith: "/",
-            // route: "admin.reports", // ⚠ comment karala
+            startWith: "/reports",
+            route: "reports.index",
             icon: "DocumentChartBarIcon",
             count: 0,
             disabled: false, // Accessible to all
