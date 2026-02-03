@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Customer\CustomerRequest;
 use App\Models\Customer;
 use Inertia\Inertia;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class CustomerController extends Controller
 {
@@ -12,10 +14,62 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        $customers = Customer::with('discountCategory')
-            ->withSum('sales', 'totalAmount')
+        $user = auth()->user();
+        $permissions = $user->getPermissions();
+        $isAdmin = $user->isAdmin();
+
+        // Search (name/contact/email)
+        $search = trim((string) request()->query('search', ''));
+
+        // Date range for Total Sales
+        $startDateParam = request()->query('start_date');
+        $endDateParam = request()->query('end_date');
+
+        $rangeStart = null;
+        $rangeEnd = null;
+
+        if ($startDateParam && $endDateParam) {
+            try {
+                $rangeStart = Carbon::parse($startDateParam)->startOfDay();
+                $rangeEnd = Carbon::parse($endDateParam)->endOfDay();
+
+                if ($rangeStart->gt($rangeEnd)) {
+                    $tmp = $rangeStart;
+                    $rangeStart = $rangeEnd->copy()->startOfDay();
+                    $rangeEnd = $tmp->copy()->endOfDay();
+                }
+            } catch (\Exception $e) {
+                $rangeStart = null;
+                $rangeEnd = null;
+            }
+        }
+
+        $customersQuery = Customer::with('discountCategory');
+
+        if ($search !== '') {
+            $customersQuery->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('contactNumber', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Total Sales should respect date range AND only approved sales
+        if ($rangeStart && $rangeEnd) {
+            $customersQuery->withSum(['sales' => function ($q) use ($rangeStart, $rangeEnd) {
+                $q->where('status', 'approved')
+                  ->whereBetween('created_at', [$rangeStart, $rangeEnd]);
+            }], 'totalAmount');
+        } else {
+            $customersQuery->withSum(['sales' => function ($q) {
+                $q->where('status', 'approved');
+            }], 'totalAmount');
+        }
+
+        $customers = $customersQuery
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->appends(request()->query());
 
         // Add totalSales attribute to each customer
         $customers->getCollection()->transform(function ($customer) {
@@ -23,15 +77,15 @@ class CustomerController extends Controller
             return $customer;
         });
 
-        // Get user permissions
-        $user = auth()->user();
-        $permissions = $user->getPermissions();
-        $isAdmin = $user->isAdmin();
-
         return Inertia::render('Customer/Index', [
             'customers' => $customers,
             'permissions' => $permissions,
             'isAdmin' => $isAdmin,
+            'filters' => [
+                'search' => $search !== '' ? $search : null,
+                'start_date' => $rangeStart ? $rangeStart->toDateString() : null,
+                'end_date' => $rangeEnd ? $rangeEnd->toDateString() : null,
+            ],
         ]);
     }
 
@@ -56,7 +110,7 @@ class CustomerController extends Controller
         $customer->update($data);
         $customer->netBalance = $customer->creditBalance ?? $customer->netBalance ?? 0;
         $customer->save();
-        
+
         // Update credit period status after changes
         $customer->updateCreditPeriodStatus();
 
@@ -64,7 +118,6 @@ class CustomerController extends Controller
             'message'  => 'Customer updated successfully!',
             'customer' => $customer,
         ]);
-
     }
 
     public function destroy(Customer $customer)
@@ -72,7 +125,6 @@ class CustomerController extends Controller
         $customer->delete();
 
         return redirect()->back()->with('success', 'Customer deleted successfully!');
-
     }
 
     public function edit(Customer $customer)
@@ -80,27 +132,55 @@ class CustomerController extends Controller
         return inertia('Customers/Edit', ['customer' => $customer]);
     }
 
-    public function settleCredit(Customer $customer)
+    public function settleCredit(Request $request, Customer $customer)
     {
-        $creditAmount = $customer->currentCreditSpend;
+        $currentOutstanding = (float) ($customer->currentCreditSpend ?? 0);
 
-        if ($creditAmount <= 0) {
+        if ($currentOutstanding <= 0) {
             return response()->json([
                 'message' => 'No outstanding credit to settle',
             ], 400);
         }
 
-        // Reset the current credit spend to 0
-        $customer->currentCreditSpend = 0;
+        $amount = $request->input('amount', null);
+
+        if ($amount === null || $amount === '') {
+            return response()->json([
+                'message' => 'Settlement amount is required',
+            ], 422);
+        }
+
+        if (!is_numeric($amount)) {
+            return response()->json([
+                'message' => 'Settlement amount must be a number',
+            ], 422);
+        }
+
+        $amount = (float) $amount;
+
+        if ($amount <= 0) {
+            return response()->json([
+                'message' => 'Settlement amount must be greater than 0',
+            ], 422);
+        }
+
+        if ($amount > $currentOutstanding) {
+            return response()->json([
+                'message' => 'Settlement amount cannot exceed outstanding credit',
+            ], 422);
+        }
+
+        // Subtract only the settled amount
+        $customer->currentCreditSpend = max(0, $currentOutstanding - $amount);
         $customer->save();
-        
-        // Update credit period status (will reset periods since credit = 0)
+
+        // Update credit period status (resets periods if credit becomes 0)
+        $customer->refresh();
         $customer->updateCreditPeriodStatus();
 
         return response()->json([
-            'message' => "Credit of Rs. {$creditAmount} settled successfully for {$customer->name}",
+            'message' => "Credit of Rs. {$amount} settled successfully for {$customer->name}",
             'customer' => $customer,
         ]);
     }
-
 }
