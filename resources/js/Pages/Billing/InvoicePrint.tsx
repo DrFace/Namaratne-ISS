@@ -228,7 +228,7 @@ export default function InvoicePrint({
                                             ITEM CODE
                                         </th>
                                         <th className="border border-gray-400 p-1 text-left w-[35%]">
-                                            Vehicle DESCRIPTION
+                                            ITEM NAME
                                         </th>
                                         <th className="border border-gray-400 p-1 text-right w-[15%]">
                                             UNIT PRICE

@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { usePage } from "@inertiajs/react";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
-import MasterTable, { TableBody, TableTd } from "@/Components/elements/tables/masterTable";
+import MasterTable, {
+    TableBody,
+    TableTd,
+} from "@/Components/elements/tables/masterTable";
 import CreateProductModal from "./CreateProductModal";
 import CreateSeriasModal from "./CreateSeriasModal";
 import AddStockModal from "./AddStockModal";
@@ -12,7 +15,12 @@ import ConfirmButton from "@/Components/elements/buttons/ConfirmButton";
 import { PrimaryLink } from "@/Components/elements/buttons/PrimaryButton";
 
 export default function ProductsIndexPage() {
-    const { products: initialProducts, seriasList, permissions, isAdmin } = usePage().props as any;
+    const {
+        products: initialProducts,
+        seriasList,
+        permissions,
+        isAdmin,
+    } = usePage().props as any;
 
     // State: products object (paginated)
     const [products, setProducts] = useState(initialProducts);
@@ -49,8 +57,16 @@ export default function ProductsIndexPage() {
         { label: "", sortField: "", sortable: false },
         { label: "ID", sortField: "id", sortable: true },
         { label: "Item name", sortField: "productName", sortable: true },
+
+        // ✅ NEW
+        { label: "Part Number", sortField: "productCode", sortable: true },
+        {
+            label: "Vehicle Description",
+            sortField: "productDescription",
+            sortable: true,
+        },
+
         { label: "Vehicle Type", sortField: "seriasNo", sortable: true },
-        { label: "Batch", sortField: "batchNumber", sortable: true },
         { label: "Buying Price", sortField: "buyingPrice", sortable: true },
         { label: "Selling Price", sortField: "sellingPrice", sortable: true },
         { label: "Quantity", sortField: "quantity", sortable: true },
@@ -62,9 +78,9 @@ export default function ProductsIndexPage() {
     const createLink = undefined;
 
     // Permission checks
-    const canAddStock = hasPermission('restock_products');
-    const canAddProduct = hasPermission('add_products');
-    const canAddSeries = hasPermission('add_series');
+    const canAddStock = hasPermission("restock_products");
+    const canAddProduct = hasPermission("add_products");
+    const canAddSeries = hasPermission("add_series");
 
     return (
         <Authenticated bRoutes={undefined}>
@@ -196,6 +212,13 @@ export default function ProductsIndexPage() {
                         >
                             <TableTd>{product.id}</TableTd>
                             <TableTd>{product.productName}</TableTd>
+
+                            {/* ✅ NEW */}
+                            <TableTd>{product.productCode ?? "-"}</TableTd>
+                            <TableTd>
+                                {product.productDescription ?? "-"}
+                            </TableTd>
+
                             <TableTd>
                                 {seriasList.find(
                                     (s: any) => s.id === product.seriasId,
