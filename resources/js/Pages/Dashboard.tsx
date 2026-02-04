@@ -484,7 +484,7 @@ export default function Dashboard() {
                                                 Code
                                             </th>
                                             <th className="text-left py-2 px-2 font-medium text-gray-600">
-                                                Series
+                                                vehicle Type
                                             </th>
                                             <th className="text-center py-2 px-2 font-medium text-gray-600">
                                                 Current
@@ -568,7 +568,7 @@ export default function Dashboard() {
                                                 Code
                                             </th>
                                             <th className="text-left py-2 px-2 font-medium text-gray-600">
-                                                Series
+                                                Vehicle Type
                                             </th>
                                             <th className="text-left py-2 px-2 font-medium text-gray-600">
                                                 Batch
@@ -744,7 +744,7 @@ export default function Dashboard() {
                         <div className="space-y-3">
                             <div className="flex justify-between py-2 border-b">
                                 <span className="text-gray-600 font-medium">
-                                    Product Name:
+                                    Item Name:
                                 </span>
                                 <span className="text-gray-800 font-semibold">
                                     {selectedProduct.productName}
@@ -752,7 +752,7 @@ export default function Dashboard() {
                             </div>
                             <div className="flex justify-between py-2 border-b">
                                 <span className="text-gray-600 font-medium">
-                                    Product Code:
+                                    Part Number:
                                 </span>
                                 <span className="text-gray-800 font-mono text-sm">
                                     {selectedProduct.productCode}
