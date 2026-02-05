@@ -114,6 +114,16 @@ const SideNavLinks: React.FC = () => {
             count: 0,
             disabled: !isAdmin, // Only admins can access discount categories
         },
+        {
+            name: "Invoice Archive",
+            link: true,
+            border: false,
+            startWith: "/invoices/archive",
+            route: "invoices.archive",
+            icon: "DocumentDuplicateIcon", // pick any hero icon name your NavItem supports
+            count: 0,
+            disabled: false, // or: !hasPermission('view_invoices_archive') if you add a permission
+        },
     ];
 
     return (
