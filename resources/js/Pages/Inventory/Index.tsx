@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { usePage } from "@inertiajs/react";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
-import MasterTable, { TableBody, TableTd } from "@/Components/elements/tables/masterTable";
+import MasterTable, {
+    TableBody,
+    TableTd,
+} from "@/Components/elements/tables/masterTable";
 import CreateProductModal from "./CreateProductModal";
 import CreateSeriasModal from "./CreateSeriasModal";
 import AddStockModal from "./AddStockModal";
@@ -12,7 +15,12 @@ import ConfirmButton from "@/Components/elements/buttons/ConfirmButton";
 import { PrimaryLink } from "@/Components/elements/buttons/PrimaryButton";
 
 export default function ProductsIndexPage() {
-    const { products: initialProducts, seriasList, permissions, isAdmin } = usePage().props as any;
+    const {
+        products: initialProducts,
+        seriasList,
+        permissions,
+        isAdmin,
+    } = usePage().props as any;
 
     // State: products object (paginated)
     const [products, setProducts] = useState(initialProducts);
@@ -48,9 +56,17 @@ export default function ProductsIndexPage() {
     const tableColumns = [
         { label: "", sortField: "", sortable: false },
         { label: "ID", sortField: "id", sortable: true },
-        { label: "Product name", sortField: "productName", sortable: true },
-        { label: "Series", sortField: "seriasNo", sortable: true },
-        { label: "Batch", sortField: "batchNumber", sortable: true },
+        { label: "Item name", sortField: "productName", sortable: true },
+
+        // ✅ NEW
+        { label: "Part Number", sortField: "productCode", sortable: true },
+        {
+            label: "Vehicle Description",
+            sortField: "productDescription",
+            sortable: true,
+        },
+
+        { label: "Vehicle Type", sortField: "seriasNo", sortable: true },
         { label: "Buying Price", sortField: "buyingPrice", sortable: true },
         { label: "Selling Price", sortField: "sellingPrice", sortable: true },
         { label: "Quantity", sortField: "quantity", sortable: true },
@@ -62,9 +78,9 @@ export default function ProductsIndexPage() {
     const createLink = undefined;
 
     // Permission checks
-    const canAddStock = hasPermission('restock_products');
-    const canAddProduct = hasPermission('add_products');
-    const canAddSeries = hasPermission('add_series');
+    const canAddStock = hasPermission("restock_products");
+    const canAddProduct = hasPermission("add_products");
+    const canAddSeries = hasPermission("add_series");
 
     return (
         <Authenticated bRoutes={undefined}>
@@ -75,14 +91,19 @@ export default function ProductsIndexPage() {
                         {/* Add Stock Button */}
                         <div className="relative group">
                             <button
-                                onClick={() => canAddStock && setIsStockModalOpen(true)}
+                                onClick={() =>
+                                    canAddStock && setIsStockModalOpen(true)
+                                }
                                 disabled={!canAddStock}
-                                className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${canAddStock
-                                    ? 'bg-green-500 text-white hover:bg-green-600 cursor-pointer'
-                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                    }`}
+                                className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
+                                    canAddStock
+                                        ? "bg-green-500 text-white hover:bg-green-600 cursor-pointer"
+                                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                }`}
                             >
-                                {!canAddStock && <LockClosedIcon className="w-4 h-4" />}
+                                {!canAddStock && (
+                                    <LockClosedIcon className="w-4 h-4" />
+                                )}
                                 Add Stock
                             </button>
                             {!canAddStock && (
@@ -95,14 +116,19 @@ export default function ProductsIndexPage() {
                         {/* Add Product Button */}
                         <div className="relative group">
                             <button
-                                onClick={() => canAddProduct && setIsProductModalOpen(true)}
+                                onClick={() =>
+                                    canAddProduct && setIsProductModalOpen(true)
+                                }
                                 disabled={!canAddProduct}
-                                className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${canAddProduct
-                                    ? 'bg-blue-500 text-white hover:bg-blue-600 cursor-pointer'
-                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                    }`}
+                                className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
+                                    canAddProduct
+                                        ? "bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
+                                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                }`}
                             >
-                                {!canAddProduct && <LockClosedIcon className="w-4 h-4" />}
+                                {!canAddProduct && (
+                                    <LockClosedIcon className="w-4 h-4" />
+                                )}
                                 Add Product
                             </button>
                             {!canAddProduct && (
@@ -115,19 +141,25 @@ export default function ProductsIndexPage() {
                         {/* Add Series Button */}
                         <div className="relative group">
                             <button
-                                onClick={() => canAddSeries && setIsSeriasModalOpen(true)}
+                                onClick={() =>
+                                    canAddSeries && setIsSeriasModalOpen(true)
+                                }
                                 disabled={!canAddSeries}
-                                className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${canAddSeries
-                                    ? 'bg-blue-500 text-white hover:bg-blue-600 cursor-pointer'
-                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                    }`}
+                                className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
+                                    canAddSeries
+                                        ? "bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
+                                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                }`}
                             >
-                                {!canAddSeries && <LockClosedIcon className="w-4 h-4" />}
-                                Add Series
+                                {!canAddSeries && (
+                                    <LockClosedIcon className="w-4 h-4" />
+                                )}
+                                Add Vehical Type
                             </button>
                             {!canAddSeries && (
                                 <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                    You don't have permission to add series
+                                    You don't have permission to add Vehicle
+                                    Type
                                 </div>
                             )}
                         </div>
@@ -149,16 +181,21 @@ export default function ProductsIndexPage() {
                                 <>
                                     <button
                                         onClick={() => {
-                                            if (hasPermission('edit_products')) {
+                                            if (
+                                                hasPermission("edit_products")
+                                            ) {
                                                 setSelectedProduct(product);
                                                 setIsEditModalOpen(true);
                                             }
                                         }}
-                                        disabled={!hasPermission('edit_products')}
-                                        className={`flex items-center gap-1 px-3 py-2 text-sm rounded ${hasPermission('edit_products')
-                                            ? 'bg-blue-500 text-white hover:bg-blue-600 cursor-pointer'
-                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                            }`}
+                                        disabled={
+                                            !hasPermission("edit_products")
+                                        }
+                                        className={`flex items-center gap-1 px-3 py-2 text-sm rounded ${
+                                            hasPermission("edit_products")
+                                                ? "bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
+                                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                        }`}
                                     >
                                         <PencilIcon className="w-3 h-3" /> Edit
                                     </button>
@@ -166,15 +203,26 @@ export default function ProductsIndexPage() {
                                         className="!py-2"
                                         url={`/products/${product.id}`}
                                         label="Delete"
-                                        disabled={!hasPermission('delete_products')}
+                                        disabled={
+                                            !hasPermission("delete_products")
+                                        }
                                     />
                                 </>
                             }
                         >
                             <TableTd>{product.id}</TableTd>
                             <TableTd>{product.productName}</TableTd>
+
+                            {/* ✅ NEW */}
+                            <TableTd>{product.productCode ?? "-"}</TableTd>
                             <TableTd>
-                                {seriasList.find((s: any) => s.id === product.seriasId)?.seriasNo ?? "-"}
+                                {product.productDescription ?? "-"}
+                            </TableTd>
+
+                            <TableTd>
+                                {seriasList.find(
+                                    (s: any) => s.id === product.seriasId,
+                                )?.seriasNo ?? "-"}
                             </TableTd>
                             <TableTd>{product.batchNumber ?? "-"}</TableTd>
                             <TableTd>LKR {product.buyingPrice ?? "-"}</TableTd>
@@ -182,8 +230,12 @@ export default function ProductsIndexPage() {
                             <TableTd>{product.quantity}</TableTd>
                             <TableTd>{product.purchaseDate ?? "-"}</TableTd>
                             <TableTd>
-                                <div className={`font-semibold ${product.quantity > 0 ? "text-green-500" : "text-red-500"}`}>
-                                    {product.quantity > 0 ? "In-stock" : "Out of stock"}
+                                <div
+                                    className={`font-semibold ${product.quantity > 0 ? "text-green-500" : "text-red-500"}`}
+                                >
+                                    {product.quantity > 0
+                                        ? "In-stock"
+                                        : "Out of stock"}
                                 </div>
                             </TableTd>
                         </TableBody>

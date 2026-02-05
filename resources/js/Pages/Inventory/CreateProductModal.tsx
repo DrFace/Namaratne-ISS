@@ -105,13 +105,15 @@ export default function CreateProductModal({
                     <div className="grid grid-cols-2 gap-3">
                         {/* Product Name */}
                         <div>
-                            <label className="block text-sm font-medium">Product Name</label>
+                            <label className="block text-sm font-medium">
+                                Item Name
+                            </label>
                             <input
                                 type="text"
                                 name="productName"
                                 value={form.productName}
                                 onChange={handleChange}
-                                placeholder="Product Name"
+                                placeholder="Item Name"
                                 className="w-full border p-2 rounded"
                             />
                             {errors.productName && (
@@ -123,13 +125,15 @@ export default function CreateProductModal({
 
                         {/* Product Code */}
                         <div>
-                            <label className="block text-sm font-medium">Product Code</label>
+                            <label className="block text-sm font-medium">
+                                Part Number
+                            </label>
                             <input
                                 type="text"
                                 name="productCode"
                                 value={form.productCode}
                                 onChange={handleChange}
-                                placeholder="Product Code"
+                                placeholder="Part Number"
                                 className="w-full border p-2 rounded"
                             />
                             {errors.productCode && (
@@ -141,14 +145,18 @@ export default function CreateProductModal({
 
                         {/* Series */}
                         <div>
-                            <label className="block text-sm font-medium">Series Number</label>
+                            <label className="block text-sm font-medium">
+                                Vehicle Type
+                            </label>
                             <select
                                 name="seriasId"
                                 value={form.seriasId}
                                 onChange={handleChange}
                                 className="w-full border p-2 rounded"
                             >
-                                <option value="">-- Select Series --</option>
+                                <option value="">
+                                    -- Select Vehicle Type --
+                                </option>
                                 {seriasList?.map((s) => (
                                     <option key={s.id} value={s.id}>
                                         {s.seriasNo}
@@ -159,7 +167,9 @@ export default function CreateProductModal({
 
                         {/* Description */}
                         <div className="col-span-2">
-                            <label className="block text-sm font-medium">Description</label>
+                            <label className="block text-sm font-medium">
+                                Vehicle Description
+                            </label>
                             <textarea
                                 name="productDescription"
                                 value={form.productDescription}
@@ -171,7 +181,9 @@ export default function CreateProductModal({
 
                         {/* Low Stock */}
                         <div>
-                            <label className="block text-sm font-medium">Low Stock</label>
+                            <label className="block text-sm font-medium">
+                                Low Stock
+                            </label>
                             <input
                                 type="number"
                                 name="lowStock"
@@ -184,7 +196,9 @@ export default function CreateProductModal({
 
                         {/* Unit */}
                         <div>
-                            <label className="block text-sm font-medium">Unit</label>
+                            <label className="block text-sm font-medium">
+                                Unit
+                            </label>
                             <input
                                 type="text"
                                 name="unit"
@@ -197,7 +211,9 @@ export default function CreateProductModal({
 
                         {/* Brand */}
                         <div>
-                            <label className="block text-sm font-medium">Brand</label>
+                            <label className="block text-sm font-medium">
+                                Brand
+                            </label>
                             <input
                                 type="text"
                                 name="brand"
@@ -210,7 +226,9 @@ export default function CreateProductModal({
 
                         {/* Product Image */}
                         <div className="col-span-2">
-                            <label className="block text-sm font-medium">Product Image</label>
+                            <label className="block text-sm font-medium">
+                                Product Image
+                            </label>
                             <input
                                 type="file"
                                 name="productImage"

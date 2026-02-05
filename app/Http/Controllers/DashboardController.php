@@ -16,7 +16,32 @@ class DashboardController extends Controller
     public function index()
     {
         $user = auth()->user();
-        
+
+        // Date range for analytics widgets (Sales Trend, Top 5, Recent Transactions)
+        $startDateParam = request()->query('start_date');
+        $endDateParam = request()->query('end_date');
+
+        if ($startDateParam && $endDateParam) {
+            try {
+                $rangeStart = Carbon::parse($startDateParam)->startOfDay();
+                $rangeEnd = Carbon::parse($endDateParam)->endOfDay();
+            } catch (\Exception $e) {
+                $rangeStart = Carbon::now()->subDays(29)->startOfDay();
+                $rangeEnd = Carbon::now()->endOfDay();
+            }
+        } else {
+            // Default: last 30 days (inclusive)
+            $rangeStart = Carbon::now()->subDays(29)->startOfDay();
+            $rangeEnd = Carbon::now()->endOfDay();
+        }
+
+        // Ensure correct order
+        if ($rangeStart->gt($rangeEnd)) {
+            $tmp = $rangeStart;
+            $rangeStart = $rangeEnd->copy()->startOfDay();
+            $rangeEnd = $tmp->copy()->endOfDay();
+        }
+
         // Get customers with expired credit periods who cannot purchase
         $expiredCreditCustomers = Customer::where('canPurchase', false)
             ->whereNotNull('creditPeriodExpiresAt')
@@ -30,12 +55,16 @@ class DashboardController extends Controller
 
         $dashboardData = [
             'kpis' => $this->getKPIs(),
-            'charts' => $this->getChartData(),
-            'tables' => $this->getTableData(),
+            'charts' => $this->getChartData($rangeStart, $rangeEnd),
+            'tables' => $this->getTableData($rangeStart, $rangeEnd),
             'permissions' => $user->getPermissions(),
             'userRole' => $user->getRoleName(),
             'isAdmin' => $user->isAdmin(),
             'expiredCreditCustomers' => $expiredCreditCustomers,
+            'dateRange' => [
+                'start' => $rangeStart->toDateString(),
+                'end' => $rangeEnd->toDateString(),
+            ],
         ];
 
         return Inertia::render('Dashboard', $dashboardData);
@@ -108,10 +137,10 @@ class DashboardController extends Controller
         ];
     }
 
-    private function getChartData()
+    private function getChartData(Carbon $rangeStart, Carbon $rangeEnd)
     {
-        // Sales Last 30 Days (daily aggregation)
-        $salesLast30Days = Sales::where('created_at', '>=', Carbon::now()->subDays(30))
+        // Sales Trend (daily aggregation within selected range)
+        $salesInRange = Sales::whereBetween('created_at', [$rangeStart, $rangeEnd])
             ->where('status', 'approved')
             ->selectRaw('DATE(created_at) as date, SUM(totalAmount) as total')
             ->groupBy('date')
@@ -120,14 +149,18 @@ class DashboardController extends Controller
             ->pluck('total', 'date')
             ->toArray();
 
-        // Fill in missing dates with 0
-        $last30Days = [];
-        for ($i = 29; $i >= 0; $i--) {
-            $date = Carbon::now()->subDays($i)->format('Y-m-d');
-            $last30Days[$date] = $salesLast30Days[$date] ?? 0;
+        // Fill in missing dates with 0 across the range
+        $days = [];
+        $cursor = $rangeStart->copy()->startOfDay();
+        $endCursor = $rangeEnd->copy()->startOfDay();
+
+        while ($cursor->lte($endCursor)) {
+            $dateKey = $cursor->format('Y-m-d');
+            $days[$dateKey] = $salesInRange[$dateKey] ?? 0;
+            $cursor->addDay();
         }
 
-        // Stock by Category (using serias as categories)
+        // Stock by Category (unchanged)
         $stockByCategory = Product::join('serias_numbers', 'products.seriasId', '=', 'serias_numbers.id')
             ->select('serias_numbers.seriasNo as category', DB::raw('SUM(products.quantity) as quantity'))
             ->where('products.quantity', '>', 0)
@@ -135,10 +168,10 @@ class DashboardController extends Controller
             ->get()
             ->toArray();
 
-        // Top 5 Selling Products (last 30 days)
+        // Top 5 Selling Products (within selected range)
         $topProducts = SalesDetails::join('sales', 'sales_details.salesId', '=', 'sales.id')
             ->join('products', 'sales_details.productId', '=', 'products.id')
-            ->where('sales.created_at', '>=', Carbon::now()->subDays(30))
+            ->whereBetween('sales.created_at', [$rangeStart, $rangeEnd])
             ->where('sales.status', 'approved')
             ->select('products.productName', 'products.productCode', DB::raw('SUM(sales_details.quantity) as totalSold'))
             ->groupBy('products.id', 'products.productName', 'products.productCode')
@@ -149,17 +182,17 @@ class DashboardController extends Controller
 
         return [
             'salesLast30Days' => [
-                'labels' => array_keys($last30Days),
-                'data' => array_values($last30Days),
+                'labels' => array_keys($days),
+                'data' => array_values($days),
             ],
             'stockByCategory' => $stockByCategory,
             'topProducts' => $topProducts,
         ];
     }
 
-    private function getTableData()
+    private function getTableData(Carbon $rangeStart, Carbon $rangeEnd)
     {
-        // Low Stock Items
+        // Low Stock Items (unchanged)
         $lowStockItems = Product::with('serias:id,seriasNo')
             ->whereColumn('quantity', '<=', 'lowStock')
             ->where('quantity', '>', 0)
@@ -183,7 +216,7 @@ class DashboardController extends Controller
             })
             ->toArray();
 
-        // Out of Stock Items
+        // Out of Stock Items (unchanged)
         $outOfStockItems = Product::with('serias:id,seriasNo')
             ->where(function ($query) {
                 $query->where('quantity', 0)
@@ -207,8 +240,9 @@ class DashboardController extends Controller
             })
             ->toArray();
 
-        // Recent Transactions (Sales only - last 10)
+        // Recent Transactions (filtered by selected range)
         $recentTransactions = Sales::with(['customer:id,name', 'createdByUser:id,first_name,last_name'])
+            ->whereBetween('created_at', [$rangeStart, $rangeEnd])
             ->select('id', 'billNumber', 'customerId', 'totalAmount', 'paymentMethod', 'status', 'created_at', 'createdBy')
             ->orderBy('created_at', 'desc')
             ->limit(10)

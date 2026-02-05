@@ -106,7 +106,7 @@ class PermissionSeeder extends Seeder
                 'description' => 'Can add stock to existing products',
             ],
             [
-                'name' => 'Add Series',
+                'name' => 'Add Vehaical Type',
                 'slug' => 'add_series',
                 'category' => 'action',
                 'description' => 'Can add new product series/categories',
