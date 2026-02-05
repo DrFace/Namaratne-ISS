@@ -11,6 +11,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\InvoiceArchiveController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -81,6 +82,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/discount-categories/{id}/customers', [\App\Http\Controllers\DiscountCategoryController::class, 'assignCustomer'])->name('discount-categories.assign-customer');
         Route::delete('/discount-categories/{id}/customers/{customerId}', [\App\Http\Controllers\DiscountCategoryController::class, 'removeCustomer'])->name('discount-categories.remove-customer');
     });
+
+        Route::get('/invoices/archive', [InvoiceArchiveController::class, 'index'])->name('invoices.archive');
+
 
     // API route for getting user permissions
     Route::get('/api/user/permissions', [PermissionController::class, 'getUserPermissions']);
