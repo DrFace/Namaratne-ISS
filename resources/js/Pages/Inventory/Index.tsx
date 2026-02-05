@@ -1,234 +1,292 @@
+import { useState } from "react";
+import { usePage } from "@inertiajs/react";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
-import React, { useState } from "react";
-import { Head, Link, router, usePage } from "@inertiajs/react";
-import type { PageProps as InertiaPageProps } from "@inertiajs/core";
+import MasterTable, {
+    TableBody,
+    TableTd,
+} from "@/Components/elements/tables/masterTable";
+import CreateProductModal from "./CreateProductModal";
+import CreateSeriasModal from "./CreateSeriasModal";
+import AddStockModal from "./AddStockModal";
+import EditProductModal from "./EditProductModal";
+import { PencilIcon } from "@heroicons/react/20/solid";
+import { LockClosedIcon } from "@heroicons/react/24/outline";
+import ConfirmButton from "@/Components/elements/buttons/ConfirmButton";
+import { PrimaryLink } from "@/Components/elements/buttons/PrimaryButton";
+import { format, parseISO } from "date-fns"; // ✅ ADDED
 
-type Paginator<T> = {
-    data: T[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    links: Array<{ url: string | null; label: string; active: boolean }>;
-};
+export default function ProductsIndexPage() {
+    const {
+        products: initialProducts,
+        seriasList,
+        permissions,
+        isAdmin,
+    } = usePage().props as any;
 
-type SaleRow = {
-    id: number;
-    billNumber?: string | null;
-    customer_name?: string | null;
-    totalAmount?: number | string | null;
-    paidAmount?: number | string | null;
-    dueAmount?: number | string | null;
-    paymentMethod?: string | null;
-    status?: "pending" | "approved" | "draft" | string | null;
-    created_at?: string | null;
-};
+    // ✅ ADDED (only helper)
+    const formatDate = (value?: string | null) => {
+        if (!value) return "-";
+        try {
+            return format(parseISO(value), "dd MMM yyyy, hh:mm a");
+        } catch {
+            // if backend sends "YYYY-MM-DD" or any other format that parseISO can't parse safely
+            try {
+                return format(new Date(value), "dd MMM yyyy, hh:mm a");
+            } catch {
+                return value;
+            }
+        }
+    };
 
-type InvoiceArchiveProps = InertiaPageProps & {
-    auth: any;
-    ziggy: any;
-    filters: { q: string };
-    printed: Paginator<SaleRow>;
-    drafts: Paginator<SaleRow>;
-};
+    // State: products object (paginated)
+    const [products, setProducts] = useState(initialProducts);
+    const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+    const [isSeriasModalOpen, setIsSeriasModalOpen] = useState(false);
+    const [isStockModalOpen, setIsStockModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
-function Pagination({ links }: { links: Paginator<any>["links"] }) {
-    return (
-        <div className="flex flex-wrap gap-2">
-            {links.map((l, idx) => {
-                if (!l.url) {
-                    return (
-                        <span
-                            key={idx}
-                            className="px-3 py-1 rounded border text-sm opacity-50 cursor-not-allowed"
-                            dangerouslySetInnerHTML={{ __html: l.label }}
-                        />
-                    );
-                }
-                return (
-                    <Link
-                        key={idx}
-                        href={l.url}
-                        className={
-                            "px-3 py-1 rounded border text-sm " +
-                            (l.active ? "font-semibold" : "")
-                        }
-                        dangerouslySetInnerHTML={{ __html: l.label }}
-                    />
-                );
-            })}
-        </div>
-    );
-}
+    // Helper function to check permissions
+    const hasPermission = (permission: string) => {
+        if (isAdmin) return true;
+        return permissions && permissions.includes(permission);
+    };
 
-function SalesTable({
-    rows,
-    emptyText,
-}: {
-    rows: SaleRow[];
-    emptyText: string;
-}) {
-    return (
-        <div className="overflow-x-auto border rounded">
-            <table className="min-w-full text-sm">
-                <thead>
-                    <tr className="text-left border-b">
-                        <th className="p-3">Bill #</th>
-                        <th className="p-3">Customer</th>
-                        <th className="p-3">Total</th>
-                        <th className="p-3">Paid</th>
-                        <th className="p-3">Due</th>
-                        <th className="p-3">Payment</th>
-                        <th className="p-3">Status</th>
-                        <th className="p-3">Created</th>
-                        <th className="p-3 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows.length === 0 ? (
-                        <tr>
-                            <td className="p-3" colSpan={9}>
-                                {emptyText}
-                            </td>
-                        </tr>
-                    ) : (
-                        rows.map((s) => (
-                            <tr key={s.id} className="border-b last:border-b-0">
-                                <td className="p-3">
-                                    {s.billNumber ?? `#${s.id}`}
-                                </td>
-                                <td className="p-3">
-                                    {s.customer_name ?? "-"}
-                                </td>
-                                <td className="p-3">{s.totalAmount ?? "-"}</td>
-                                <td className="p-3">{s.paidAmount ?? "-"}</td>
-                                <td className="p-3">{s.dueAmount ?? "-"}</td>
-                                <td className="p-3">
-                                    {s.paymentMethod ?? "-"}
-                                </td>
-                                <td className="p-3">{s.status ?? "-"}</td>
-                                <td className="p-3">{s.created_at ?? "-"}</td>
-                                <td className="p-3">
-                                    <div className="flex justify-end gap-2">
-                                        {/* Your repo prints invoices here */}
-                                        <Link
-                                            className="px-3 py-1 rounded border"
-                                            href={`/billing/print/${s.id}`}
-                                        >
-                                            Print
-                                        </Link>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))
-                    )}
-                </tbody>
-            </table>
-        </div>
-    );
-}
+    // When a new product is created, merge into .data
+    const handleProductCreated = (newProduct: any) => {
+        setProducts((prev: any) => ({
+            ...prev,
+            data: [...prev.data, newProduct],
+        }));
+    };
 
-export default function Archive() {
-    const { props } = usePage<InvoiceArchiveProps>();
+    const handleSeriasCreated = (newSerias: any) => {
+        console.log("New series added:", newSerias);
+    };
 
-    const [tab, setTab] = useState<"printed" | "drafts">("printed");
+    const handleStockAdded = (newStock: any) => {
+        console.log("Stock added:", newStock);
+        window.location.reload();
+    };
 
-    const q = props.filters?.q ?? "";
-    const [search, setSearch] = useState(q);
+    const tableColumns = [
+        { label: "", sortField: "", sortable: false },
+        { label: "ID", sortField: "id", sortable: true },
+        { label: "Item name", sortField: "productName", sortable: true },
 
-    function submitSearch(e: React.FormEvent) {
-        e.preventDefault();
-        router.get(
-            route("invoices.archive"),
-            { q: search },
-            { preserveState: true, replace: true },
-        );
-    }
+        // ✅ NEW
+        { label: "Part Number", sortField: "productCode", sortable: true },
+        {
+            label: "Vehicle Description",
+            sortField: "productDescription",
+            sortable: true,
+        },
+
+        { label: "Vehicle Type", sortField: "seriasNo", sortable: true },
+        { label: "Buying Price", sortField: "buyingPrice", sortable: true },
+        { label: "Selling Price", sortField: "sellingPrice", sortable: true },
+        { label: "Quantity", sortField: "quantity", sortable: true },
+        { label: "Purchase Date", sortField: "purchaseDate", sortable: true },
+        { label: "Availability", sortField: "availability", sortable: true },
+    ];
+
+    const filters = {};
+    const createLink = undefined;
+
+    // Permission checks
+    const canAddStock = hasPermission("restock_products");
+    const canAddProduct = hasPermission("add_products");
+    const canAddSeries = hasPermission("add_series");
 
     return (
         <Authenticated bRoutes={undefined}>
-            <Head title="Invoice Archive" />
+            <div className="flex-1 p-6">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold">Products</h2>
+                    <div className="flex gap-2">
+                        {/* Add Stock Button */}
+                        <div className="relative group">
+                            <button
+                                onClick={() =>
+                                    canAddStock && setIsStockModalOpen(true)
+                                }
+                                disabled={!canAddStock}
+                                className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
+                                    canAddStock
+                                        ? "bg-green-500 text-white hover:bg-green-600 cursor-pointer"
+                                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                }`}
+                            >
+                                {!canAddStock && (
+                                    <LockClosedIcon className="w-4 h-4" />
+                                )}
+                                Add Stock
+                            </button>
+                            {!canAddStock && (
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                    You don't have permission to add stock
+                                </div>
+                            )}
+                        </div>
 
-            <div className="flex-1 p-6 space-y-4">
-                <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div>
-                        <h1 className="text-xl font-semibold">
-                            Invoice Archive
-                        </h1>
-                        <p className="text-sm opacity-70">
-                            Approved (printed) and Draft bills.
-                        </p>
+                        {/* Add Product Button */}
+                        <div className="relative group">
+                            <button
+                                onClick={() =>
+                                    canAddProduct && setIsProductModalOpen(true)
+                                }
+                                disabled={!canAddProduct}
+                                className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
+                                    canAddProduct
+                                        ? "bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
+                                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                }`}
+                            >
+                                {!canAddProduct && (
+                                    <LockClosedIcon className="w-4 h-4" />
+                                )}
+                                Add Product
+                            </button>
+                            {!canAddProduct && (
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                    You don't have permission to add products
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Add Series Button */}
+                        <div className="relative group">
+                            <button
+                                onClick={() =>
+                                    canAddSeries && setIsSeriasModalOpen(true)
+                                }
+                                disabled={!canAddSeries}
+                                className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
+                                    canAddSeries
+                                        ? "bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
+                                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                }`}
+                            >
+                                {!canAddSeries && (
+                                    <LockClosedIcon className="w-4 h-4" />
+                                )}
+                                Add Vehical Type
+                            </button>
+                            {!canAddSeries && (
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                    You don't have permission to add Vehicle
+                                    Type
+                                </div>
+                            )}
+                        </div>
                     </div>
+                </div>
 
-                    <form onSubmit={submitSearch} className="flex gap-2">
-                        <input
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search bill number / customer..."
-                            className="border rounded px-3 py-2 text-sm w-64"
-                        />
-                        <button
-                            className="border rounded px-3 py-2 text-sm"
-                            type="submit"
+                <MasterTable
+                    tableColumns={tableColumns}
+                    filters={filters}
+                    url={route("products.index")}
+                    createLink={createLink}
+                    links={products.meta?.links}
+                >
+                    {products.data.map((product: any) => (
+                        <TableBody
+                            key={product.id}
+                            id={product.id}
+                            buttons={
+                                <>
+                                    <button
+                                        onClick={() => {
+                                            if (
+                                                hasPermission("edit_products")
+                                            ) {
+                                                setSelectedProduct(product);
+                                                setIsEditModalOpen(true);
+                                            }
+                                        }}
+                                        disabled={
+                                            !hasPermission("edit_products")
+                                        }
+                                        className={`flex items-center gap-1 px-3 py-2 text-sm rounded ${
+                                            hasPermission("edit_products")
+                                                ? "bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
+                                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                        }`}
+                                    >
+                                        <PencilIcon className="w-3 h-3" /> Edit
+                                    </button>
+                                    <ConfirmButton
+                                        className="!py-2"
+                                        url={`/products/${product.id}`}
+                                        label="Delete"
+                                        disabled={
+                                            !hasPermission("delete_products")
+                                        }
+                                    />
+                                </>
+                            }
                         >
-                            Search
-                        </button>
-                    </form>
-                </div>
+                            <TableTd>{product.id}</TableTd>
+                            <TableTd>{product.productName}</TableTd>
 
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => setTab("printed")}
-                        className={
-                            "px-3 py-2 rounded border text-sm " +
-                            (tab === "printed" ? "font-semibold" : "")
-                        }
-                    >
-                        Printed / Approved ({props.printed.total})
-                    </button>
+                            {/* ✅ NEW */}
+                            <TableTd>{product.productCode ?? "-"}</TableTd>
+                            <TableTd>
+                                {product.productDescription ?? "-"}
+                            </TableTd>
 
-                    <button
-                        onClick={() => setTab("drafts")}
-                        className={
-                            "px-3 py-2 rounded border text-sm " +
-                            (tab === "drafts" ? "font-semibold" : "")
-                        }
-                    >
-                        Drafts ({props.drafts.total})
-                    </button>
-                </div>
+                            <TableTd>
+                                {seriasList.find(
+                                    (s: any) => s.id === product.seriasId,
+                                )?.seriasNo ?? "-"}
+                            </TableTd>
+                            <TableTd>LKR {product.buyingPrice ?? "-"}</TableTd>
+                            <TableTd>LKR {product.sellingPrice ?? "-"}</TableTd>
+                            <TableTd>{product.quantity}</TableTd>
 
-                {tab === "printed" ? (
-                    <>
-                        <SalesTable
-                            rows={props.printed.data}
-                            emptyText="No approved invoices found."
-                        />
-                        <div className="flex items-center justify-between flex-wrap gap-3">
-                            <div className="text-sm opacity-70">
-                                Page {props.printed.current_page} of{" "}
-                                {props.printed.last_page} •{" "}
-                                {props.printed.total} total
-                            </div>
-                            <Pagination links={props.printed.links} />
-                        </div>
-                    </>
-                ) : (
-                    <>
-                        <SalesTable
-                            rows={props.drafts.data}
-                            emptyText="No draft invoices found."
-                        />
-                        <div className="flex items-center justify-between flex-wrap gap-3">
-                            <div className="text-sm opacity-70">
-                                Page {props.drafts.current_page} of{" "}
-                                {props.drafts.last_page} • {props.drafts.total}{" "}
-                                total
-                            </div>
-                            <Pagination links={props.drafts.links} />
-                        </div>
-                    </>
-                )}
+                            {/* ✅ CHANGED ONLY THIS (humanize purchaseDate) */}
+                            <TableTd>
+                                {formatDate(product.purchaseDate)}
+                            </TableTd>
+
+                            <TableTd>
+                                <div
+                                    className={`font-semibold ${product.quantity > 0 ? "text-green-500" : "text-red-500"}`}
+                                >
+                                    {product.quantity > 0
+                                        ? "In-stock"
+                                        : "Out of stock"}
+                                </div>
+                            </TableTd>
+                        </TableBody>
+                    ))}
+                </MasterTable>
+
+                {/* Modals */}
+                <CreateProductModal
+                    isOpen={isProductModalOpen}
+                    onClose={() => setIsProductModalOpen(false)}
+                    onCreated={handleProductCreated}
+                    seriasList={seriasList}
+                />
+                <CreateSeriasModal
+                    isOpen={isSeriasModalOpen}
+                    onClose={() => setIsSeriasModalOpen(false)}
+                    onCreated={handleSeriasCreated}
+                />
+                <AddStockModal
+                    isOpen={isStockModalOpen}
+                    onClose={() => setIsStockModalOpen(false)}
+                    onStockAdded={handleStockAdded}
+                    productsList={products.data}
+                />
+                <EditProductModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => setIsEditModalOpen(false)}
+                    onUpdated={() => window.location.reload()}
+                    product={selectedProduct}
+                    seriasList={seriasList}
+                />
             </div>
         </Authenticated>
     );

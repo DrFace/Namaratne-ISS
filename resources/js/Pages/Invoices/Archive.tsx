@@ -2,6 +2,7 @@ import Authenticated from "@/Layouts/AuthenticatedLayout";
 import React, { useState } from "react";
 import { Head, Link, router, usePage } from "@inertiajs/react";
 import type { PageProps as InertiaPageProps } from "@inertiajs/core";
+import { format, parseISO } from "date-fns";
 
 type Paginator<T> = {
     data: T[];
@@ -61,6 +62,15 @@ function Pagination({ links }: { links: Paginator<any>["links"] }) {
     );
 }
 
+function formatCreatedAt(iso?: string | null) {
+    if (!iso) return "-";
+    try {
+        return format(parseISO(iso), "dd MMM yyyy, hh:mm a");
+    } catch {
+        return iso; // fallback to original string if parsing fails
+    }
+}
+
 function SalesTable({
     rows,
     emptyText,
@@ -107,7 +117,9 @@ function SalesTable({
                                     {s.paymentMethod ?? "-"}
                                 </td>
                                 <td className="p-3">{s.status ?? "-"}</td>
-                                <td className="p-3">{s.created_at ?? "-"}</td>
+                                <td className="p-3">
+                                    {formatCreatedAt(s.created_at)}
+                                </td>
                                 <td className="p-3">
                                     <div className="flex justify-end gap-2">
                                         {/* Your repo prints invoices here */}
