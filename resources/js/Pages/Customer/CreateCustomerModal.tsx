@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
 
-export default function CreateCustomerModal({ isOpen, onClose, onCreated, permissions, isAdmin }: any) {
+export default function CreateCustomerModal({
+    isOpen,
+    onClose,
+    onCreated,
+    permissions,
+    isAdmin,
+    discountCategories = [], // ✅ NEW
+}: any) {
     const [form, setForm] = useState({
         customerId: "",
         name: "",
@@ -17,6 +24,8 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated, permis
         cardBalance: "",
         status: "active",
         availability: true,
+
+        discountCategoryId: "", // ✅ NEW
     });
 
     const [errors, setErrors] = useState<{ [key: string]: string[] }>({});
@@ -40,11 +49,15 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated, permis
         setErrors({});
 
         try {
-            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+            const token =
+                document
+                    .querySelector('meta[name="csrf-token"]')
+                    ?.getAttribute("content") || "";
+
             const res = await fetch("/customer", {
                 method: "POST",
                 headers: {
-                    "Accept": "application/json",
+                    Accept: "application/json",
                     "X-CSRF-TOKEN": token,
                     "Content-Type": "application/json",
                 },
@@ -73,7 +86,9 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated, permis
                 <h2 className="text-lg font-bold mb-4">Add Customer</h2>
                 <form onSubmit={handleSubmit} className="space-y-3">
                     <div>
-                        <label className="block text-sm font-medium">Customer Name</label>
+                        <label className="block text-sm font-medium">
+                            Customer Name
+                        </label>
                         <input
                             type="text"
                             name="name"
@@ -82,11 +97,17 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated, permis
                             onChange={handleChange}
                             className="w-full border p-2 rounded"
                         />
-                        {errors.name && <p className="text-red-500 text-sm">{errors.name[0]}</p>}
+                        {errors.name && (
+                            <p className="text-red-500 text-sm">
+                                {errors.name[0]}
+                            </p>
+                        )}
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium">Contact Number</label>
+                        <label className="block text-sm font-medium">
+                            Contact Number
+                        </label>
                         <input
                             type="number"
                             name="contactNumber"
@@ -98,7 +119,9 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated, permis
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium">Email</label>
+                        <label className="block text-sm font-medium">
+                            Email
+                        </label>
                         <input
                             type="email"
                             name="email"
@@ -110,7 +133,9 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated, permis
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium">Address</label>
+                        <label className="block text-sm font-medium">
+                            Address
+                        </label>
                         <textarea
                             name="address"
                             placeholder="Address"
@@ -121,7 +146,9 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated, permis
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium">VAT Number (Optional)</label>
+                        <label className="block text-sm font-medium">
+                            VAT Number (Optional)
+                        </label>
                         <input
                             type="text"
                             name="vatNumber"
@@ -133,7 +160,9 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated, permis
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium">Credit Limit</label>
+                        <label className="block text-sm font-medium">
+                            Credit Limit
+                        </label>
                         <input
                             type="number"
                             name="creditLimit"
@@ -144,9 +173,38 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated, permis
                         />
                     </div>
 
-                    {hasPermission('change_customer_credit_period') && (
+                    {/* ✅ NEW: Discount Category */}
+                    <div>
+                        <label className="block text-sm font-medium">
+                            Discount Category
+                        </label>
+                        <select
+                            name="discountCategoryId"
+                            value={form.discountCategoryId}
+                            onChange={handleChange}
+                            className="w-full border p-2 rounded"
+                        >
+                            <option value="">
+                                -- Select Discount Category --
+                            </option>
+                            {discountCategories?.map((c: any) => (
+                                <option key={c.id} value={c.id}>
+                                    {c.name}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.discountCategoryId && (
+                            <p className="text-red-500 text-sm">
+                                {errors.discountCategoryId[0]}
+                            </p>
+                        )}
+                    </div>
+
+                    {hasPermission("change_customer_credit_period") && (
                         <div>
-                            <label className="block text-sm font-medium">Credit Period</label>
+                            <label className="block text-sm font-medium">
+                                Credit Period
+                            </label>
                             <select
                                 name="creditPeriod"
                                 value={form.creditPeriod}
@@ -160,6 +218,7 @@ export default function CreateCustomerModal({ isOpen, onClose, onCreated, permis
                             </select>
                         </div>
                     )}
+
                     <div className="flex justify-between items-center">
                         <label className="flex items-center gap-2">
                             <input

@@ -1,7 +1,15 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 
-export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated, permissions, isAdmin }: any) {
+export default function EditCustomerModal({
+    isOpen,
+    onClose,
+    customer,
+    onUpdated,
+    permissions,
+    isAdmin,
+    discountCategories = [], // ✅ pass this from parent
+}: any) {
     const [form, setForm] = useState({
         customerId: "",
         name: "",
@@ -13,6 +21,9 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
         creditPeriod: "30 days",
         status: "active",
         availability: true,
+
+        // ✅ NEW
+        discountCategoryId: "",
     });
 
     const [errors, setErrors] = useState<{ [key: string]: string[] }>({});
@@ -24,9 +35,21 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
         return permissions && permissions.includes(permission);
     };
 
+    // ✅ helper to read discount category id from any backend shape
+    const getCustomerDiscountCategoryId = (c: any) => {
+        if (!c) return "";
+        return (
+            c.discountCategoryId ??
+            c.discount_category_id ??
+            c.discountCategory?.id ??
+            c.discount_category?.id ??
+            ""
+        ).toString();
+    };
+
     // Load customer data into form when modal opens
     useEffect(() => {
-        if (customer) {
+        if (isOpen && customer) {
             setForm({
                 customerId: customer.customerId || "",
                 name: customer.name || "",
@@ -38,9 +61,14 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
                 creditPeriod: customer.creditPeriod || "30 days",
                 status: customer.status || "active",
                 availability: customer.availability ?? true,
+
+                // ✅ NEW
+                discountCategoryId: getCustomerDiscountCategoryId(customer),
             });
+
+            setErrors({});
         }
-    }, [customer]);
+    }, [isOpen, customer]);
 
     const handleChange = (e: any) => {
         const { name, value, type, checked } = e.target;
@@ -56,11 +84,15 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
         setErrors({});
 
         try {
-            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+            const token =
+                document
+                    .querySelector('meta[name="csrf-token"]')
+                    ?.getAttribute("content") || "";
+
             const res = await fetch(`/customer/${customer.id}`, {
                 method: "POST",
                 headers: {
-                    "Accept": "application/json",
+                    Accept: "application/json",
                     "X-CSRF-TOKEN": token,
                     "Content-Type": "application/json",
                 },
@@ -83,13 +115,28 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
 
     if (!isOpen) return null;
 
+    // ✅ ensure currently selected id exists in options (otherwise select shows placeholder)
+    const selectedId = form.discountCategoryId?.toString() || "";
+    const hasSelectedInList =
+        selectedId &&
+        discountCategories?.some((c: any) => c.id?.toString() === selectedId);
+
+    // optional display name for fallback option
+    const selectedName =
+        customer?.discountCategory?.name ||
+        customer?.discount_category?.name ||
+        `Selected (ID: ${selectedId})`;
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-[500px] max-h-[80vh] overflow-y-auto shadow-lg">
                 <h2 className="text-lg font-bold mb-4">Edit Customer</h2>
+
                 <form onSubmit={handleSubmit} className="space-y-3">
                     <div>
-                        <label className="block text-sm font-medium">Customer Name</label>
+                        <label className="block text-sm font-medium">
+                            Customer Name
+                        </label>
                         <input
                             type="text"
                             name="name"
@@ -98,11 +145,17 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
                             onChange={handleChange}
                             className="w-full border p-2 rounded"
                         />
-                        {errors.name && <p className="text-red-500 text-sm">{errors.name[0]}</p>}
+                        {errors.name && (
+                            <p className="text-red-500 text-sm">
+                                {errors.name[0]}
+                            </p>
+                        )}
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium">Contact Number</label>
+                        <label className="block text-sm font-medium">
+                            Contact Number
+                        </label>
                         <input
                             type="number"
                             name="contactNumber"
@@ -114,7 +167,9 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium">Email</label>
+                        <label className="block text-sm font-medium">
+                            Email
+                        </label>
                         <input
                             type="email"
                             name="email"
@@ -126,7 +181,9 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium">Address</label>
+                        <label className="block text-sm font-medium">
+                            Address
+                        </label>
                         <textarea
                             name="address"
                             placeholder="Address"
@@ -137,7 +194,9 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium">VAT Number (Optional)</label>
+                        <label className="block text-sm font-medium">
+                            VAT Number (Optional)
+                        </label>
                         <input
                             type="text"
                             name="vatNumber"
@@ -149,7 +208,9 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium">Credit Limit</label>
+                        <label className="block text-sm font-medium">
+                            Credit Limit
+                        </label>
                         <input
                             type="number"
                             name="creditLimit"
@@ -160,9 +221,47 @@ export default function EditCustomerModal({ isOpen, onClose, customer, onUpdated
                         />
                     </div>
 
-                    {hasPermission('change_customer_credit_period') && (
+                    {/* ✅ Discount Category */}
+                    <div>
+                        <label className="block text-sm font-medium">
+                            Discount Category
+                        </label>
+                        <select
+                            name="discountCategoryId"
+                            value={selectedId}
+                            onChange={handleChange}
+                            className="w-full border p-2 rounded"
+                        >
+                            <option value="">
+                                -- Select Discount Category --
+                            </option>
+
+                            {/* ✅ fallback option so current value shows even if not in list */}
+                            {selectedId && !hasSelectedInList && (
+                                <option value={selectedId}>
+                                    {selectedName}
+                                </option>
+                            )}
+
+                            {discountCategories?.map((c: any) => (
+                                <option key={c.id} value={c.id}>
+                                    {c.name}
+                                </option>
+                            ))}
+                        </select>
+
+                        {errors.discountCategoryId && (
+                            <p className="text-red-500 text-sm">
+                                {errors.discountCategoryId[0]}
+                            </p>
+                        )}
+                    </div>
+
+                    {hasPermission("change_customer_credit_period") && (
                         <div>
-                            <label className="block text-sm font-medium">Credit Period</label>
+                            <label className="block text-sm font-medium">
+                                Credit Period
+                            </label>
                             <select
                                 name="creditPeriod"
                                 value={form.creditPeriod}

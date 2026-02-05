@@ -16,6 +16,7 @@ import { PrimaryLink } from "@/Components/elements/buttons/PrimaryButton";
 import EditCustomerModal from "./EditCustomerModal";
 import axios from "axios";
 import { toast } from "react-toastify";
+import DiscountCategoriesIndex from "../DiscountCategories/Index";
 
 export default function CustomersIndexPage() {
     const {
@@ -23,6 +24,9 @@ export default function CustomersIndexPage() {
         permissions,
         isAdmin,
         filters: serverFilters,
+
+        // ✅ FIX: get discountCategories from backend props
+        discountCategories,
     } = usePage().props as any;
 
     // IMPORTANT: keep local state for instant UI updates (settle credit), but sync with new props
@@ -437,6 +441,8 @@ export default function CustomersIndexPage() {
                     onCreated={handleCustomerCreated}
                     permissions={permissions}
                     isAdmin={isAdmin}
+                    // ✅ FIX: pass the real list, not a component
+                    discountCategories={discountCategories}
                 />
                 <EditCustomerModal
                     isOpen={isEditModalOpen}
@@ -445,6 +451,8 @@ export default function CustomersIndexPage() {
                     onUpdated={handleCustomerUpdated}
                     permissions={permissions}
                     isAdmin={isAdmin}
+                    // ✅ FIX: pass list here too (so edit dropdown shows items)
+                    discountCategories={discountCategories}
                 />
             </div>
         </Authenticated>

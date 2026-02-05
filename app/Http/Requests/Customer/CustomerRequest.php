@@ -32,6 +32,9 @@ class CustomerRequest extends FormRequest
             'netBalance'    => 'nullable|numeric|min:0',
             'status'        => 'required|in:active,inactive',
             'availability'  => 'boolean',
+            'discount_category_id' => 'nullable|exists:discount_categories,id',
+            'discountCategoryId'   => 'nullable|exists:discount_categories,id',
+            
         ];
     }
 }
