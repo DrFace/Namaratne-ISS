@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Customer\CustomerRequest;
 use App\Models\Customer;
+use App\Models\DiscountCategory; // ✅ NEW
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -17,6 +18,11 @@ class CustomerController extends Controller
         $user = auth()->user();
         $permissions = $user->getPermissions();
         $isAdmin = $user->isAdmin();
+
+        // ✅ NEW: load discount categories for dropdowns
+        $discountCategories = DiscountCategory::select('id', 'name')
+            ->orderBy('name')
+            ->get();
 
         // Search (name/contact/email)
         $search = trim((string) request()->query('search', ''));
@@ -81,6 +87,10 @@ class CustomerController extends Controller
             'customers' => $customers,
             'permissions' => $permissions,
             'isAdmin' => $isAdmin,
+
+            // ✅ NEW
+            'discountCategories' => $discountCategories,
+
             'filters' => [
                 'search' => $search !== '' ? $search : null,
                 'start_date' => $rangeStart ? $rangeStart->toDateString() : null,
@@ -90,35 +100,51 @@ class CustomerController extends Controller
     }
 
     public function store(CustomerRequest $request)
-    {
-        $data = $request->validated();
+{
+    $data = $request->validated();
 
-        $customer             = Customer::create($data);
-        $customer->netBalance = $customer->creditBalance ?? 0;
-        $customer->save();
-
-        return response()->json([
-            'message'  => 'Customer added successfully!',
-            'customer' => $customer,
-        ]);
+    // ✅ MAP camelCase → snake_case
+    if (isset($data['discountCategoryId']) && !isset($data['discount_category_id'])) {
+        $data['discount_category_id'] = $data['discountCategoryId'];
     }
+    unset($data['discountCategoryId']);
+
+    $customer = Customer::create($data);
+
+    $customer->netBalance = $customer->creditBalance ?? 0;
+    $customer->save();
+
+    return response()->json([
+        'message'  => 'Customer added successfully!',
+        'customer' => $customer,
+    ]);
+}
+
 
     public function update(CustomerRequest $request, Customer $customer)
-    {
-        $data = $request->validated();
+{
+    $data = $request->validated();
 
-        $customer->update($data);
-        $customer->netBalance = $customer->creditBalance ?? $customer->netBalance ?? 0;
-        $customer->save();
-
-        // Update credit period status after changes
-        $customer->updateCreditPeriodStatus();
-
-        return response()->json([
-            'message'  => 'Customer updated successfully!',
-            'customer' => $customer,
-        ]);
+    // ✅ MAP camelCase → snake_case
+    if (isset($data['discountCategoryId']) && !isset($data['discount_category_id'])) {
+        $data['discount_category_id'] = $data['discountCategoryId'];
     }
+    unset($data['discountCategoryId']);
+
+    $customer->update($data);
+
+    $customer->netBalance = $customer->creditBalance ?? $customer->netBalance ?? 0;
+    $customer->save();
+
+    // Update credit period status after changes
+    $customer->updateCreditPeriodStatus();
+
+    return response()->json([
+        'message'  => 'Customer updated successfully!',
+        'customer' => $customer,
+    ]);
+}
+
 
     public function destroy(Customer $customer)
     {
