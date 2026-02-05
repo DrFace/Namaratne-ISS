@@ -224,7 +224,6 @@ export default function ProductsIndexPage() {
                                     (s: any) => s.id === product.seriasId,
                                 )?.seriasNo ?? "-"}
                             </TableTd>
-                            <TableTd>{product.batchNumber ?? "-"}</TableTd>
                             <TableTd>LKR {product.buyingPrice ?? "-"}</TableTd>
                             <TableTd>LKR {product.sellingPrice ?? "-"}</TableTd>
                             <TableTd>{product.quantity}</TableTd>
