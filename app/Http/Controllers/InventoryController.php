@@ -15,7 +15,12 @@ class InventoryController extends Controller
             'id',
             'productName',
             'productCode',
+            'productDescription', // ✅ FIX
+            'unit',               // ✅ FIX
+            'brand',              // ✅ FIX
             'seriasId',
+            'lowStock',           // ✅ FIX
+            'productImage',       // ✅ FIX
             'batchNumber',
             'buyingPrice',
             'sellingPrice',
@@ -200,6 +205,7 @@ class InventoryController extends Controller
             'brand'              => 'nullable|string|max:255',
             'seriasId'           => 'nullable|integer',
             'lowStock'           => 'nullable|integer|min:0',
+            'productName'        => 'nullable|string|max:255',
             'productImage'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
