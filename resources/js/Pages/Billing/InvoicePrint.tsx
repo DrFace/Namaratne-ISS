@@ -49,8 +49,8 @@ interface InvoiceData {
 export default function InvoicePrint({
     invoice,
     vatNumber,
-    currency = 'LKR',
-    exchangeRate
+    currency = "LKR",
+    exchangeRate,
 }: {
     invoice: InvoiceData;
     vatNumber?: string;
@@ -63,8 +63,9 @@ export default function InvoicePrint({
 
     // Helper function to convert LKR to USD
     const convertPrice = (lkrAmount: string | number): number => {
-        const amount = typeof lkrAmount === 'string' ? parseFloat(lkrAmount) : lkrAmount;
-        if (currency === 'USD' && exchangeRate) {
+        const amount =
+            typeof lkrAmount === "string" ? parseFloat(lkrAmount) : lkrAmount;
+        if (currency === "USD" && exchangeRate) {
             return amount / exchangeRate;
         }
         return amount;
@@ -72,7 +73,7 @@ export default function InvoicePrint({
 
     // Helper function to format currency
     const formatCurrency = (amount: number): string => {
-        if (currency === 'USD') {
+        if (currency === "USD") {
             return `$${amount.toFixed(2)}`;
         }
         return `Rs. ${amount.toFixed(2)}`;
@@ -87,6 +88,21 @@ export default function InvoicePrint({
     for (let i = 0; i < allItems.length; i += itemsPerPage) {
         itemChunks.push(allItems.slice(i, i + itemsPerPage));
     }
+
+    // ✅ VAT-INCLUSIVE totals (matches your layout)
+    const goodsValue = Number.parseFloat(String(invoice.totalAmount || 0)) || 0; // GOODS VALUE
+    const discountValue =
+        Number.parseFloat(String(invoice.discount_value || 0)) || 0; // DISCOUNT amount
+
+    // TOTAL after discount (this is what you show as "TOTAL")
+    const totalAfterDiscount = Math.max(0, goodsValue - discountValue);
+
+    // VAT portion using your formula:
+    // VAT 18% = TOTAL - {(TOTAL*100)/118}
+    const vatAmount = totalAfterDiscount - (totalAfterDiscount * 100) / 118;
+
+    // ✅ FIX: GRAND TOTAL = TOTAL + VAT 18%
+    const grandTotal = totalAfterDiscount + vatAmount;
 
     return (
         <>
@@ -325,11 +341,12 @@ export default function InvoicePrint({
                                                 <td className="border border-gray-300 p-1 text-right">
                                                     {formatCurrency(
                                                         convertPrice(
-                                                            invoice.totalAmount,
+                                                            goodsValue,
                                                         ),
                                                     )}
                                                 </td>
                                             </tr>
+
                                             <tr>
                                                 <td
                                                     className="p-1"
@@ -355,14 +372,12 @@ export default function InvoicePrint({
                                                     -{" "}
                                                     {formatCurrency(
                                                         convertPrice(
-                                                            String(
-                                                                invoice.discount_value ||
-                                                                    0,
-                                                            ),
+                                                            discountValue,
                                                         ),
                                                     )}
                                                 </td>
                                             </tr>
+
                                             <tr>
                                                 <td
                                                     className="p-1"
@@ -377,15 +392,12 @@ export default function InvoicePrint({
                                                 <td className="border border-gray-300 p-1 text-right">
                                                     {formatCurrency(
                                                         convertPrice(
-                                                            (
-                                                                parseFloat(
-                                                                    invoice.creditAmount,
-                                                                ) / 1.18
-                                                            ).toFixed(2),
+                                                            totalAfterDiscount,
                                                         ),
                                                     )}
                                                 </td>
                                             </tr>
+
                                             <tr>
                                                 <td
                                                     className="p-1"
@@ -399,18 +411,11 @@ export default function InvoicePrint({
                                                 </td>
                                                 <td className="border border-gray-300 p-1 text-right">
                                                     {formatCurrency(
-                                                        convertPrice(
-                                                            (
-                                                                (parseFloat(
-                                                                    invoice.creditAmount,
-                                                                ) /
-                                                                    1.18) *
-                                                                0.18
-                                                            ).toFixed(2),
-                                                        ),
+                                                        convertPrice(vatAmount),
                                                     )}
                                                 </td>
                                             </tr>
+
                                             <tr className="font-bold">
                                                 <td
                                                     className="p-1"
@@ -425,7 +430,7 @@ export default function InvoicePrint({
                                                 <td className="border border-gray-300 bg-pink-100 p-1 text-right">
                                                     {formatCurrency(
                                                         convertPrice(
-                                                            invoice.creditAmount,
+                                                            grandTotal,
                                                         ),
                                                     )}
                                                 </td>
