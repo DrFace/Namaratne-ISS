@@ -32,14 +32,17 @@ export default function Billing({ products: initialProducts }: any) {
     const [displayCurrency, setDisplayCurrency] = useState<"LKR" | "USD">(
         "LKR",
     );
-    const [exchangeRate, setExchangeRate] = useState(320);
+    const [exchangeRate, setExchangeRate] = useState<number>(320);
 
     // Fetch exchange rate on mount
     useEffect(() => {
         const fetchExchangeRate = async () => {
             try {
                 const response = await axios.get("/api/currency/rate");
-                setExchangeRate(response.data.rate || 320);
+                const rate = Number(response.data?.rate);
+                setExchangeRate(
+                    !Number.isFinite(rate) || rate <= 0 ? 320 : rate,
+                );
             } catch (error) {
                 console.error("Error fetching exchange rate:", error);
             }
@@ -51,40 +54,57 @@ export default function Billing({ products: initialProducts }: any) {
     const convertPrice = (lkrAmount: number | string): number => {
         const amount =
             typeof lkrAmount === "string" ? parseFloat(lkrAmount) : lkrAmount;
-        if (isNaN(amount)) return 0;
+
+        if (!Number.isFinite(amount)) return 0;
 
         if (displayCurrency === "USD") {
-            return amount / exchangeRate;
+            const rate = Number(exchangeRate);
+            if (!Number.isFinite(rate) || rate <= 0) return 0;
+            return amount / rate;
         }
         return amount;
     };
 
     const formatCurrency = (amount: number | string): string => {
         const num = typeof amount === "string" ? parseFloat(amount) : amount;
-        if (isNaN(num)) return displayCurrency === "USD" ? "$0.00" : "Rs. 0.00";
+        const safe = Number.isFinite(num) ? num : 0;
 
         if (displayCurrency === "USD") {
-            return `$${num.toFixed(2)}`;
+            return `$${safe.toFixed(2)}`;
         }
-        return `Rs. ${num.toFixed(2)}`;
+        return `Rs. ${safe.toFixed(2)}`;
     };
 
-    // Totals
-    const total = cartItems.reduce(
-        (sum, p) => sum + p.sellingPrice * p.quantity,
-        0,
-    );
+    // ✅ Totals (MATCH InvoicePrint)
+    // GOODS VALUE
+    const goodsValue = cartItems.reduce((sum, p) => {
+        const price = Number(p.sellingPrice);
+        const qty = Number(p.quantity);
+        return (
+            sum +
+            (Number.isFinite(price) ? price : 0) *
+                (Number.isFinite(qty) ? qty : 0)
+        );
+    }, 0);
 
-    // Apply discount
+    // DISCOUNT amount
     const discountAmount =
         discountType === "percentage"
-            ? (total * discountValue) / 100
+            ? (goodsValue * discountValue) / 100
             : discountValue;
 
-    const customerCredit = selectedCustomer?.creditBalance || 0;
-    const netTotal = Math.max(total - discountAmount - customerCredit, 0);
+    // TOTAL after discount
+    const totalAfterDiscount = Math.max(0, goodsValue - discountAmount);
 
-    const paidAmount = paymentType === "cash" ? cashAmount : netTotal;
+    // VAT 18% portion (VAT-inclusive formula from InvoicePrint)
+    // VAT 18% = TOTAL - {(TOTAL*100)/118}
+    const vatAmount = totalAfterDiscount - (totalAfterDiscount * 100) / 118;
+
+    // GRAND TOTAL
+    const grandTotal = totalAfterDiscount + vatAmount;
+
+    // Paid amount
+    const paidAmount = paymentType === "cash" ? cashAmount : grandTotal;
 
     // Check if customer can purchase (credit period not expired)
     const canCustomerPurchase = selectedCustomer?.canPurchase !== false;
@@ -92,8 +112,8 @@ export default function Billing({ products: initialProducts }: any) {
         paymentType === "credit" && !canCustomerPurchase;
 
     useEffect(() => {
-        setBalance(netTotal - paidAmount);
-    }, [netTotal, paidAmount]);
+        setBalance(grandTotal - paidAmount);
+    }, [grandTotal, paidAmount]);
 
     // Product filtering
     const filteredProducts = initialProducts.filter((p: any) => {
@@ -107,7 +127,6 @@ export default function Billing({ products: initialProducts }: any) {
     useEffect(() => {
         const query = customerContact || customerName;
 
-        // Set loading state immediately when user types
         if (query.length >= 2) {
             setIsSearchingCustomer(true);
         } else {
@@ -159,7 +178,6 @@ export default function Billing({ products: initialProducts }: any) {
     const addToCart = (product: any) => {
         const existing = cartItems.find((p) => p.id === product.id);
         if (existing) {
-            // Check if adding one more exceeds stock
             if (existing.quantity + 1 > product.quantity) {
                 toast.warning(
                     `Cannot add more. Only ${product.quantity} items available in stock.`,
@@ -174,7 +192,6 @@ export default function Billing({ products: initialProducts }: any) {
                 ),
             );
         } else {
-            // Check if product has stock
             if (product.quantity < 1) {
                 toast.error("Product is out of stock.");
                 return;
@@ -188,14 +205,13 @@ export default function Billing({ products: initialProducts }: any) {
             cartItems
                 .map((p) => {
                     if (p.id === id) {
-                        const newQuantity = p.quantity + delta;
-                        // Find the original product to check stock limit
+                        const newQuantity = Number(p.quantity) + delta;
+
                         const originalProduct = initialProducts.find(
                             (prod: any) => prod.id === id,
                         );
-                        const maxStock = originalProduct?.quantity || 0;
+                        const maxStock = Number(originalProduct?.quantity || 0);
 
-                        // Prevent exceeding stock
                         if (newQuantity > maxStock) {
                             toast.warning(
                                 `Cannot add more. Only ${maxStock} items available in stock.`,
@@ -207,12 +223,11 @@ export default function Billing({ products: initialProducts }: any) {
                     }
                     return p;
                 })
-                .filter((p) => p.quantity > 0),
+                .filter((p) => Number(p.quantity) > 0),
         );
     };
 
     const setDirectQuantity = (id: number, value: string) => {
-        // Allow empty string (user is typing)
         if (value === "") {
             setCartItems(
                 cartItems.map((p) =>
@@ -222,17 +237,14 @@ export default function Billing({ products: initialProducts }: any) {
             return;
         }
 
-        const numValue = parseInt(value);
+        const numValue = parseInt(value, 10);
 
-        // If not a valid number, don't update
-        if (isNaN(numValue)) {
-            return;
-        }
+        if (isNaN(numValue)) return;
 
         const originalProduct = initialProducts.find(
             (prod: any) => prod.id === id,
         );
-        const maxStock = originalProduct?.quantity || 0;
+        const maxStock = Number(originalProduct?.quantity || 0);
 
         if (numValue > maxStock) {
             toast.warning(
@@ -254,9 +266,7 @@ export default function Billing({ products: initialProducts }: any) {
         currentValue: any,
     ) => {
         if (e.key === "Enter") {
-            const numValue = parseInt(String(currentValue));
-
-            // Remove item if quantity is less than 1 or invalid
+            const numValue = parseInt(String(currentValue), 10);
             if (isNaN(numValue) || numValue < 1) {
                 setCartItems(cartItems.filter((p) => p.id !== id));
             }
@@ -264,9 +274,7 @@ export default function Billing({ products: initialProducts }: any) {
     };
 
     const handleQuantityBlur = (id: number, currentValue: any) => {
-        const numValue = parseInt(String(currentValue));
-
-        // Remove item if quantity is less than 1 or invalid
+        const numValue = parseInt(String(currentValue), 10);
         if (isNaN(numValue) || numValue < 1) {
             setCartItems(cartItems.filter((p) => p.id !== id));
         }
@@ -278,7 +286,6 @@ export default function Billing({ products: initialProducts }: any) {
 
     // Save sale
     const saveSale = async (status: "draft" | "approved") => {
-        // Validate credit period for approved sales
         if (status === "approved" && creditPeriodExpired) {
             toast.error(
                 "Cannot approve sale: Customer's credit period has expired! Please settle outstanding credit first.",
@@ -286,14 +293,14 @@ export default function Billing({ products: initialProducts }: any) {
             return;
         }
 
-        // Validate cash amount for cash payments
+        // ✅ Cash validation must be against GRAND TOTAL
         if (
             status === "approved" &&
             paymentType === "cash" &&
-            cashAmount < netTotal
+            cashAmount < grandTotal
         ) {
             toast.error(
-                "Cash amount must be greater than or equal to the net total!",
+                "Cash amount must be greater than or equal to the grand total!",
             );
             return;
         }
@@ -304,16 +311,20 @@ export default function Billing({ products: initialProducts }: any) {
                 customerName,
                 customerContact,
                 cartItems,
-                totalAmount: total,
+
+                // ✅ store base values in LKR
+                totalAmount: goodsValue,
                 discountValue,
                 discountType,
                 discountAmount,
-                creditUsed: customerCredit,
-                netTotal,
+
+                // ✅ Align with invoice math (so index == print)
+                netTotal: grandTotal,
                 paidAmount,
                 cashAmount: paymentType === "cash" ? cashAmount : 0,
                 cardAmount: 0,
-                creditAmount: paymentType === "credit" ? netTotal : 0,
+                creditAmount: paymentType === "credit" ? grandTotal : 0,
+
                 balance,
                 paymentMethod: paymentType,
                 status,
@@ -329,6 +340,7 @@ export default function Billing({ products: initialProducts }: any) {
                     `/billing/print/${saleId}${currencyParam}`,
                     "_blank",
                 );
+
                 // Reset
                 setCartItems([]);
                 setCustomerName("");
@@ -337,6 +349,7 @@ export default function Billing({ products: initialProducts }: any) {
                 setPaymentType("cash");
                 setCashAmount(0);
                 setDiscountValue(0);
+                setDiscountType("fixed");
             }
         } catch (err: any) {
             toast.error(err.response?.data?.message || "Error saving sale");
@@ -544,6 +557,7 @@ export default function Billing({ products: initialProducts }: any) {
                                         Search for a customer to start billing
                                     </p>
                                 </div>
+
                                 <div className="relative mb-3">
                                     <label className="font-semibold">
                                         Customer Name
@@ -600,6 +614,8 @@ export default function Billing({ products: initialProducts }: any) {
                                                 setCartItems([]);
                                                 setPaymentType("cash");
                                                 setCashAmount(0);
+                                                setDiscountValue(0);
+                                                setDiscountType("fixed");
                                             }}
                                             className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
                                         >
@@ -608,8 +624,8 @@ export default function Billing({ products: initialProducts }: any) {
                                     </div>
                                 </div>
 
-                                {/* Discounts & Credit */}
-                                <div className="text-sm text-gray-700 mb-2">
+                                {/* Discounts */}
+                                <div className="text-sm text-gray-700 mb-3">
                                     Discount:{" "}
                                     <span className="font-semibold">
                                         {selectedCustomer?.discount_category ? (
@@ -631,17 +647,6 @@ export default function Billing({ products: initialProducts }: any) {
                                         )}
                                     </span>
                                 </div>
-
-                                {selectedCustomer &&
-                                    selectedCustomer.creditBalance > 0 && (
-                                        <div className="text-sm text-gray-700 mb-3">
-                                            Credit Balance Used:{" "}
-                                            <span className="font-semibold text-blue-600">
-                                                Rs.{" "}
-                                                {selectedCustomer.creditBalance}
-                                            </span>
-                                        </div>
-                                    )}
 
                                 {/* Payment */}
                                 <div className="space-y-2 mb-3">
@@ -697,8 +702,9 @@ export default function Billing({ products: initialProducts }: any) {
                                             <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded space-y-2">
                                                 <p className="text-sm text-blue-700">
                                                     Full amount (Rs.{" "}
-                                                    {netTotal.toLocaleString()})
-                                                    will be paid through credit
+                                                    {grandTotal.toLocaleString()}
+                                                    ) will be paid through
+                                                    credit
                                                 </p>
                                                 {selectedCustomer?.creditPeriodExpiresAt && (
                                                     <div className="text-xs text-blue-600 pt-2 border-t border-blue-200">
@@ -716,6 +722,7 @@ export default function Billing({ products: initialProducts }: any) {
                                                     </div>
                                                 )}
                                             </div>
+
                                             {creditPeriodExpired && (
                                                 <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded">
                                                     <p className="text-sm text-red-700 font-semibold">
@@ -748,10 +755,8 @@ export default function Billing({ products: initialProducts }: any) {
                                                 checked={
                                                     displayCurrency === "LKR"
                                                 }
-                                                onChange={(e) =>
-                                                    setDisplayCurrency(
-                                                        e.target.value as "LKR",
-                                                    )
+                                                onChange={() =>
+                                                    setDisplayCurrency("LKR")
                                                 }
                                                 className="mr-2"
                                             />
@@ -766,10 +771,8 @@ export default function Billing({ products: initialProducts }: any) {
                                                 checked={
                                                     displayCurrency === "USD"
                                                 }
-                                                onChange={(e) =>
-                                                    setDisplayCurrency(
-                                                        e.target.value as "USD",
-                                                    )
+                                                onChange={() =>
+                                                    setDisplayCurrency("USD")
                                                 }
                                                 className="mr-2"
                                             />
@@ -784,15 +787,25 @@ export default function Billing({ products: initialProducts }: any) {
                                     </p>
                                 </div>
 
-                                {/* Totals */}
+                                {/* ✅ Totals (MATCH InvoicePrint labels) */}
                                 <div className="flex justify-between mb-1">
-                                    <span>Total:</span>
+                                    <span>Goods Value:</span>
                                     <span className="font-semibold">
-                                        {formatCurrency(convertPrice(total))}
+                                        {formatCurrency(
+                                            convertPrice(goodsValue),
+                                        )}
                                     </span>
                                 </div>
+
                                 <div className="flex justify-between mb-1">
-                                    <span>Discount:</span>
+                                    <span>
+                                        Discount
+                                        {selectedCustomer?.discount_category
+                                            ?.name
+                                            ? ` (${selectedCustomer.discount_category.name})`
+                                            : ""}
+                                        :
+                                    </span>
                                     <span className="font-semibold text-green-600">
                                         -{" "}
                                         {formatCurrency(
@@ -800,26 +813,34 @@ export default function Billing({ products: initialProducts }: any) {
                                         )}
                                     </span>
                                 </div>
-                                {selectedCustomer &&
-                                    selectedCustomer.creditBalance > 0 && (
-                                        <div className="flex justify-between mb-1">
-                                            <span>Credit Used:</span>
-                                            <span className="font-semibold text-blue-600">
-                                                -{" "}
-                                                {formatCurrency(
-                                                    convertPrice(
-                                                        selectedCustomer.creditBalance,
-                                                    ),
-                                                )}
-                                            </span>
-                                        </div>
-                                    )}
+
                                 <div className="flex justify-between mb-1">
-                                    <span>Net Total:</span>
+                                    <span>Total:</span>
                                     <span className="font-bold text-blue-600">
-                                        {formatCurrency(convertPrice(netTotal))}
+                                        {formatCurrency(
+                                            convertPrice(totalAfterDiscount),
+                                        )}
                                     </span>
                                 </div>
+
+                                <div className="flex justify-between mb-1">
+                                    <span>VAT 18%:</span>
+                                    <span className="font-semibold">
+                                        {formatCurrency(
+                                            convertPrice(vatAmount),
+                                        )}
+                                    </span>
+                                </div>
+
+                                <div className="flex justify-between mb-1">
+                                    <span>Grand Total:</span>
+                                    <span className="font-bold text-blue-600">
+                                        {formatCurrency(
+                                            convertPrice(grandTotal),
+                                        )}
+                                    </span>
+                                </div>
+
                                 <div className="flex justify-between mb-4">
                                     <span>Balance:</span>
                                     <span className="font-bold text-red-500">
@@ -855,6 +876,7 @@ export default function Billing({ products: initialProducts }: any) {
                                                 >
                                                     <Minus size={14} />
                                                 </button>
+
                                                 <input
                                                     type="number"
                                                     min="1"
@@ -880,6 +902,7 @@ export default function Billing({ products: initialProducts }: any) {
                                                     }
                                                     className="w-16 text-center border rounded p-1 font-semibold"
                                                 />
+
                                                 <button
                                                     className="bg-gray-200 p-1 rounded hover:bg-gray-300"
                                                     onClick={() =>
@@ -888,6 +911,7 @@ export default function Billing({ products: initialProducts }: any) {
                                                 >
                                                     <Plus size={14} />
                                                 </button>
+
                                                 <button
                                                     className="bg-red-500 text-white p-1 rounded hover:bg-red-600"
                                                     onClick={() =>
