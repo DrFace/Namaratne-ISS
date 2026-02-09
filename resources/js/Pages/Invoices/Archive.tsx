@@ -123,35 +123,34 @@ function SalesTable({
                                 <td className="p-3">
                                     <div className="flex justify-end gap-2">
                                         {/* ✅ NEW: View invoice */}
-                                        <Link
-                                            as="a"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="px-3 py-1 rounded border"
-                                            href={`/billing/view/${s.id}`}
-                                        >
-                                            View
-                                        </Link>
+                                        <div className="flex justify-end gap-2">
+                                            <a
+                                                className="px-3 py-1 rounded border"
+                                                href={`/billing/view/${s.id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                View
+                                            </a>
 
-                                        <Link
-                                            as="a"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="px-3 py-1 rounded border"
-                                            href={`/billing/view/${s.id}?download=1`}
-                                        >
-                                            PDF
-                                        </Link>
+                                            <a
+                                                className="px-3 py-1 rounded border"
+                                                href={`/billing/view/${s.id}?download=1`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                PDF
+                                            </a>
 
-                                        <Link
-                                            as="a"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="px-3 py-1 rounded border"
-                                            href={`/billing/print/${s.id}`}
-                                        >
-                                            Print
-                                        </Link>
+                                            <a
+                                                className="px-3 py-1 rounded border"
+                                                href={`/billing/print/${s.id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                Print
+                                            </a>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>
