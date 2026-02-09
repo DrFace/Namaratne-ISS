@@ -84,6 +84,7 @@ Route::middleware('auth')->group(function () {
     });
 
         Route::get('/invoices/archive', [InvoiceArchiveController::class, 'index'])->name('invoices.archive');
+    Route::get('/billing/view/{id}', [BillingController::class, 'invoiceView']);
 
 
     // API route for getting user permissions

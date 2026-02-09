@@ -67,7 +67,7 @@ function formatCreatedAt(iso?: string | null) {
     try {
         return format(parseISO(iso), "dd MMM yyyy, hh:mm a");
     } catch {
-        return iso; // fallback to original string if parsing fails
+        return iso;
     }
 }
 
@@ -122,8 +122,31 @@ function SalesTable({
                                 </td>
                                 <td className="p-3">
                                     <div className="flex justify-end gap-2">
-                                        {/* Your repo prints invoices here */}
+                                        {/* ✅ NEW: View invoice */}
                                         <Link
+                                            as="a"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-3 py-1 rounded border"
+                                            href={`/billing/view/${s.id}`}
+                                        >
+                                            View
+                                        </Link>
+
+                                        <Link
+                                            as="a"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-3 py-1 rounded border"
+                                            href={`/billing/view/${s.id}?download=1`}
+                                        >
+                                            PDF
+                                        </Link>
+
+                                        <Link
+                                            as="a"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
                                             className="px-3 py-1 rounded border"
                                             href={`/billing/print/${s.id}`}
                                         >

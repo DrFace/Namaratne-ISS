@@ -175,6 +175,64 @@ class BillingController extends Controller
             'exchangeRate' => $exchangeRate,
         ]);
     }
+
+    /**
+     * ✅ NEW: View invoice without auto-print + allow PDF download client-side.
+     */
+    public function invoiceView($id, Request $request)
+    {
+        // Same data prep as invoice()
+        $sale = Sales::with([
+            'items.product:id,productName,productCode',
+            'customer:id,name,contactNumber,email,address,vatNumber,discount_category_id',
+            'customer.discountCategory:id,name,type,value'
+        ])->findOrFail($id);
+
+        $sale->items->transform(function ($item) {
+            $item->productName = $item->product?->productName;
+            $item->productCode = $item->product?->productCode;
+            unset($item->product);
+            return $item;
+        });
+
+        if ($sale->customer) {
+            $sale->customer_name = $sale->customer->name;
+            $sale->customer_contact = $sale->customer->contactNumber;
+            $sale->customer_email = $sale->customer->email;
+            $sale->customer_address = $sale->customer->address;
+            $sale->customer_vat_number = $sale->customer->vatNumber;
+
+            // Add discount category info
+            if ($sale->customer->discountCategory) {
+                $sale->discount_category_name = $sale->customer->discountCategory->name;
+                $sale->discount_category_type = $sale->customer->discountCategory->type;
+                $sale->discount_category_value = $sale->customer->discountCategory->value;
+            }
+
+            unset($sale->customer);
+        }
+
+        // Get company VAT number from settings
+        $vatNumber = \App\Models\Setting::getSetting('company_vat_number', '');
+
+        // Get currency from query parameter (default to LKR)
+        $currency = strtoupper($request->query('currency', 'LKR'));
+
+        // Get exchange rate if USD is requested
+        $exchangeRate = null;
+        if ($currency === 'USD') {
+            $rate = \App\Models\CurrencyRate::getCurrentRate('USD', 'LKR');
+            $exchangeRate = $rate ?? 320; // Default to 320 if not set
+        }
+
+        return Inertia::render('Billing/InvoiceView', [
+            'invoice' => $sale,
+            'vatNumber' => $vatNumber,
+            'currency' => $currency,
+            'exchangeRate' => $exchangeRate,
+        ]);
+    }
+
     /**
      * Display the specified resource.
      */
