@@ -20,9 +20,13 @@ export default function InventoryReport({
   inventory: InventoryItem[];
   generatedAt: string;
 }) {
-  useEffect(() => {
-    setTimeout(() => window.print(), 500);
-  }, []);
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleBack = () => {
+    window.history.back();
+  };
 
   const totalItems = inventory.length;
   const totalQuantity = inventory.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
@@ -40,6 +44,21 @@ export default function InventoryReport({
                 @page { margin: 1cm; }
                 body { font-family: Arial, sans-serif; }
             `}</style>
+
+          <div className="no-print bg-white border-b sticky top-0 z-50 p-4 mb-6 shadow-sm flex justify-between items-center">
+              <button 
+                  onClick={handleBack}
+                  className="px-4 py-2 text-sm font-bold text-gray-600 hover:text-gray-900 flex items-center gap-2"
+              >
+                  ← Back to Reports
+              </button>
+              <button 
+                  onClick={handlePrint}
+                  className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all"
+              >
+                  Print Report
+              </button>
+          </div>
 
           <div style={{ maxWidth: "210mm", margin: "0 auto", padding: "20px" }}>
               {/* Header */}

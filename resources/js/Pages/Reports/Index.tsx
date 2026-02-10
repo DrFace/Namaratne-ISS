@@ -1,6 +1,7 @@
 import Authenticated from "@/Layouts/AuthenticatedLayout";
 import { DocumentTextIcon, UserGroupIcon, ArchiveBoxIcon, ArrowTrendingUpIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
+import { router } from "@inertiajs/react";
 import Breadcrumbs from "@/Components/UI/Breadcrumbs";
 import Card from "@/Components/UI/Card";
 import Badge from "@/Components/UI/Badge";
@@ -66,14 +67,14 @@ export default function ReportsIndex() {
       setDateRange(getDefaultDates());
       setShowDateModal(true);
     } else {
-      window.open(report.href, '_blank');
+      router.visit(report.href);
     }
   };
 
   const handleGenerateReport = () => {
     if (selectedReport) {
       const url = `${selectedReport.href}?start_date=${dateRange.startDate}&end_date=${dateRange.endDate}`;
-      window.open(url, '_blank');
+      router.visit(url);
       setShowDateModal(false);
     }
   };
@@ -115,7 +116,7 @@ export default function ReportsIndex() {
                 <div className="pt-4 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
                   <span className="flex items-center gap-1">
                     <DocumentTextIcon className="w-4 h-4" />
-                    Open PDF
+                    View Report
                   </span>
                   <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <ArrowTrendingUpIcon className="w-4 h-4 rotate-45" />
@@ -166,7 +167,7 @@ export default function ReportsIndex() {
                   onClick={handleGenerateReport}
                   className="flex-1"
                 >
-                  Generate PDF
+                  View Report
                 </Button>
               </div>
             </Card>

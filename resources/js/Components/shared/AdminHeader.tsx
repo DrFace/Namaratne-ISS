@@ -8,6 +8,8 @@ import SideNavLinks from "@/lib/SideNavLinks";
 import { useUIStore } from "@/store/uiStore";
 import { useNotificationStore } from "@/store/notificationStore";
 import { motion, AnimatePresence } from "framer-motion";
+import { SearchModal } from "../UI/SearchModal";
+import { MagnifyingGlassIcon as SearchIcon } from "@heroicons/react/24/outline";
 
 function classNames(...classes: any) {
     return classes.filter(Boolean).join(" ");
@@ -26,6 +28,7 @@ const AdminHeader = ({
     const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotificationStore();
     const [userDropdown, setUserDropdown] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
 
     return (
         <>
@@ -144,17 +147,20 @@ const AdminHeader = ({
                         />
                     </div>
 
-                    {/* Center: Search Bar */}
-                    <div className="flex-1 mx-4 max-w-2xl relative group">
-                        <input
-                            type="text"
-                            value={activeSearchQuery}
-                            onChange={(e) => setActiveSearchQuery(e.target.value)}
-                            placeholder="Search product, supplier, order... (/)"
-                            className="w-full px-12 py-2.5 text-sm rounded-2xl border-none bg-slate-800 text-white placeholder-slate-400 focus:ring-4 focus:ring-indigo-500/20 transition-all"
-                            id="global-search-input"
-                        />
-                        <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+                    {/* Center: System Name */}
+                    <div className="flex-1 mx-4 max-w-2xl text-center hidden md:block">
+                        <div className="flex items-center justify-center gap-4">
+                            <h1 className="text-lg lg:text-xl font-black text-white tracking-[0.2em] uppercase transition-all hover:text-indigo-400 cursor-default">
+                                Namerathna Inventory & Sales System
+                            </h1>
+                            <button 
+                                onClick={() => setSearchOpen(true)}
+                                className="group flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 hover:bg-slate-800 rounded-xl border border-white/5 transition-all"
+                            >
+                                <SearchIcon className="w-4 h-4 text-slate-400 group-hover:text-white" />
+                                <span className="text-[10px] font-bold text-slate-500 group-hover:text-slate-300 uppercase tracking-widest px-1.5 py-0.5 bg-slate-900 rounded-md border border-white/5">/</span>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Right: Notification + User */}
@@ -263,6 +269,11 @@ const AdminHeader = ({
                     </div>
                 )}
             </div>
+
+            <SearchModal 
+                isOpen={searchOpen} 
+                onClose={() => setSearchOpen(false)} 
+            />
         </>
     );
 };

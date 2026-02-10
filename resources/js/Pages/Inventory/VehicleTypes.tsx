@@ -37,6 +37,7 @@ export default function VehicleTypesPage() {
                 setIsModalOpen(false);
                 setEditingType(null);
                 setForm({ seriasNo: "" });
+                window.location.reload();
             },
             onError: (err) => setErrors(err)
         });

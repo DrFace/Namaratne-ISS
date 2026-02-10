@@ -45,6 +45,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/customer/{customer}/timeline', [CustomerController::class, 'timeline'])->name('customer.timeline');
     Route::post('/customer-notes', [CustomerController::class, 'storeNote'])->name('customer.notes.store');
 
+    Route::resource('purchase-orders', PurchaseOrderController::class);
+    Route::post('purchase-orders/{id}/receive', [PurchaseOrderController::class, 'receive'])->name('purchase-orders.receive');
+    Route::get('purchase-orders/{id}/print', [PurchaseOrderController::class, 'print'])->name('purchase-orders.print');
+
     Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
     Route::post('/billing', [BillingController::class, 'store'])->name('billing.store');
     Route::get('/customers/search', [BillingController::class, 'search']);

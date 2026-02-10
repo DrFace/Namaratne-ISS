@@ -24,6 +24,9 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(functio
     // Dashboard API
     Route::get('/dashboard', [App\Http\Controllers\Api\V1\DashboardController::class, 'index']);
     
+    // Global Search API
+    Route::get('/search', [App\Http\Controllers\Api\GlobalSearchController::class, 'search']);
+    
     // Products API
     Route::prefix('products')->group(function () {
         Route::get('/', [App\Http\Controllers\Api\V1\ProductController::class, 'index']);
