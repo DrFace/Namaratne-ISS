@@ -12,6 +12,7 @@ use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\InvoiceArchiveController;
+use App\Http\Controllers\PurchaseOrderController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -35,6 +36,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/inventory/{id}', [InventoryController::class, 'destroy'])->name('products.destroy');
     Route::post('/serias', [InventoryController::class, 'seriasStore'])->name('serias.store');
     Route::resource('vehicle-types', \App\Http\Controllers\VehicleTypeController::class);
+    Route::resource('suppliers', \App\Http\Controllers\SupplierController::class);
 
     Route::get('/customer', [CustomerController::class, 'index'])->name('customer.index');
     Route::post('/customer', [CustomerController::class, 'store'])->name('customer.store');

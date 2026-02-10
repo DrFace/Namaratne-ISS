@@ -119,35 +119,35 @@ export default function InvoicePrint({
                         }
                     `}</style>
 
-                    <div className="bg-white font-sans text-[13px] text-gray-900 leading-tight p-6">
-                        <div className="max-w-[800px] mx-auto border border-gray-300 shadow-sm my-6 p-6">
+                    <div className="bg-white font-sans text-[13px] text-gray-900 leading-tight p-6 print:p-0 print:text-black">
+                        <div className="max-w-[800px] mx-auto border border-gray-300 shadow-sm print:shadow-none print:border-black my-6 p-6 print:my-0 print:p-4">
                             {/* HEADER */}
 
                             {/* First Row: Logos and Company Info */}
-                            <div className="flex items-center gap-4 mb-3">
+                            <div className="flex items-center gap-4 mb-3 print:mb-2">
                                 {/* Logos on the LEFT */}
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 print:hidden">
                                     <img
                                         src="/images/eep_logo.jpeg"
                                         alt="EEP Logo"
-                                        className="h-36 w-auto object-contain"
+                                        className="h-32 w-auto object-contain"
                                     />
                                     <img
                                         src="/images/nmd_logo.png"
                                         alt="NMD logo"
-                                        className="h-36 w-auto object-contain"
+                                        className="h-32 w-auto object-contain"
                                     />
                                 </div>
 
                                 {/* Company Name and Details */}
                                 <div className="flex flex-col">
-                                    <h1 className="text-4xl font-bold text-black tracking-wide leading-tight">
+                                    <h1 className="text-4xl print:text-5xl font-bold text-black tracking-wide leading-tight">
                                         NAMARATNA
                                     </h1>
-                                    <h2 className="text-xl font-semibold text-gray-800 leading-tight">
+                                    <h2 className="text-xl print:text-2xl font-semibold text-gray-800 print:text-black leading-tight">
                                         Motor Distributors
                                     </h2>
-                                    <p className="text-xs text-gray-600 mt-1">
+                                    <p className="text-xs text-gray-600 print:text-black mt-1">
                                         Direct importers and island-wide
                                         distributors for ESP shock absorbers
                                     </p>
@@ -156,16 +156,15 @@ export default function InvoicePrint({
 
                             {/* Second Row: Tax Invoice - Left Aligned */}
                             <div className="mb-2">
-                                <p className="text-lg font-semibold text-gray-900">
+                                <p className="text-lg font-bold text-black uppercase tracking-widest">
                                     Tax Invoice
                                 </p>
                             </div>
-                            <div className="flex justify-between items-start border-b-2 border-pink-600 pb-2 mb-2">
-                                <div className="mt-2 space-y-1 text-xs">
+                            <div className="flex justify-between items-start border-b-2 border-gray-900 pb-2 mb-2">
+                                <div className="mt-1 space-y-1 text-xs">
                                     <p>
                                         <strong>Invoice Number:</strong>{" "}
-                                        {invoice.billNumber ||
-                                            "_____________________"}
+                                        <span className="font-bold">{invoice.billNumber || "N/A"}</span>
                                     </p>
                                     {totalPages > 1 && (
                                         <p>
@@ -175,63 +174,46 @@ export default function InvoicePrint({
                                     )}
                                 </div>
 
-                                <div className="mt-2 space-y-1 text-xs">
+                                <div className="mt-1 space-y-1 text-xs">
                                     <p>
                                         <strong>Invoice Date:</strong>{" "}
-                                        {invoice.created_at.split("T")[0] ||
-                                            "___________________________"}
+                                        {invoice.created_at.split("T")[0]}
                                     </p>
                                 </div>
                             </div>
 
                             {/* INVOICE TO / FROM */}
-                            <div className="border-2 border-gray-400 flex mb-3 text-xs">
-                                <div className="w-1/2 p-3 border-r-2 border-gray-400">
-                                    <p className="font-semibold mb-2">
+                            <div className="border border-black flex mb-3 text-xs">
+                                <div className="w-1/2 p-3 border-r border-black">
+                                    <p className="font-bold underline mb-2">
                                         Invoice To:
                                     </p>
-                                    <p>
-                                        Client Name:{" "}
-                                        {invoice.customer_name ||
-                                            "__________________________"}
+                                    <p className="font-bold">
+                                        {invoice.customer_name || "__________________________"}
                                     </p>
                                     <p>
-                                        Company:{" "}
-                                        {invoice.company ||
-                                            "_____________________________"}
+                                        Company: {invoice.company || "N/A"}
                                     </p>
                                     <p>
-                                        Phone No:{" "}
-                                        {invoice.customer_contact ||
-                                            "____________________________"}
+                                        Phone No: {invoice.customer_contact || "N/A"}
                                     </p>
                                     <p>
-                                        Email:{" "}
-                                        {invoice.customer_email ||
-                                            "_______________________________"}
+                                        Address: {invoice.customer_address || "N/A"}
                                     </p>
                                     <p>
-                                        Address:{" "}
-                                        {invoice.customer_address ||
-                                            "_____________________________"}
-                                    </p>
-                                    <p>
-                                        VAT No:{" "}
-                                        {invoice.customer_vat_number ||
-                                            "__________________________"}
+                                        VAT No: {invoice.customer_vat_number || "N/A"}
                                     </p>
                                 </div>
                                 <div className="w-1/2 p-3">
-                                    <p className="font-semibold mb-2">
+                                    <p className="font-bold underline mb-2">
                                         Invoice From:
                                     </p>
-                                    <p>Namaratne Motor Distributors</p>
+                                    <p className="font-bold">Namaratne Motor Distributors</p>
                                     <p>143/19B, Salawa Rd, Mirihana</p>
                                     <p>Tel: 0777756095</p>
                                     <p>Email: saleinfo.nmd@gmail.com</p>
                                     <p>
-                                        VAT No:{" "}
-                                        {vatNumber || "___________________"}
+                                        VAT No: <span className="font-bold">{vatNumber || "N/A"}</span>
                                     </p>
                                 </div>
                             </div>
@@ -239,27 +221,27 @@ export default function InvoicePrint({
                             {/* ITEMS TABLE */}
                             <table className="w-full border-collapse text-xs mb-4">
                                 <thead>
-                                    <tr className="bg-pink-100 border border-gray-400 text-[12px]">
-                                        <th className="border border-gray-400 p-1 text-left w-[20%]">
+                                    <tr className="bg-gray-100 print:bg-transparent border border-black text-[12px]">
+                                        <th className="border border-black p-1 text-left w-[20%]">
                                             ITEM CODE
                                         </th>
-                                        <th className="border border-gray-400 p-1 text-left w-[35%]">
+                                        <th className="border border-black p-1 text-left w-[35%]">
                                             ITEM NAME
                                         </th>
-                                        <th className="border border-gray-400 p-1 text-right w-[15%]">
+                                        <th className="border border-black p-1 text-right w-[15%]">
                                             UNIT PRICE
                                         </th>
-                                        <th className="border border-gray-400 p-1 text-center w-[10%]">
+                                        <th className="border border-black p-1 text-center w-[10%]">
                                             QTY
                                         </th>
-                                        <th className="border border-gray-400 p-1 text-right w-[20%]">
+                                        <th className="border border-black p-1 text-right w-[20%]">
                                             TOTAL
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {(() => {
-                                        const minRows = 5;
+                                        const minRows = 8;
                                         const rows = [];
 
                                         // Add actual items for this page
@@ -272,51 +254,39 @@ export default function InvoicePrint({
                                                 item.totalAmount,
                                             );
                                             rows.push(
-                                                <tr key={i}>
-                                                    <td className="border border-gray-300 p-1">
-                                                        {item.productCode ||
-                                                            "-"}
+                                                <tr key={i} className="border-b border-gray-200 print:border-black/20">
+                                                    <td className="p-1">
+                                                        {item.productCode || "-"}
                                                     </td>
-                                                    <td className="border border-gray-300 p-1">
-                                                        {item.productName ||
-                                                            "-"}
+                                                    <td className="p-1">
+                                                        {item.productName || "-"}
                                                     </td>
-                                                    <td className="border border-gray-300 p-1 text-right">
+                                                    <td className="p-1 text-right">
                                                         {formatCurrency(price)}
                                                     </td>
-                                                    <td className="border border-gray-300 p-1 text-center">
+                                                    <td className="p-1 text-center font-bold">
                                                         {qty}
                                                     </td>
-                                                    <td className="border border-gray-300 p-1 text-right">
+                                                    <td className="p-1 text-right">
                                                         {formatCurrency(total)}
                                                     </td>
                                                 </tr>,
                                             );
                                         });
 
-                                        // Add empty rows to reach minimum 5 rows
+                                        // Add empty rows to reach minimum rows
                                         for (
                                             let i = pageItems.length;
                                             i < minRows;
                                             i++
                                         ) {
                                             rows.push(
-                                                <tr key={`empty-${i}`}>
-                                                    <td className="border border-gray-300 p-1">
-                                                        &nbsp;
-                                                    </td>
-                                                    <td className="border border-gray-300 p-1">
-                                                        &nbsp;
-                                                    </td>
-                                                    <td className="border border-gray-300 p-1">
-                                                        &nbsp;
-                                                    </td>
-                                                    <td className="border border-gray-300 p-1">
-                                                        &nbsp;
-                                                    </td>
-                                                    <td className="border border-gray-300 p-1">
-                                                        &nbsp;
-                                                    </td>
+                                                <tr key={`empty-${i}`} className="border-b border-gray-100 print:border-black/5">
+                                                    <td className="p-1">&nbsp;</td>
+                                                    <td className="p-1">&nbsp;</td>
+                                                    <td className="p-1">&nbsp;</td>
+                                                    <td className="p-1">&nbsp;</td>
+                                                    <td className="p-1">&nbsp;</td>
                                                 </tr>,
                                             );
                                         }
@@ -327,112 +297,53 @@ export default function InvoicePrint({
                                     {/* TOTALS ROWS - Only on last page */}
                                     {pageIndex === itemChunks.length - 1 && (
                                         <>
-                                            <tr>
-                                                <td
-                                                    className="p-1"
-                                                    colSpan={2}
-                                                ></td>
-                                                <td
-                                                    className="border border-gray-300 p-1 font-medium text-left"
-                                                    colSpan={2}
-                                                >
+                                            <tr className="border-t-2 border-black">
+                                                <td className="p-1" colSpan={2}></td>
+                                                <td className="p-1 font-bold text-left" colSpan={2}>
                                                     GOODS VALUE
                                                 </td>
-                                                <td className="border border-gray-300 p-1 text-right">
-                                                    {formatCurrency(
-                                                        convertPrice(
-                                                            goodsValue,
-                                                        ),
-                                                    )}
+                                                <td className="p-1 text-right font-bold">
+                                                    {formatCurrency(convertPrice(goodsValue))}
                                                 </td>
                                             </tr>
 
                                             <tr>
-                                                <td
-                                                    className="p-1"
-                                                    colSpan={2}
-                                                ></td>
-                                                <td
-                                                    className="border border-gray-300 p-1 font-medium text-left"
-                                                    colSpan={2}
-                                                >
-                                                    DISCOUNT
-                                                    {invoice.discount_category_name && (
-                                                        <span className="font-normal text-xs">
-                                                            {" "}
-                                                            (
-                                                            {
-                                                                invoice.discount_category_name
-                                                            }
-                                                            )
-                                                        </span>
-                                                    )}
+                                                <td className="p-1" colSpan={2}></td>
+                                                <td className="p-1 font-normal text-left" colSpan={2}>
+                                                    DISCOUNT {invoice.discount_category_name && `(${invoice.discount_category_name})`}
                                                 </td>
-                                                <td className="border border-gray-300 p-1 text-right">
-                                                    -{" "}
-                                                    {formatCurrency(
-                                                        convertPrice(
-                                                            discountValue,
-                                                        ),
-                                                    )}
+                                                <td className="p-1 text-right">
+                                                    - {formatCurrency(convertPrice(discountValue))}
                                                 </td>
                                             </tr>
 
                                             <tr>
-                                                <td
-                                                    className="p-1"
-                                                    colSpan={2}
-                                                ></td>
-                                                <td
-                                                    className="border border-gray-300 p-1 font-medium text-left"
-                                                    colSpan={2}
-                                                >
-                                                    TOTAL
+                                                <td className="p-1" colSpan={2}></td>
+                                                <td className="p-1 font-bold text-left" colSpan={2}>
+                                                    NET TOTAL
                                                 </td>
-                                                <td className="border border-gray-300 p-1 text-right">
-                                                    {formatCurrency(
-                                                        convertPrice(
-                                                            totalAfterDiscount,
-                                                        ),
-                                                    )}
+                                                <td className="p-1 text-right font-bold">
+                                                    {formatCurrency(convertPrice(totalAfterDiscount))}
                                                 </td>
                                             </tr>
 
                                             <tr>
-                                                <td
-                                                    className="p-1"
-                                                    colSpan={2}
-                                                ></td>
-                                                <td
-                                                    className="border border-gray-300 p-1 font-medium text-left"
-                                                    colSpan={2}
-                                                >
+                                                <td className="p-1" colSpan={2}></td>
+                                                <td className="p-1 font-normal text-left" colSpan={2}>
                                                     VAT 18%
                                                 </td>
-                                                <td className="border border-gray-300 p-1 text-right">
-                                                    {formatCurrency(
-                                                        convertPrice(vatAmount),
-                                                    )}
+                                                <td className="p-1 text-right">
+                                                    {formatCurrency(convertPrice(vatAmount))}
                                                 </td>
                                             </tr>
 
-                                            <tr className="font-bold">
-                                                <td
-                                                    className="p-1"
-                                                    colSpan={2}
-                                                ></td>
-                                                <td
-                                                    className="border border-gray-300 bg-pink-100 p-1 text-left"
-                                                    colSpan={2}
-                                                >
+                                            <tr className="border-y-2 border-black">
+                                                <td className="p-1" colSpan={2}></td>
+                                                <td className="p-1 text-left font-black text-sm" colSpan={2}>
                                                     GRAND TOTAL
                                                 </td>
-                                                <td className="border border-gray-300 bg-pink-100 p-1 text-right">
-                                                    {formatCurrency(
-                                                        convertPrice(
-                                                            grandTotal,
-                                                        ),
-                                                    )}
+                                                <td className="p-1 text-right font-black text-sm underline decoration-double">
+                                                    {formatCurrency(convertPrice(grandTotal))}
                                                 </td>
                                             </tr>
                                         </>

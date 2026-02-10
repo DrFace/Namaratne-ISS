@@ -2,24 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Supplier;
+use App\Services\SupplierService;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class SupplierController extends Controller
 {
+    public function __construct(
+        protected SupplierService $supplierService
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        $suppliers = $this->supplierService->getAllSuppliers();
+        return Inertia::render('Suppliers/Index', [
+            'suppliers' => $suppliers,
+        ]);
     }
 
     /**
@@ -27,23 +29,19 @@ class SupplierController extends Controller
      */
     public function store(Request $request)
     {
-        //
-    }
+        $validated = $request->validate([
+            'supplierName' => 'required|string|max:255',
+            'supplierAddress' => 'nullable|string',
+            'supplierPhone' => 'nullable|string',
+            'supplierEmail' => 'nullable|email',
+            'companyName' => 'nullable|string',
+            'availibility' => 'nullable|in:active,inactive',
+            'status' => 'nullable|string',
+        ]);
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
+        $this->supplierService->createSupplier($validated);
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
+        return redirect()->back()->with('success', 'Supplier created successfully');
     }
 
     /**
@@ -51,7 +49,19 @@ class SupplierController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $validated = $request->validate([
+            'supplierName' => 'sometimes|required|string|max:255',
+            'supplierAddress' => 'nullable|string',
+            'supplierPhone' => 'nullable|string',
+            'supplierEmail' => 'nullable|email',
+            'companyName' => 'nullable|string',
+            'availibility' => 'nullable|in:active,inactive',
+            'status' => 'nullable|string',
+        ]);
+
+        $this->supplierService->updateSupplier((int) $id, $validated);
+
+        return redirect()->back()->with('success', 'Supplier updated successfully');
     }
 
     /**
@@ -59,6 +69,7 @@ class SupplierController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $this->supplierService->deleteSupplier((int) $id);
+        return redirect()->back()->with('success', 'Supplier deleted successfully');
     }
 }

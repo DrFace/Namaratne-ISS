@@ -64,6 +64,16 @@ const SideNavLinks: React.FC = () => {
             disabled: false,
         },
         {
+            name: "Suppliers",
+            link: true,
+            border: false,
+            startWith: "/suppliers",
+            route: "suppliers.index",
+            icon: "BuildingOfficeIcon",
+            count: 0,
+            disabled: false,
+        },
+        {
             name: "Purchase Orders",
             link: true,
             border: false,

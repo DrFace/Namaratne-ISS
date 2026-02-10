@@ -132,7 +132,7 @@ const AdminHeader = ({
             <div className="lg:pt-4 lg:mt-0 lg:px-3 relative lg:fixed bg-slate-900 lg:bg-gradient-to-r lg:from-slate-200 lg:to-slate-100 top-0 left-0 right-0 z-50 backdrop-blur-[6px]">
                 <header className="flex z-50 lg:h-[4.3rem] w-full flex-shrink-0 bg-slate-900 lg:rounded-xl items-center justify-between px-4 lg:px-8">
                     {/* Left: Logo + Sidebar Toggle */}
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-6">
                         <button
                             type="button"
                             className="focus:outline-none focus:ring-2 focus:ring-inset focus:ring-transparent lg:hidden"
@@ -140,11 +140,13 @@ const AdminHeader = ({
                         >
                             <Bars3CenterLeftIcon className="w-6 h-6 text-slate-200" />
                         </button>
-                        <img
-                            className="h-[40px] w-auto object-contain hidden lg:block"
-                            src="/images/nmd_logo.png"
-                            alt="NMD Logo"
-                        />
+                        <div className="flex items-center">
+                            <img
+                                className="h-10 lg:h-12 w-auto object-contain hidden lg:block"
+                                src="/images/nmd_logo.png"
+                                alt="NMD Logo"
+                            />
+                        </div>
                     </div>
 
                     {/* Center: System Name */}
