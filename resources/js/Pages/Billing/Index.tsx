@@ -1,10 +1,6 @@
 import Authenticated from "@/Layouts/AuthenticatedLayout";
 import React, { useState, useEffect } from "react";
-<<<<<<< HEAD
 import { Trash2, Plus, Minus, X } from "lucide-react";
-=======
-import { Trash2, Plus, Minus } from "lucide-react";
->>>>>>> 4d845289fa457ca9004ccc31a16b61d1ca888f90
 import axios from "axios";
 import { router } from "@inertiajs/react";
 import { toast } from "react-toastify";
@@ -17,10 +13,7 @@ export default function Billing({ products: initialProducts }: any) {
     const [searchName, setSearchName] = useState("");
     const [searchCode, setSearchCode] = useState("");
     const [cartItems, setCartItems] = useState<any[]>([]);
-<<<<<<< HEAD
     const [isCartOpen, setIsCartOpen] = useState(false); // Mobile cart toggle
-=======
->>>>>>> 4d845289fa457ca9004ccc31a16b61d1ca888f90
 
     // Customer fields
     const [customerName, setCustomerName] = useState("");
@@ -367,7 +360,6 @@ export default function Billing({ products: initialProducts }: any) {
             toast.error(err.response?.data?.message || "Error saving sale");
         }
     };
-<<<<<<< HEAD
     
     // Close cart on large screens or when clicking outside (optional)
     useEffect(() => {
@@ -379,8 +371,6 @@ export default function Billing({ products: initialProducts }: any) {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
-=======
->>>>>>> 4d845289fa457ca9004ccc31a16b61d1ca888f90
 
     return (
         <Authenticated>
@@ -526,9 +516,6 @@ export default function Billing({ products: initialProducts }: any) {
                         )}
                     </div>
 
-<<<<<<< HEAD
-                    </div>
-
                     {/* Mobile Cart Toggle */}
                     <div className="fixed bottom-4 left-4 right-4 z-40 xl:hidden">
                         <button 
@@ -575,15 +562,6 @@ export default function Billing({ products: initialProducts }: any) {
                                     ? "Cart Summary"
                                     : "Select Customer"}
                             </h2>
-=======
-                    {/* Cart & Payment Section */}
-                    <div className="bg-white rounded-xl shadow p-4 flex flex-col">
-                        <h2 className="text-lg font-semibold mb-4 border-b pb-2">
-                            {selectedCustomer
-                                ? "Cart Summary"
-                                : "Select Customer"}
-                        </h2>
->>>>>>> 4d845289fa457ca9004ccc31a16b61d1ca888f90
 
                         {/* Customer */}
                         {!selectedCustomer ? (
@@ -983,13 +961,10 @@ export default function Billing({ products: initialProducts }: any) {
                                 </div>
                             </>
                         )}
+                        </div>
                     </div>
                 </div>
             </div>
         </Authenticated>
     );
 }
-<<<<<<< HEAD
-
-=======
->>>>>>> 4d845289fa457ca9004ccc31a16b61d1ca888f90
