@@ -174,6 +174,16 @@ const SideNavLinks: React.FC = () => {
             count: 0,
             disabled: false, // or: !hasPermission('view_invoices_archive') if you add a permission
         },
+        {
+            name: "Help & Manual",
+            link: true,
+            border: false,
+            startWith: "/help",
+            route: "help.index",
+            icon: "QuestionMarkCircleIcon",
+            count: 0,
+            disabled: false,
+        },
     ];
 
     return (

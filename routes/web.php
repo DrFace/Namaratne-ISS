@@ -159,6 +159,8 @@ Route::middleware('auth')->group(function () {
 
     // API route for getting user permissions
     Route::get('/api/user/permissions', [PermissionController::class, 'getUserPermissions']);
+    // Help & User Manual
+    Route::get('/help', [App\Http\Controllers\HelpController::class, 'index'])->name('help.index');
 });
 
 require __DIR__ . '/auth.php';
