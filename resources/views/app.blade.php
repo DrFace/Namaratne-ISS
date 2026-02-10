@@ -10,6 +10,8 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <meta name="theme-color" content="#4f46e5">
+        <link rel="icon" type="image/png" href="/images/nmd_logo.png">
+        <link rel="shortcut icon" href="/images/nmd_logo.png">
         <link rel="apple-touch-icon" href="/images/nmd_logo.png">
 
         <!-- Fonts -->
