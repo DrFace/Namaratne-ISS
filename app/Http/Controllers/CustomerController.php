@@ -158,4 +158,121 @@ class CustomerController extends Controller
             ], 400);
         }
     }
+
+    public function timeline($customerId)
+    {
+        $customer = \App\Models\Customer::with(['sales', 'notes.createdBy'])->findOrFail($customerId);
+
+        // Fetch Sales
+        $sales = $customer->sales()->with('user')->get()->map(function($sale) {
+            return [
+                'id' => 'sale-' . $sale->id,
+                'type' => 'sale',
+                'title' => 'Purchase: #' . $sale->billNumber,
+                'description' => "Purchased items worth Rs. " . number_format((float)$sale->totalAmount, 2),
+                'timestamp' => $sale->created_at,
+                'amount' => (float)$sale->totalAmount,
+                'meta' => [
+                    'bill_number' => $sale->billNumber,
+                    'status' => $sale->status,
+                    'user' => $sale->user->name ?? 'System',
+                ]
+            ];
+        });
+
+        // Fetch Payments
+        $payments = \App\Models\Payment::whereIn('sale_id', $customer->sales()->pluck('id'))->with('recordedBy')->get()->map(function($payment) {
+            return [
+                'id' => 'payment-' . $payment->id,
+                'type' => 'payment',
+                'title' => 'Payment Received',
+                'description' => "Payment of Rs. " . number_format((float)$payment->amount, 2) . " via " . ($payment->payment_method ?? 'N/A'),
+                'timestamp' => $payment->payment_date ?: $payment->created_at,
+                'amount' => (float)$payment->amount,
+                'meta' => [
+                    'method' => $payment->payment_method,
+                    'reference' => $payment->reference_number,
+                    'user' => $payment->recordedBy->name ?? 'System',
+                ]
+            ];
+        });
+
+        // Fetch Returns
+        $returns = \App\Models\ReturnModel::whereIn('sale_id', $customer->sales()->pluck('id'))->with('createdBy')->get()->map(function($return) {
+            return [
+                'id' => 'return-' . $return->id,
+                'type' => 'return',
+                'title' => 'Product Return: #' . $return->return_number,
+                'description' => "Returned items worth Rs. " . number_format((float)$return->total_amount, 2),
+                'timestamp' => $return->created_at,
+                'amount' => (float)$return->total_amount,
+                'meta' => [
+                    'return_number' => $return->return_number,
+                    'reason' => $return->reason,
+                    'user' => $return->createdBy->name ?? 'System',
+                ]
+            ];
+        });
+
+        // Fetch Notes
+        $notes = $customer->notes->map(function($note) {
+            return [
+                'id' => 'note-' . $note->id,
+                'type' => 'note',
+                'title' => 'Internal Note (' . ucfirst($note->type) . ')',
+                'description' => $note->note,
+                'timestamp' => $note->created_at,
+                'meta' => [
+                    'type' => $note->type,
+                    'user' => $note->createdBy->name ?? 'System',
+                ]
+            ];
+        });
+
+        // Fetch Activity Logs
+        $activity = \Spatie\Activitylog\Models\Activity::where('subject_type', \App\Models\Customer::class)
+            ->where('subject_id', $customer->id)
+            ->with('causer')
+            ->get()
+            ->map(function($log) {
+                return [
+                    'id' => 'activity-' . $log->id,
+                    'type' => 'activity',
+                    'title' => 'Customer Profile Updated',
+                    'description' => $log->description,
+                    'timestamp' => $log->created_at,
+                    'meta' => [
+                        'user' => $log->causer->name ?? 'System',
+                        'changes' => $log->properties['attributes'] ?? [],
+                    ]
+                ];
+            });
+
+        // Combine and Sort
+        $timeline = $sales->concat($payments)->concat($returns)->concat($notes)->concat($activity)
+            ->sortByDesc(function($item) {
+                return \Carbon\Carbon::parse($item['timestamp'])->timestamp;
+            })
+            ->values();
+
+        return response()->json($timeline);
+    }
+
+    public function storeNote(Request $request)
+    {
+        $data = $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+            'note' => 'required|string',
+            'type' => 'required|string|in:general,follow-up,complaint,vip',
+        ]);
+
+        $data['created_by'] = auth()->id();
+
+        $note = \App\Models\CustomerNote::create($data);
+
+        return response()->json([
+            'message' => 'Note added successfully',
+            'note' => $note->load('createdBy'),
+        ]);
+    }
 }

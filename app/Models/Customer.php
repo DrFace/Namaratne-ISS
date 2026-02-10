@@ -40,6 +40,8 @@ class Customer extends Model
         'creditLimitReachedAt',
         'creditPeriodExpiresAt',
         'canPurchase',
+        'loyalty_points',
+        'segment',
     ];
 
     protected $casts = [
@@ -56,7 +58,16 @@ class Customer extends Model
         'canPurchase'             => 'boolean',
         'contactNumber'           => 'encrypted',
         'vatNumber'               => 'encrypted',
+        'loyalty_points'          => 'integer',
     ];
+
+    /**
+     * Get the notes for this customer
+     */
+    public function notes()
+    {
+        return $this->hasMany(\App\Models\CustomerNote::class);
+    }
 
     /**
      * Get the discount category for this customer

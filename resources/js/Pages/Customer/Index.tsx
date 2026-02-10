@@ -20,6 +20,8 @@ import { Users } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import DiscountCategoriesIndex from "../DiscountCategories/Index";
+import CustomerTimeline from "@/Components/CRM/CustomerTimeline";
+import { History } from "lucide-react";
 
 export default function CustomersIndexPage() {
     const {
@@ -78,9 +80,17 @@ export default function CustomersIndexPage() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedCustomer, setSelectedCustomer] = useState(null);
 
+    const [isTimelineOpen, setIsTimelineOpen] = useState(false);
+    const [timelineCustomer, setTimelineCustomer] = useState(null);
+
     const openEditModal = (customer: any) => {
         setSelectedCustomer(customer);
         setIsEditModalOpen(true);
+    };
+
+    const openTimeline = (customer: any) => {
+        setTimelineCustomer(customer);
+        setIsTimelineOpen(true);
     };
 
     const applyFilters = () => {
@@ -175,6 +185,7 @@ export default function CustomersIndexPage() {
         { label: "To Settle", sortField: "currentCreditSpend", sortable: true },
         { label: "Credit Status", sortField: "", sortable: false },
         { label: "Status", sortField: "status", sortable: true },
+        { label: "Activity", sortField: "", sortable: false },
         { label: "", sortField: "", sortable: false },
         { label: "", sortField: "", sortable: false },
         { label: "", sortField: "", sortable: false },
@@ -351,6 +362,15 @@ export default function CustomersIndexPage() {
 
                                     <TableTd>
                                         <button
+                                            onClick={() => openTimeline(c)}
+                                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all bg-indigo-50 text-indigo-600 hover:bg-indigo-100 shadow-sm"
+                                        >
+                                            <History className="w-4 h-4" />
+                                            Activity
+                                        </button>
+                                    </TableTd>
+                                    <TableTd>
+                                        <button
                                             onClick={() => openEditModal(c)}
                                             disabled={
                                                 !hasPermission("edit_customers")
@@ -472,6 +492,12 @@ export default function CustomersIndexPage() {
                     isAdmin={isAdmin}
                     // ✅ FIX: pass list here too (so edit dropdown shows items)
                     discountCategories={discountCategories}
+                />
+
+                <CustomerTimeline 
+                    isOpen={isTimelineOpen}
+                    customer={timelineCustomer}
+                    onClose={() => setIsTimelineOpen(false)}
                 />
             </div>
         </Authenticated>
