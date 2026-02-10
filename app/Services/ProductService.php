@@ -189,7 +189,7 @@ class ProductService
         try {
             // Filter out protected fields
             $updateData = array_intersect_key($data, array_flip([
-                'brand', 'unit', 'lowStock', 'status', 'availability', 'seriasId'
+                'brand', 'unit', 'lowStock', 'status', 'availability', 'seriasId', 'vehicle_type'
             ]));
 
             if (empty($updateData)) {

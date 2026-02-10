@@ -37,7 +37,7 @@ class SaleResource extends JsonResource
                 'product_id' => $item->productId,
                 'product_name' => $item->product?->productName,
                 'quantity' => $item->quantity,
-                'unit_price' => $item->unitPrice,
+                'unit_price' => $item->salePrice,
                 'total' => $item->totalPrice,
             ]) : null,
             'creator' => [

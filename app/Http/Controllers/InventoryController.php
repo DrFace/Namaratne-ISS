@@ -44,6 +44,7 @@ class InventoryController extends Controller
             'brand'              => 'nullable|string',
             'seriasId'           => 'nullable|integer',
             'lowStock'           => 'required|integer',
+            'vehicle_type'       => 'nullable|string|max:255',
         ]);
 
         $validated['createdBy'] = auth()->id();
@@ -126,6 +127,7 @@ class InventoryController extends Controller
             'lowStock'           => 'nullable|integer|min:0',
             'productName'        => 'nullable|string|max:255',
             'productImage'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'vehicle_type'       => 'nullable|string|max:255',
         ]);
 
         try {

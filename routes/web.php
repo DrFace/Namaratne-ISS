@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\InvoiceArchiveController;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\BulkImportController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -100,6 +101,11 @@ Route::middleware('auth')->group(function () {
         // Settings routes
         Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('settings.index');
         Route::post('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('settings.update');
+
+        // Bulk Import Routes
+        Route::post('/settings/import-products', [BulkImportController::class, 'importProducts'])->name('settings.import-products');
+        Route::post('/settings/import-customers', [BulkImportController::class, 'importCustomers'])->name('settings.import-customers');
+        Route::get('/settings/download-template/{type}', [BulkImportController::class, 'downloadTemplate'])->name('settings.download-template');
         
         // Discount Categories routes
         Route::get('/discount-categories', [\App\Http\Controllers\DiscountCategoryController::class, 'index'])->name('discount-categories.index');

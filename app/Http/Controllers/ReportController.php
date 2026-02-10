@@ -137,7 +137,7 @@ class ReportController extends Controller
                     'customerId' => $detail->sale->customer->customerId ?? '-',
                     'quantity' => $detail->quantity,
                     'salePrice' => $detail->salePrice,
-                    'discount' => $detail->descount ?? 0,
+                    'discount' => $detail->discount ?? 0,
                     'totalAmount' => $detail->totalAmount,
                     'date' => $detail->sale->created_at->format('Y-m-d H:i'),
                 ];

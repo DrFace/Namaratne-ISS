@@ -136,10 +136,78 @@ export default function SettingsIndex() {
                          <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-gray-100 dark:bg-gray-900 rounded-full w-fit">
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
                             <span className="text-[10px] text-gray-500 font-medium uppercase tracking-widest">
-                              Last Sync: {new Date(currencyRate.updated_at).toLocaleString()}
+                               Last Sync: {new Date(currencyRate.updated_at).toLocaleString()}
                             </span>
                          </div>
                        )}
+                     </div>
+                   </div>
+
+                   {/* Bulk Import Section */}
+                   <div className="pt-8 border-t border-gray-100 dark:border-gray-700 space-y-6">
+                     <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                        <Save className="w-5 h-5" />
+                        <h3 className="font-bold text-lg">Bulk Data Import</h3>
+                     </div>
+
+                     <div className="grid md:grid-cols-2 gap-6">
+                        {/* Import Products */}
+                        <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 space-y-4">
+                            <h4 className="font-bold text-gray-900 dark:text-white flex items-center justify-between">
+                                Import Products
+                                <a 
+                                    href={route('settings.download-template', 'products')} 
+                                    className="text-xs text-indigo-600 hover:text-indigo-500 underline"
+                                >
+                                    Download Template
+                                </a>
+                            </h4>
+                            <input 
+                                type="file" 
+                                accept=".xlsx,.xls,.csv"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        const formData = new FormData();
+                                        formData.append('file', file);
+                                        router.post(route('settings.import-products'), formData, {
+                                            onSuccess: () => toast.success("Products imported successfully!"),
+                                            onError: () => toast.error("Failed to import products")
+                                        });
+                                    }
+                                }}
+                                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                            />
+                        </div>
+
+                        {/* Import Customers */}
+                        <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 space-y-4">
+                            <h4 className="font-bold text-gray-900 dark:text-white flex items-center justify-between">
+                                Import Customers
+                                <a 
+                                    href={route('settings.download-template', 'customers')} 
+                                    className="text-xs text-indigo-600 hover:text-indigo-500 underline"
+                                >
+                                    Download Template
+                                </a>
+                            </h4>
+                            <input 
+                                type="file" 
+                                accept=".xlsx,.xls,.csv"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        const formData = new FormData();
+                                        formData.append('file', file);
+                                        router.post(route('settings.import-customers'), formData, {
+                                            onSuccess: () => toast.success("Customers imported successfully!"),
+                                            onError: () => toast.error("Failed to import customers")
+                                        });
+                                    }
+                                }}
+                                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                            />
+                        </div>
                      </div>
                    </div>
                  </div>

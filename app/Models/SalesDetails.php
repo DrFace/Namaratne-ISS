@@ -14,14 +14,14 @@ class SalesDetails extends Model
         'productId',
         'quantity',
         'salePrice',
-        'descount',
+        'discount',
         'totalAmount',
         'returnQuantity',
     ];
 
     protected $casts = [
         'salePrice' => 'decimal:2',
-        'descount' => 'decimal:2',
+        'discount' => 'decimal:2',
         'totalAmount' => 'decimal:2',
     ];
 

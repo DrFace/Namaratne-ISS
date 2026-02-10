@@ -43,6 +43,7 @@ class Product extends Model
         'availability',
         'expiryDate',
         'purchaseDate',
+        'vehicle_type',
     ];
 
      protected $casts = [

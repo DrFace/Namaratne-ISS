@@ -37,7 +37,7 @@ class QuotationController extends Controller
     {
         return Inertia::render('Quotations/Create', [
             'customers' => \App\Models\Customer::select(['id', 'name'])->get(),
-            'products' => \App\Models\Product::select(['id', 'productName', 'productCode', 'unitPrice'])->where('quantity', '>', 0)->get(),
+            'products' => \App\Models\Product::select(['id', 'productName', 'productCode', 'sellingPrice'])->where('quantity', '>', 0)->get(),
         ]);
     }
 
@@ -118,7 +118,7 @@ class QuotationController extends Controller
         return Inertia::render('Quotations/Create', [
             'quotation' => $quotation,
             'customers' => \App\Models\Customer::select(['id', 'name'])->get(),
-            'products' => \App\Models\Product::select(['id', 'productName', 'productCode', 'unitPrice'])->where('quantity', '>', 0)->get(),
+            'products' => \App\Models\Product::select(['id', 'productName', 'productCode', 'sellingPrice'])->where('quantity', '>', 0)->get(),
         ]);
     }
 
