@@ -14,6 +14,9 @@ import {
 import ConfirmButton from "@/Components/elements/buttons/ConfirmButton";
 import { PrimaryLink } from "@/Components/elements/buttons/PrimaryButton";
 import EditCustomerModal from "./EditCustomerModal";
+import Breadcrumbs from "@/Components/UI/Breadcrumbs";
+import EmptyState from "@/Components/UI/EmptyState";
+import { Users } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import DiscountCategoriesIndex from "../DiscountCategories/Index";
@@ -179,7 +182,9 @@ export default function CustomersIndexPage() {
 
     return (
         <Authenticated>
-            <div className="flex-1 p-6">
+            <div className="flex-1 p-6 space-y-6 animate-premium-in">
+                <Breadcrumbs items={[{ label: 'Customers', href: route('customer.index') }]} />
+                
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold">Customers</h2>
                     <div className="relative group">
@@ -271,169 +276,183 @@ export default function CustomersIndexPage() {
                     </div>
                 </div>
 
-                <MasterTable
-                    tableColumns={tableColumns}
-                    filters={filters}
-                    url={route("customer.index")}
-                    createLink={createLink}
-                    links={customers?.meta?.links}
-                    hideDateRange={true}
-                >
-                    {customers.data.map((c: any) => (
-                        <tbody key={c.id} className="bg-white">
-                            <tr>
-                                <TableTd>{c.id}</TableTd>
-                                <TableTd>{c.name}</TableTd>
-                                <TableTd>{c.contactNumber}</TableTd>
-                                <TableTd>
-                                    Rs.{" "}
-                                    {Number(
-                                        c.creditLimit || 0,
-                                    ).toLocaleString()}
-                                </TableTd>
-                                <TableTd>
-                                    Rs.{" "}
-                                    {Number(c.totalSales || 0).toLocaleString()}
-                                </TableTd>
-
-                                <TableTd>
-                                    <span
-                                        className={`font-semibold ${
-                                            Number(c.currentCreditSpend || 0) >
-                                            0
-                                                ? "text-red-600"
-                                                : "text-green-700"
-                                        }`}
-                                    >
+                {customers.data.length > 0 ? (
+                    <MasterTable
+                        tableColumns={tableColumns}
+                        filters={filters}
+                        url={route("customer.index")}
+                        createLink={createLink}
+                        links={customers?.meta?.links}
+                        hideDateRange={true}
+                    >
+                        {customers.data.map((c: any) => (
+                            <tbody key={c.id} className="bg-white">
+                                <tr>
+                                    <TableTd>{c.id}</TableTd>
+                                    <TableTd>{c.name}</TableTd>
+                                    <TableTd>{c.contactNumber}</TableTd>
+                                    <TableTd>
                                         Rs.{" "}
                                         {Number(
-                                            c.currentCreditSpend || 0,
+                                            c.creditLimit || 0,
                                         ).toLocaleString()}
-                                    </span>
-                                </TableTd>
+                                    </TableTd>
+                                    <TableTd>
+                                        Rs.{" "}
+                                        {Number(c.totalSales || 0).toLocaleString()}
+                                    </TableTd>
 
-                                <TableTd>
-                                    {c.canPurchase === false ? (
-                                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                            <ClockIcon className="w-4 h-4" />
-                                            Period Expired
-                                        </span>
-                                    ) : c.creditPeriodExpiresAt ? (
-                                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                            <ClockIcon className="w-4 h-4" />
-                                            {Math.max(
-                                                0,
-                                                Math.floor(
-                                                    (new Date(
-                                                        c.creditPeriodExpiresAt,
-                                                    ).getTime() -
-                                                        Date.now()) /
-                                                        (1000 * 60 * 60 * 24),
-                                                ),
-                                            )}{" "}
-                                            days left
-                                        </span>
-                                    ) : (
-                                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            <CheckCircleIcon className="w-4 h-4" />
-                                            Good
-                                        </span>
-                                    )}
-                                </TableTd>
-
-                                <TableTd>{c.status}</TableTd>
-
-                                <TableTd>
-                                    <button
-                                        onClick={() => openEditModal(c)}
-                                        disabled={
-                                            !hasPermission("edit_customers")
-                                        }
-                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                                            hasPermission("edit_customers")
-                                                ? "bg-green-600 text-white hover:bg-green-700 shadow-sm hover:shadow-md"
-                                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                        }`}
-                                    >
-                                        <PencilIcon className="w-4 h-4" />
-                                        Edit
-                                    </button>
-                                </TableTd>
-
-                                <TableTd>
-                                    <button
-                                        onClick={() =>
-                                            Number(c.currentCreditSpend || 0) >
-                                                0 && handleSettleCredit(c)
-                                        }
-                                        disabled={
-                                            !hasPermission("edit_customers") ||
-                                            Number(c.currentCreditSpend || 0) <=
+                                    <TableTd>
+                                        <span
+                                            className={`font-semibold ${
+                                                Number(c.currentCreditSpend || 0) >
                                                 0
-                                        }
-                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                                            hasPermission("edit_customers") &&
-                                            Number(c.currentCreditSpend || 0) >
-                                                0
-                                                ? "bg-green-600 text-white hover:bg-green-700 shadow-sm hover:shadow-md"
-                                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                        }`}
-                                    >
-                                        <CurrencyDollarIcon className="w-4 h-4" />
-                                        {Number(c.currentCreditSpend || 0) > 0
-                                            ? "Settle Credit"
-                                            : "All Settled"}
-                                    </button>
-                                </TableTd>
+                                                    ? "text-red-600"
+                                                    : "text-green-700"
+                                            }`}
+                                        >
+                                            Rs.{" "}
+                                            {Number(
+                                                c.currentCreditSpend || 0,
+                                            ).toLocaleString()}
+                                        </span>
+                                    </TableTd>
 
-                                <TableTd>
-                                    <button
-                                        onClick={() => {
-                                            if (
-                                                !hasPermission(
-                                                    "delete_customers",
-                                                )
-                                            )
-                                                return;
-                                            if (
-                                                window.confirm(
-                                                    "Are you sure you want to delete this customer?",
-                                                )
-                                            ) {
-                                                fetch(`/customer/${c.id}`, {
-                                                    method: "DELETE",
-                                                    headers: {
-                                                        "X-CSRF-TOKEN":
-                                                            document
-                                                                .querySelector(
-                                                                    'meta[name="csrf-token"]',
-                                                                )
-                                                                ?.getAttribute(
-                                                                    "content",
-                                                                ) || "",
-                                                    },
-                                                }).then(() =>
-                                                    window.location.reload(),
-                                                );
+                                    <TableTd>
+                                        {c.canPurchase === false ? (
+                                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                <ClockIcon className="w-4 h-4" />
+                                                Period Expired
+                                            </span>
+                                        ) : c.creditPeriodExpiresAt ? (
+                                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                                <ClockIcon className="w-4 h-4" />
+                                                {Math.max(
+                                                    0,
+                                                    Math.floor(
+                                                        (new Date(
+                                                            c.creditPeriodExpiresAt,
+                                                        ).getTime() -
+                                                            Date.now()) /
+                                                            (1000 * 60 * 60 * 24),
+                                                    ),
+                                                )}{" "}
+                                                days left
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <CheckCircleIcon className="w-4 h-4" />
+                                                Good
+                                            </span>
+                                        )}
+                                    </TableTd>
+
+                                    <TableTd>{c.status}</TableTd>
+
+                                    <TableTd>
+                                        <button
+                                            onClick={() => openEditModal(c)}
+                                            disabled={
+                                                !hasPermission("edit_customers")
                                             }
-                                        }}
-                                        disabled={
-                                            !hasPermission("delete_customers")
-                                        }
-                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                                            hasPermission("delete_customers")
-                                                ? "bg-red-600 text-white hover:bg-red-700 shadow-sm hover:shadow-md"
-                                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                        }`}
-                                    >
-                                        <TrashIcon className="w-4 h-4" />
-                                        Delete
-                                    </button>
-                                </TableTd>
-                            </tr>
-                        </tbody>
-                    ))}
-                </MasterTable>
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                                hasPermission("edit_customers")
+                                                    ? "bg-green-600 text-white hover:bg-green-700 shadow-sm hover:shadow-md"
+                                                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                            }`}
+                                        >
+                                            <PencilIcon className="w-4 h-4" />
+                                            Edit
+                                        </button>
+                                    </TableTd>
+
+                                    <TableTd>
+                                        <button
+                                            onClick={() =>
+                                                Number(c.currentCreditSpend || 0) >
+                                                    0 && handleSettleCredit(c)
+                                            }
+                                            disabled={
+                                                !hasPermission("edit_customers") ||
+                                                Number(c.currentCreditSpend || 0) <=
+                                                    0
+                                            }
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                                                hasPermission("edit_customers") &&
+                                                Number(c.currentCreditSpend || 0) >
+                                                    0
+                                                    ? "bg-green-600 text-white hover:bg-green-700 shadow-sm hover:shadow-md"
+                                                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                            }`}
+                                        >
+                                            <CurrencyDollarIcon className="w-4 h-4" />
+                                            {Number(c.currentCreditSpend || 0) > 0
+                                                ? "Settle Credit"
+                                                : "All Settled"}
+                                        </button>
+                                    </TableTd>
+
+                                    <TableTd>
+                                        <button
+                                            onClick={() => {
+                                                if (
+                                                    !hasPermission(
+                                                        "delete_customers",
+                                                    )
+                                                )
+                                                    return;
+                                                if (
+                                                    window.confirm(
+                                                        "Are you sure you want to delete this customer?",
+                                                    )
+                                                ) {
+                                                    fetch(`/customer/${c.id}`, {
+                                                        method: "DELETE",
+                                                        headers: {
+                                                            "X-CSRF-TOKEN":
+                                                                document
+                                                                    .querySelector(
+                                                                        'meta[name="csrf-token"]',
+                                                                    )
+                                                                    ?.getAttribute(
+                                                                        "content",
+                                                                    ) || "",
+                                                        },
+                                                    }).then(() =>
+                                                        window.location.reload(),
+                                                    );
+                                                }
+                                            }}
+                                            disabled={
+                                                !hasPermission("delete_customers")
+                                            }
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                                hasPermission("delete_customers")
+                                                    ? "bg-red-600 text-white hover:bg-red-700 shadow-sm hover:shadow-md"
+                                                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                            }`}
+                                        >
+                                            <TrashIcon className="w-4 h-4" />
+                                            Delete
+                                        </button>
+                                    </TableTd>
+                                </tr>
+                            </tbody>
+                        ))}
+                    </MasterTable>
+                ) : (
+                    <div className="py-12 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+                        <EmptyState 
+                            title="No Customers Found" 
+                            description="Start by adding your first customer to the system."
+                            icon={Users}
+                            action={canAddCustomer ? {
+                                label: "Add Customer",
+                                onClick: () => setIsModalOpen(true)
+                            } : undefined}
+                        />
+                    </div>
+                )}
 
                 <CreateCustomerModal
                     isOpen={isModalOpen}

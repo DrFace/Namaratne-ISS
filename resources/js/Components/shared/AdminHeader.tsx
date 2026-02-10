@@ -1,10 +1,13 @@
 import { Dialog, Menu, Transition } from "@headlessui/react";
 import { Bars3CenterLeftIcon, XMarkIcon } from "@heroicons/react/20/solid";
-import { ChevronDownIcon, ChevronUpIcon, BellIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, ChevronUpIcon, BellIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Fragment, ReactNode, useState } from "react";
 import Breadcrumbs from "../elements/header/BreadCumbs";
 import { Link } from "@inertiajs/react";
 import SideNavLinks from "@/lib/SideNavLinks";
+import { useUIStore } from "@/store/uiStore";
+import { useNotificationStore } from "@/store/notificationStore";
+import { motion, AnimatePresence } from "framer-motion";
 
 function classNames(...classes: any) {
     return classes.filter(Boolean).join(" ");
@@ -19,8 +22,10 @@ const AdminHeader = ({
     header?: ReactNode;
     bRoutes?: any[];
 }) => {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [Dropdown, setDropdown] = useState(false);
+    const { sidebarOpen, setSidebarOpen, activeSearchQuery, setActiveSearchQuery } = useUIStore();
+    const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotificationStore();
+    const [userDropdown, setUserDropdown] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
 
     return (
         <>
@@ -73,8 +78,8 @@ const AdminHeader = ({
 
                                 {/* Sidebar navigation */}
                                 <nav className="flex-shrink-0 h-screen pb-10 mt-5 overflow-y-auto">
-                                    <div className="flex items-center justify-center">
-                                        <img className="h-10 mx-auto" alt="site logo" />
+                                    <div className="flex items-center justify-center py-4">
+                                        <img className="h-16 w-auto object-contain" src="/images/nmd_logo.png" alt="NMD Logo" />
                                     </div>
                                     <div className="flex flex-col px-8 py-3 mt-4 space-x-2 bg-gray-100">
                                         <div className="flex items-center justify-between">
@@ -86,15 +91,15 @@ const AdminHeader = ({
                                                 <p className="text-sm font-medium ">{user?.full_name}</p>
                                             </div>
                                             <div>
-                                                {Dropdown ? (
-                                                    <ChevronDownIcon className="w-4 h-4" onClick={() => setDropdown(false)} />
+                                                {userDropdown ? (
+                                                    <ChevronDownIcon className="w-4 h-4" onClick={() => setUserDropdown(false)} />
                                                 ) : (
-                                                    <ChevronUpIcon className="w-4 h-4" onClick={() => setDropdown(true)} />
+                                                    <ChevronUpIcon className="w-4 h-4" onClick={() => setUserDropdown(true)} />
                                                 )}
                                             </div>
                                         </div>
 
-                                        {Dropdown && (
+                                        {userDropdown && (
                                             <div className="px-12 space-y-1">
                                                 <Link
                                                     href={route("logout")}
@@ -132,28 +137,85 @@ const AdminHeader = ({
                         >
                             <Bars3CenterLeftIcon className="w-6 h-6 text-slate-200" />
                         </button>
-                        {/* <img
-                            className="h-[50px] object-contain"
-                            src={"/assets/images/ai-geeks.png"}
-                            alt="site logo"
-                        /> */}
-                    </div>
-
-                    {/* Center: Search Bar */}
-                    <div className="flex-1 mx-4">
-                        <input
-                            type="text"
-                            placeholder="Search product, supplier, order"
-                            className="w-full px-4 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        <img
+                            className="h-[40px] w-auto object-contain hidden lg:block"
+                            src="/images/nmd_logo.png"
+                            alt="NMD Logo"
                         />
                     </div>
 
+                    {/* Center: Search Bar */}
+                    <div className="flex-1 mx-4 max-w-2xl relative group">
+                        <input
+                            type="text"
+                            value={activeSearchQuery}
+                            onChange={(e) => setActiveSearchQuery(e.target.value)}
+                            placeholder="Search product, supplier, order... (/)"
+                            className="w-full px-12 py-2.5 text-sm rounded-2xl border-none bg-slate-800 text-white placeholder-slate-400 focus:ring-4 focus:ring-indigo-500/20 transition-all"
+                            id="global-search-input"
+                        />
+                        <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+                    </div>
+
                     {/* Right: Notification + User */}
-                    <div className="flex items-center space-x-4">
-                        <button className="relative p-2 rounded-full hover:bg-slate-700">
-                            <BellIcon className="w-6 h-6 text-white" />
-                            <span className="absolute top-0 right-0 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
-                        </button>
+                    <div className="flex items-center space-x-6">
+                        <div className="relative">
+                            <button 
+                                onClick={() => setShowNotifications(!showNotifications)}
+                                className="relative p-2 rounded-2xl hover:bg-slate-800 transition-colors group"
+                            >
+                                <BellIcon className="w-6 h-6 text-slate-400 group-hover:text-white transition-colors" />
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-black text-white ring-4 ring-slate-900 animate-in zoom-in duration-300">
+                                        {unreadCount}
+                                    </span>
+                                )}
+                            </button>
+
+                            {/* NOTIFICATION PANEL */}
+                            <AnimatePresence>
+                                {showNotifications && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        className="absolute right-0 mt-4 w-80 bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden z-[100]"
+                                    >
+                                        <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                                            <h3 className="font-black text-sm uppercase tracking-widest">Notifications</h3>
+                                            <button 
+                                                onClick={markAllAsRead}
+                                                className="text-[10px] font-bold text-indigo-600 uppercase hover:underline"
+                                            >
+                                                Mark all read
+                                            </button>
+                                        </div>
+                                        <div className="max-h-96 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-800">
+                                            {notifications.length === 0 ? (
+                                                <div className="p-8 text-center text-gray-400 italic text-sm">
+                                                    No new notifications
+                                                </div>
+                                            ) : (
+                                                notifications.map((n) => (
+                                                    <div 
+                                                        key={n.id} 
+                                                        onClick={() => markAsRead(n.id)}
+                                                        className={classNames(
+                                                            "p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer",
+                                                            !n.read ? "bg-indigo-50/30 dark:bg-indigo-900/10" : ""
+                                                        )}
+                                                    >
+                                                        <p className="text-sm font-bold text-gray-900 dark:text-white">{n.message}</p>
+                                                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{n.description}</p>
+                                                        <p className="text-[10px] text-gray-400 mt-2 uppercase font-black">{new Date(n.created_at).toLocaleTimeString()}</p>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
 
                         <Menu as="div" className="relative">
                             <Menu.Button className="flex items-center text-sm rounded-full focus:outline-none focus:ring-transparent">

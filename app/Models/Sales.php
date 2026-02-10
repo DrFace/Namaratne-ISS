@@ -4,10 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Sales extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['totalAmount', 'status', 'paymentMethod', 'billNumber'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 
     protected $fillable = [
         'customerId',
@@ -59,5 +70,10 @@ class Sales extends Model
     public function items()
     {
         return $this->hasMany(SalesDetails::class, 'salesId');
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'sale_id');
     }
 }

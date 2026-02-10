@@ -2,14 +2,18 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Customer\CustomerRequest;
-use App\Models\Customer;
-use App\Models\DiscountCategory; // ✅ NEW
+use App\Services\CustomerService;
+use App\Models\DiscountCategory;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class CustomerController extends Controller
 {
+    public function __construct(
+        protected CustomerService $customerService
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -19,15 +23,11 @@ class CustomerController extends Controller
         $permissions = $user->getPermissions();
         $isAdmin = $user->isAdmin();
 
-        // ✅ NEW: load discount categories for dropdowns
         $discountCategories = DiscountCategory::select('id', 'name')
             ->orderBy('name')
             ->get();
 
-        // Search (name/contact/email)
         $search = trim((string) request()->query('search', ''));
-
-        // Date range for Total Sales
         $startDateParam = request()->query('start_date');
         $endDateParam = request()->query('end_date');
 
@@ -50,47 +50,20 @@ class CustomerController extends Controller
             }
         }
 
-        $customersQuery = Customer::with('discountCategory');
+        // Use CustomerService to get paginated customers
+        $filters = [
+            'search' => $search !== '' ? $search : null,
+            'start_date' => $rangeStart,
+            'end_date' => $rangeEnd,
+        ];
 
-        if ($search !== '') {
-            $customersQuery->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('contactNumber', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
-
-        // Total Sales should respect date range AND only approved sales
-        if ($rangeStart && $rangeEnd) {
-            $customersQuery->withSum(['sales' => function ($q) use ($rangeStart, $rangeEnd) {
-                $q->where('status', 'approved')
-                  ->whereBetween('created_at', [$rangeStart, $rangeEnd]);
-            }], 'totalAmount');
-        } else {
-            $customersQuery->withSum(['sales' => function ($q) {
-                $q->where('status', 'approved');
-            }], 'totalAmount');
-        }
-
-        $customers = $customersQuery
-            ->latest()
-            ->paginate(10)
-            ->appends(request()->query());
-
-        // Add totalSales attribute to each customer
-        $customers->getCollection()->transform(function ($customer) {
-            $customer->totalSales = $customer->sales_sum_totalamount ?? 0;
-            return $customer;
-        });
+        $customers = $this->customerService->getPaginatedCustomers($filters, 10);
 
         return Inertia::render('Customer/Index', [
             'customers' => $customers,
             'permissions' => $permissions,
             'isAdmin' => $isAdmin,
-
-            // ✅ NEW
             'discountCategories' => $discountCategories,
-
             'filters' => [
                 'search' => $search !== '' ? $search : null,
                 'start_date' => $rangeStart ? $rangeStart->toDateString() : null,
@@ -100,113 +73,89 @@ class CustomerController extends Controller
     }
 
     public function store(CustomerRequest $request)
-{
-    $data = $request->validated();
-
-    // ✅ MAP camelCase → snake_case
-    if (isset($data['discountCategoryId']) && !isset($data['discount_category_id'])) {
-        $data['discount_category_id'] = $data['discountCategoryId'];
-    }
-    unset($data['discountCategoryId']);
-
-    $customer = Customer::create($data);
-
-    $customer->netBalance = $customer->creditBalance ?? 0;
-    $customer->save();
-
-    return response()->json([
-        'message'  => 'Customer added successfully!',
-        'customer' => $customer,
-    ]);
-}
-
-
-    public function update(CustomerRequest $request, Customer $customer)
-{
-    $data = $request->validated();
-
-    // ✅ MAP camelCase → snake_case
-    if (isset($data['discountCategoryId']) && !isset($data['discount_category_id'])) {
-        $data['discount_category_id'] = $data['discountCategoryId'];
-    }
-    unset($data['discountCategoryId']);
-
-    $customer->update($data);
-
-    $customer->netBalance = $customer->creditBalance ?? $customer->netBalance ?? 0;
-    $customer->save();
-
-    // Update credit period status after changes
-    $customer->updateCreditPeriodStatus();
-
-    return response()->json([
-        'message'  => 'Customer updated successfully!',
-        'customer' => $customer,
-    ]);
-}
-
-
-    public function destroy(Customer $customer)
     {
-        $customer->delete();
+        Gate::authorize('add_customer');
 
-        return redirect()->back()->with('success', 'Customer deleted successfully!');
-    }
+        $data = $request->validated();
 
-    public function edit(Customer $customer)
-    {
-        return inertia('Customers/Edit', ['customer' => $customer]);
-    }
-
-    public function settleCredit(Request $request, Customer $customer)
-    {
-        $currentOutstanding = (float) ($customer->currentCreditSpend ?? 0);
-
-        if ($currentOutstanding <= 0) {
-            return response()->json([
-                'message' => 'No outstanding credit to settle',
-            ], 400);
+        // MAP camelCase → snake_case
+        if (isset($data['discountCategoryId']) && !isset($data['discount_category_id'])) {
+            $data['discount_category_id'] = $data['discountCategoryId'];
         }
+        unset($data['discountCategoryId']);
 
+        try {
+            $customer = $this->customerService->createCustomer($data);
+
+            return response()->json([
+                'message' => 'Customer added successfully!',
+                'customer' => $customer,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error creating customer: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function update(CustomerRequest $request, $customerId)
+    {
+        $data = $request->validated();
+
+        // MAP camelCase → snake_case
+        if (isset($data['discountCategoryId']) && !isset($data['discount_category_id'])) {
+            $data['discount_category_id'] = $data['discountCategoryId'];
+        }
+        unset($data['discountCategoryId']);
+
+        try {
+            $customer = $this->customerService->updateCustomer($customerId, $data);
+
+            return response()->json([
+                'message' => 'Customer updated successfully!',
+                'customer' => $customer,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error updating customer: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function destroy($customerId)
+    {
+        Gate::authorize('delete_customer');
+
+        try {
+            $this->customerService->deleteCustomer($customerId);
+
+            return redirect()->back()->with('success', 'Customer deleted successfully!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error deleting customer: ' . $e->getMessage());
+        }
+    }
+
+    public function settleCredit(Request $request, $customerId)
+    {
         $amount = $request->input('amount', null);
 
-        if ($amount === null || $amount === '') {
+        if ($amount === null || $amount === '' || !is_numeric($amount) || $amount <= 0) {
             return response()->json([
-                'message' => 'Settlement amount is required',
+                'message' => 'Valid settlement amount is required',
             ], 422);
         }
 
-        if (!is_numeric($amount)) {
+        try {
+            $customer = $this->customerService->settleCredit($customerId, (float) $amount);
+
             return response()->json([
-                'message' => 'Settlement amount must be a number',
-            ], 422);
-        }
-
-        $amount = (float) $amount;
-
-        if ($amount <= 0) {
+                'message' => "Credit of Rs. {$amount} settled successfully for {$customer->name}",
+                'customer' => $customer,
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Settlement amount must be greater than 0',
-            ], 422);
+                'message' => $e->getMessage(),
+            ], 400);
         }
-
-        if ($amount > $currentOutstanding) {
-            return response()->json([
-                'message' => 'Settlement amount cannot exceed outstanding credit',
-            ], 422);
-        }
-
-        // Subtract only the settled amount
-        $customer->currentCreditSpend = max(0, $currentOutstanding - $amount);
-        $customer->save();
-
-        // Update credit period status (resets periods if credit becomes 0)
-        $customer->refresh();
-        $customer->updateCreditPeriodStatus();
-
-        return response()->json([
-            'message' => "Credit of Rs. {$amount} settled successfully for {$customer->name}",
-            'customer' => $customer,
-        ]);
     }
 }

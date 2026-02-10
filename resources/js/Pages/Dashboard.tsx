@@ -25,6 +25,13 @@ import {
 } from "chart.js";
 import { Line, Doughnut, Bar } from "react-chartjs-2";
 import ExpiredCreditCustomersWidget from "@/Components/Dashboard/ExpiredCreditCustomersWidget";
+import Card from "@/Components/UI/Card";
+import StatsCard from "@/Components/UI/StatsCard";
+import Badge from "@/Components/UI/Badge";
+import Button from "@/Components/UI/Button";
+import Input from "@/Components/UI/Input";
+import Breadcrumbs from "@/Components/UI/Breadcrumbs";
+import EmptyState from "@/Components/UI/EmptyState";
 
 // Register ChartJS components
 ChartJS.register(
@@ -243,88 +250,89 @@ export default function Dashboard() {
 
     return (
         <Authenticated bRoutes={undefined}>
-            <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+            <div className="p-4 md:p-8 space-y-6 animate-premium-in">
+                <Breadcrumbs items={[]} />
+                
                 {/* Header */}
-                <div className="mb-6">
-                    <h1 className="text-3xl font-bold text-gray-800 font-Inter">
-                        Hi, {user.first_name}
-                    </h1>
-                    <p className="text-sm text-gray-600">
-                        Here's your inventory overview and analytics
-                    </p>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+                            Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">{user.first_name}</span>
+                        </h1>
+                        <p className="text-gray-500 dark:text-gray-400 mt-1">
+                            Here's what's happening with your inventory today.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Button variant="secondary" icon={<Calendar className="w-4 h-4" />}>
+                            {new Date().toLocaleDateString('en-LK', { month: 'long', day: 'numeric', year: 'numeric' })}
+                        </Button>
+                    </div>
                 </div>
 
                 {/* KPI Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
                     {hasPermission("view_total_stock_value") && (
-                        <KPICard
+                        <StatsCard
                             title="Total Stock Value"
                             value={formatCurrency(kpis?.totalStockValue || 0)}
-                            icon={<DollarSign className="w-6 h-6" />}
+                            icon={DollarSign}
                             color="blue"
                         />
                     )}
                     {hasPermission("view_total_products") && (
-                        <KPICard
-                            title="Total Products / SKUs"
+                        <StatsCard
+                            title="Total Products"
                             value={kpis?.totalProducts || 0}
-                            icon={<Package className="w-6 h-6" />}
-                            color="green"
+                            icon={Package}
+                            color="emerald"
                         />
                     )}
                     {hasPermission("view_low_stock_count") && (
-                        <div
+                        <StatsCard
+                            title="Low Stock"
+                            value={kpis?.lowStockCount || 0}
+                            icon={TrendingDown}
+                            color="amber"
                             onClick={() => scrollToSection(lowStockRef)}
-                            className="cursor-pointer"
-                        >
-                            <KPICard
-                                title="Low Stock Items"
-                                value={kpis?.lowStockCount || 0}
-                                icon={<TrendingDown className="w-6 h-6" />}
-                                color="orange"
-                            />
-                        </div>
+                        />
                     )}
                     {hasPermission("view_out_of_stock_count") && (
-                        <div
+                        <StatsCard
+                            title="Out of Stock"
+                            value={kpis?.outOfStockCount || 0}
+                            icon={AlertTriangle}
+                            color="rose"
                             onClick={() => scrollToSection(outOfStockRef)}
-                            className="cursor-pointer"
-                        >
-                            <KPICard
-                                title="Out of Stock Items"
-                                value={kpis?.outOfStockCount || 0}
-                                icon={<AlertTriangle className="w-6 h-6" />}
-                                color="red"
-                            />
-                        </div>
+                        />
                     )}
                 </div>
 
                 {/* Sales KPIs */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {hasPermission("view_today_sales") && (
-                        <KPICard
+                        <StatsCard
                             title="Today's Sales"
                             value={formatCurrency(kpis?.todaySalesValue || 0)}
-                            subtitle={`${kpis?.todaySalesCount || 0} invoices`}
-                            icon={<ShoppingCart className="w-6 h-6" />}
-                            color="purple"
+                            description={`${kpis?.todaySalesCount || 0} invoices today`}
+                            icon={ShoppingCart}
+                            color="indigo"
                         />
                     )}
                     {hasPermission("view_month_sales") && (
-                        <KPICard
-                            title="This Month's Sales"
+                        <StatsCard
+                            title="Monthly Sales"
                             value={formatCurrency(kpis?.thisMonthSales || 0)}
-                            icon={<Calendar className="w-6 h-6" />}
+                            icon={Calendar}
                             color="indigo"
                         />
                     )}
                     {hasPermission("view_month_profit") && (
-                        <KPICard
-                            title="This Month's Profit"
+                        <StatsCard
+                            title="Monthly Profit"
                             value={formatCurrency(kpis?.thisMonthProfit || 0)}
-                            subtitle="Estimated gross profit"
-                            icon={<TrendingUp className="w-6 h-6" />}
+                            description="Estimated gross profit"
+                            icon={TrendingUp}
                             color="emerald"
                         />
                     )}
@@ -333,536 +341,398 @@ export default function Dashboard() {
                 {/* Expired Credit Customers Widget */}
                 <ExpiredCreditCustomersWidget />
 
-                {/* Date Range Filter (ONLY for Sales Trend, Top 5, Recent Transactions) */}
+                {/* Date Range Filter */}
                 {showAnalyticsFilter && (
-                    <div className="bg-white rounded-2xl shadow-sm p-6">
-                        <div className="flex flex-col lg:flex-row lg:items-end gap-4">
-                            <div className="flex-1">
-                                <div className="text-lg font-semibold text-gray-800 mb-2">
+                    <Card className="p-6">
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                            <div className="max-w-md">
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                                     Analytics Date Range
-                                </div>
-                                <div className="text-sm text-gray-600">
-                                    Applies only to Sales Trend, Top 5 Selling
-                                    Products, and Recent Transactions.
-                                </div>
+                                </h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    Apply filters to Sales Trend, Top Products, and Transactions.
+                                </p>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row gap-3">
-                                <div className="flex flex-col">
-                                    <label className="text-xs text-gray-600 mb-1">
-                                        From
-                                    </label>
-                                    <input
+                            <div className="flex flex-col sm:flex-row items-end gap-3 flex-1 lg:justify-end">
+                                <div className="w-full sm:w-48">
+                                    <Input
+                                        label="From"
                                         type="date"
                                         value={startDate}
-                                        onChange={(e) =>
-                                            setStartDate(e.target.value)
-                                        }
-                                        className="border rounded-lg px-3 py-2 text-sm"
+                                        onChange={(e) => setStartDate(e.target.value)}
                                     />
                                 </div>
 
-                                <div className="flex flex-col">
-                                    <label className="text-xs text-gray-600 mb-1">
-                                        To
-                                    </label>
-                                    <input
+                                <div className="w-full sm:w-48">
+                                    <Input
+                                        label="To"
                                         type="date"
                                         value={endDate}
-                                        onChange={(e) =>
-                                            setEndDate(e.target.value)
-                                        }
-                                        className="border rounded-lg px-3 py-2 text-sm"
+                                        onChange={(e) => setEndDate(e.target.value)}
                                     />
                                 </div>
 
-                                <div className="flex gap-2 sm:self-end">
-                                    <button
+                                <div className="flex gap-2 w-full sm:w-auto">
+                                    <Button 
                                         onClick={applyDateRange}
-                                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition"
                                         disabled={!startDate || !endDate}
+                                        className="flex-1 sm:flex-none"
                                     >
                                         Apply
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button 
+                                        variant="secondary"
                                         onClick={clearDateRange}
-                                        className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-200 transition"
+                                        className="flex-1 sm:flex-none"
                                     >
                                         Reset
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </Card>
                 )}
 
                 {/* Charts Section */}
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     {/* Sales Trend */}
                     {hasPermission("view_sales_trend") && (
-                        <div className="bg-white rounded-2xl shadow-sm p-6">
-                            <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                                Sales Trend
-                            </h2>
-                            <div className="h-64">
+                        <Card className="p-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <TrendingUp className="w-5 h-5 text-indigo-500" />
+                                    Sales Revenue Trend
+                                </h2>
+                                <Badge variant="primary">Last 30 Days</Badge>
+                            </div>
+                            <div className="h-72">
                                 <Line
                                     data={salesChartData}
-                                    options={chartOptions}
+                                    options={{
+                                        ...chartOptions,
+                                        scales: {
+                                            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                                            x: { grid: { display: false } }
+                                        }
+                                    }}
                                 />
                             </div>
-                        </div>
+                        </Card>
                     )}
 
                     {/* Stock by Category */}
                     {hasPermission("view_stock_by_category") && (
-                        <div className="bg-white rounded-2xl shadow-sm p-6">
-                            <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                                Stock by Category
+                        <Card className="p-6">
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                                <Package className="w-5 h-5 text-emerald-500" />
+                                Inventory Distribution
                             </h2>
-                            <div className="h-64 flex items-center justify-center">
+                            <div className="h-72 flex items-center justify-center">
                                 {charts?.stockByCategory?.length > 0 ? (
                                     <Doughnut
                                         data={categoryChartData}
-                                        options={chartOptions}
+                                        options={{
+                                            ...chartOptions,
+                                            cutout: '70%',
+                                        }}
                                     />
                                 ) : (
-                                    <p className="text-gray-500">
-                                        No category data available
-                                    </p>
+                                    <p className="text-gray-500 italic">No category data available</p>
                                 )}
                             </div>
-                        </div>
+                        </Card>
                     )}
                 </div>
 
                 {/* Top Products Chart */}
                 {hasPermission("view_top_selling_products") && (
-                    <div className="bg-white rounded-2xl shadow-sm p-6">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                            Top 5 Selling Products
+                    <Card className="p-6">
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                            <TrendingUp className="w-5 h-5 text-violet-500" />
+                            Top Perfoming Products
                         </h2>
-                        <div className="h-64">
+                        <div className="h-72">
                             {charts?.topProducts?.length > 0 ? (
                                 <Bar
                                     data={topProductsChartData}
                                     options={{
                                         ...chartOptions,
                                         indexAxis: "y" as const,
+                                        scales: {
+                                            x: { grid: { color: 'rgba(0,0,0,0.05)' } },
+                                            y: { grid: { display: false } }
+                                        }
                                     }}
                                 />
                             ) : (
                                 <div className="flex items-center justify-center h-full">
-                                    <p className="text-gray-500">
-                                        No sales data available
-                                    </p>
+                                    <p className="text-gray-500 italic">No sales data available</p>
                                 </div>
                             )}
                         </div>
-                    </div>
+                    </Card>
                 )}
 
                 {/* Tables Section */}
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                     {/* Low Stock Table */}
                     {hasPermission("view_low_stock_alerts") && (
-                        <div
-                            className="bg-white rounded-2xl shadow-sm p-6"
-                            ref={lowStockRef}
-                        >
-                            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                <TrendingDown className="w-5 h-5 text-orange-500" />
-                                Low Stock Alert
-                            </h2>
-                            <div className="overflow-x-auto">
+                        <Card className="p-6" ref={lowStockRef}>
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <TrendingDown className="w-5 h-5 text-orange-500" />
+                                    Low Stock Alerts
+                                </h2>
+                                <Badge variant="warning">{tables?.lowStockItems?.length || 0} Items</Badge>
+                            </div>
+                            <div className="overflow-x-auto scrollbar-hide">
                                 <table className="w-full text-sm">
                                     <thead>
-                                        <tr className="border-b">
-                                            <th className="text-left py-2 px-2 font-medium text-gray-600">
-                                                Product
-                                            </th>
-                                            <th className="text-left py-2 px-2 font-medium text-gray-600">
-                                                Code
-                                            </th>
-                                            <th className="text-left py-2 px-2 font-medium text-gray-600">
-                                                vehicle Type
-                                            </th>
-                                            <th className="text-center py-2 px-2 font-medium text-gray-600">
-                                                Current
-                                            </th>
-                                            <th className="text-center py-2 px-2 font-medium text-gray-600">
-                                                Threshold
-                                            </th>
+                                        <tr className="text-left text-gray-500 border-b border-gray-100 dark:border-gray-800">
+                                            <th className="pb-3 font-semibold">Product</th>
+                                            <th className="pb-3 font-semibold text-center">In Stock</th>
+                                            <th className="pb-3 font-semibold text-center">Threshold</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody className="divide-y divide-gray-50 dark:divide-gray-900">
                                         {tables?.lowStockItems?.length > 0 ? (
-                                            tables.lowStockItems.map(
-                                                (item: any) => (
-                                                    <tr
-                                                        key={item.id}
-                                                        className="border-b hover:bg-blue-50 cursor-pointer transition"
-                                                        onClick={() =>
-                                                            handleProductClick(
-                                                                item,
-                                                            )
-                                                        }
-                                                    >
-                                                        <td className="py-2 px-2">
-                                                            {item.productName ||
-                                                                "_"}
-                                                        </td>
-                                                        <td className="py-2 px-2 text-gray-600">
-                                                            {item.productCode ||
-                                                                "_"}
-                                                        </td>
-                                                        <td className="py-2 px-2 text-gray-600">
-                                                            {item.series || "_"}
-                                                        </td>
-                                                        <td className="py-2 px-2 text-center">
-                                                            <span className="text-orange-600 font-semibold">
-                                                                {item.quantity ??
-                                                                    "_"}
-                                                            </span>
-                                                        </td>
-                                                        <td className="py-2 px-2 text-center text-gray-600">
-                                                            {item.lowStock ??
-                                                                "_"}
-                                                        </td>
-                                                    </tr>
-                                                ),
-                                            )
+                                            tables.lowStockItems.map((item: any) => (
+                                                <tr
+                                                    key={item.id}
+                                                    className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30 cursor-pointer transition-colors"
+                                                    onClick={() => handleProductClick(item)}
+                                                >
+                                                    <td className="py-4">
+                                                        <div className="font-bold text-gray-900 dark:text-white">{item.productName}</div>
+                                                        <div className="text-xs text-gray-400 font-mono mt-0.5">{item.productCode}</div>
+                                                    </td>
+                                                    <td className="py-4 text-center">
+                                                        <Badge variant="error" className="tabular-nums font-bold">
+                                                            {item.quantity}
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="py-4 text-center text-gray-400 tabular-nums">
+                                                        {item.lowStock}
+                                                    </td>
+                                                </tr>
+                                            ))
                                         ) : (
                                             <tr>
-                                                <td
-                                                    colSpan={5}
-                                                    className="text-center py-4 text-gray-500"
-                                                >
-                                                    No low stock items
+                                                <td colSpan={3} className="py-8">
+                                                    <EmptyState 
+                                                        title="No Low Stock Items" 
+                                                        description="Your inventory levels are healthy across all products."
+                                                        icon={Package}
+                                                    />
                                                 </td>
                                             </tr>
                                         )}
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
+                        </Card>
                     )}
 
                     {/* Out of Stock Table */}
                     {hasPermission("view_out_of_stock_alerts") && (
-                        <div
-                            className="bg-white rounded-2xl shadow-sm p-6"
-                            ref={outOfStockRef}
-                        >
-                            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                <AlertTriangle className="w-5 h-5 text-red-500" />
-                                Out of Stock
-                            </h2>
-                            <div className="overflow-x-auto">
+                        <Card className="p-6" ref={outOfStockRef}>
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <AlertTriangle className="w-5 h-5 text-rose-500" />
+                                    Critically Out of Stock
+                                </h2>
+                                <Badge variant="error">{tables?.outOfStockItems?.length || 0} SKUs</Badge>
+                            </div>
+                            <div className="overflow-x-auto scrollbar-hide">
                                 <table className="w-full text-sm">
                                     <thead>
-                                        <tr className="border-b">
-                                            <th className="text-left py-2 px-2 font-medium text-gray-600">
-                                                Product
-                                            </th>
-                                            <th className="text-left py-2 px-2 font-medium text-gray-600">
-                                                Code
-                                            </th>
-                                            <th className="text-left py-2 px-2 font-medium text-gray-600">
-                                                Vehicle Type
-                                            </th>
-                                            <th className="text-left py-2 px-2 font-medium text-gray-600">
-                                                Batch
-                                            </th>
+                                        <tr className="text-left text-gray-500 border-b border-gray-100 dark:border-gray-800">
+                                            <th className="pb-3 font-semibold">Product</th>
+                                            <th className="pb-3 font-semibold">Vehicle</th>
+                                            <th className="pb-3 font-semibold">Batch</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody className="divide-y divide-gray-50 dark:divide-gray-900">
                                         {tables?.outOfStockItems?.length > 0 ? (
-                                            tables.outOfStockItems.map(
-                                                (item: any) => (
-                                                    <tr
-                                                        key={item.id}
-                                                        className="border-b hover:bg-blue-50 cursor-pointer transition"
-                                                        onClick={() =>
-                                                            handleProductClick(
-                                                                item,
-                                                            )
-                                                        }
-                                                    >
-                                                        <td className="py-2 px-2">
-                                                            {item.productName ||
-                                                                "_"}
-                                                        </td>
-                                                        <td className="py-2 px-2 text-gray-600">
-                                                            {item.productCode ||
-                                                                "_"}
-                                                        </td>
-                                                        <td className="py-2 px-2 text-gray-600">
-                                                            {item.series || "_"}
-                                                        </td>
-                                                        <td className="py-2 px-2 text-gray-600">
-                                                            {item.batchNumber ||
-                                                                "_"}
-                                                        </td>
-                                                    </tr>
-                                                ),
-                                            )
+                                            tables.outOfStockItems.map((item: any) => (
+                                                <tr
+                                                    key={item.id}
+                                                    className="group hover:bg-gray-50/50 dark:hover:bg-gray-800/30 cursor-pointer transition-colors"
+                                                    onClick={() => handleProductClick(item)}
+                                                >
+                                                    <td className="py-4">
+                                                        <div className="font-bold text-gray-900 dark:text-white">{item.productName}</div>
+                                                        <div className="text-xs text-gray-400 font-mono mt-0.5">{item.productCode}</div>
+                                                    </td>
+                                                    <td className="py-4">
+                                                        <div className="text-gray-600 dark:text-gray-300">{item.series || "_"}</div>
+                                                    </td>
+                                                    <td className="py-4">
+                                                        <Badge variant="neutral" className="font-mono">{item.batchNumber || "N/A"}</Badge>
+                                                    </td>
+                                                </tr>
+                                            ))
                                         ) : (
                                             <tr>
-                                                <td
-                                                    colSpan={4}
-                                                    className="text-center py-4 text-gray-500"
-                                                >
-                                                    No out of stock items
+                                                <td colSpan={3} className="py-8">
+                                                    <EmptyState 
+                                                        title="Inventory is Healthy" 
+                                                        description="All products are currently in stock."
+                                                        icon={Package}
+                                                    />
                                                 </td>
                                             </tr>
                                         )}
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
+                        </Card>
                     )}
                 </div>
 
                 {/* Recent Transactions */}
                 {hasPermission("view_recent_transactions") && (
-                    <div className="bg-white rounded-2xl shadow-sm p-6">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                            Recent Transactions
-                        </h2>
-                        <div className="overflow-x-auto">
+                    <Card className="p-6">
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <ShoppingCart className="w-6 h-6 text-indigo-500" />
+                                Recent Transactions
+                            </h2>
+                            <Button variant="ghost" className="text-indigo-600 dark:text-indigo-400 text-sm font-bold">
+                                View All
+                            </Button>
+                        </div>
+                        <div className="overflow-x-auto scrollbar-hide">
                             <table className="w-full text-sm">
                                 <thead>
-                                    <tr className="border-b">
-                                        <th className="text-left py-2 px-2 font-medium text-gray-600">
-                                            Bill #
-                                        </th>
-                                        <th className="text-left py-2 px-2 font-medium text-gray-600">
-                                            Date
-                                        </th>
-                                        <th className="text-left py-2 px-2 font-medium text-gray-600">
-                                            Customer
-                                        </th>
-                                        <th className="text-right py-2 px-2 font-medium text-gray-600">
-                                            Amount
-                                        </th>
-                                        <th className="text-center py-2 px-2 font-medium text-gray-600">
-                                            Payment
-                                        </th>
-                                        <th className="text-center py-2 px-2 font-medium text-gray-600">
-                                            Status
-                                        </th>
+                                    <tr className="text-left text-gray-500 border-b border-gray-100 dark:border-gray-800">
+                                        <th className="pb-4 font-semibold px-2">Invoice #</th>
+                                        <th className="pb-4 font-semibold px-2">Date</th>
+                                        <th className="pb-4 font-semibold px-2">Customer</th>
+                                        <th className="pb-4 font-semibold px-2 text-right">Amount</th>
+                                        <th className="pb-4 font-semibold px-2 text-center">Payment</th>
+                                        <th className="pb-4 font-semibold px-2 text-center">Status</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="divide-y divide-gray-50 dark:divide-gray-900">
                                     {tables?.recentTransactions?.length > 0 ? (
-                                        tables.recentTransactions.map(
-                                            (transaction: any) => (
-                                                <tr
-                                                    key={transaction.id}
-                                                    className="border-b hover:bg-gray-50"
-                                                >
-                                                    <td className="py-2 px-2 font-mono text-xs">
-                                                        {transaction.billNumber}
-                                                    </td>
-                                                    <td className="py-2 px-2 text-gray-600">
-                                                        {transaction.date}
-                                                    </td>
-                                                    <td className="py-2 px-2">
-                                                        {
-                                                            transaction.customerName
-                                                        }
-                                                    </td>
-                                                    <td className="py-2 px-2 text-right font-semibold">
-                                                        {formatCurrency(
-                                                            transaction.amount,
-                                                        )}
-                                                    </td>
-                                                    <td className="py-2 px-2 text-center">
-                                                        <span className="px-2 py-1 rounded-full text-xs bg-gray-100 capitalize">
-                                                            {
-                                                                transaction.paymentMethod
-                                                            }
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-2 px-2 text-center">
-                                                        <span
-                                                            className={`px-2 py-1 rounded-full text-xs capitalize ${
-                                                                transaction.status ===
-                                                                "approved"
-                                                                    ? "bg-green-100 text-green-700"
-                                                                    : transaction.status ===
-                                                                        "pending"
-                                                                      ? "bg-yellow-100 text-yellow-700"
-                                                                      : "bg-gray-100 text-gray-700"
-                                                            }`}
-                                                        >
-                                                            {transaction.status}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            ),
-                                        )
+                                        tables.recentTransactions.map((transaction: any) => (
+                                            <tr key={transaction.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                                                <td className="py-5 px-2 font-black text-xs text-gray-900 dark:text-white">
+                                                    #{transaction.billNumber}
+                                                </td>
+                                                <td className="py-5 px-2 text-gray-500 dark:text-gray-400">
+                                                    {transaction.date}
+                                                </td>
+                                                <td className="py-5 px-2 font-bold text-gray-900 dark:text-white">
+                                                    {transaction.customerName}
+                                                </td>
+                                                <td className="py-5 px-2 text-right font-black text-indigo-600 dark:text-indigo-400 tabular-nums">
+                                                    {formatCurrency(transaction.amount)}
+                                                </td>
+                                                <td className="py-5 px-2 text-center">
+                                                    <Badge variant="neutral" className="uppercase">{transaction.paymentMethod}</Badge>
+                                                </td>
+                                                <td className="py-5 px-2 text-center">
+                                                    <Badge 
+                                                        variant={transaction.status === "approved" ? "success" : "warning"}
+                                                        className="capitalize"
+                                                    >
+                                                        {transaction.status}
+                                                    </Badge>
+                                                </td>
+                                            </tr>
+                                        ))
                                     ) : (
                                         <tr>
-                                            <td
-                                                colSpan={6}
-                                                className="text-center py-4 text-gray-500"
-                                            >
-                                                No recent transactions
+                                            <td colSpan={6} className="py-12">
+                                                <EmptyState 
+                                                    title="No Transactions Found" 
+                                                    description="We couldn't find any recent sales records for this period."
+                                                    icon={ShoppingCart}
+                                                />
                                             </td>
                                         </tr>
                                     )}
                                 </tbody>
                             </table>
                         </div>
-                    </div>
+                    </Card>
                 )}
             </div>
 
             {/* Product Details Modal */}
             {showProductModal && selectedProduct && (
                 <div
-                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                    className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
                     onClick={() => setShowProductModal(false)}
                 >
-                    <div
-                        className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl"
+                    <Card
+                        className="max-w-md w-full p-8 relative"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="flex justify-between items-start mb-4">
-                            <h3 className="text-xl font-bold text-gray-800">
+                        <button
+                            onClick={() => setShowProductModal(false)}
+                            className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+
+                        <div className="text-center mb-8">
+                            <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <Package className="w-8 h-8" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                                 Product Details
                             </h3>
-                            <button
-                                onClick={() => setShowProductModal(false)}
-                                className="text-gray-400 hover:text-gray-600 transition"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
+                            <Badge variant="neutral" className="mt-2">
+                                {selectedProduct.productCode}
+                            </Badge>
                         </div>
 
-                        <div className="space-y-3">
-                            <div className="flex justify-between py-2 border-b">
-                                <span className="text-gray-600 font-medium">
-                                    Item Name:
-                                </span>
-                                <span className="text-gray-800 font-semibold">
-                                    {selectedProduct.productName}
-                                </span>
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-800">
+                                <span className="text-gray-500 dark:text-gray-400 font-medium">Item Name</span>
+                                <span className="text-gray-900 dark:text-white font-bold">{selectedProduct.productName}</span>
                             </div>
-                            <div className="flex justify-between py-2 border-b">
-                                <span className="text-gray-600 font-medium">
-                                    Part Number:
-                                </span>
-                                <span className="text-gray-800 font-mono text-sm">
-                                    {selectedProduct.productCode}
-                                </span>
+                            <div className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-800">
+                                <span className="text-gray-500 dark:text-gray-400 font-medium">Vehicle Type</span>
+                                <span className="text-gray-900 dark:text-white">{selectedProduct.series || "_"}</span>
                             </div>
-                            <div className="flex justify-between py-2 border-b">
-                                <span className="text-gray-600 font-medium">
-                                    Batch Number:
-                                </span>
-                                <span className="text-gray-800">
-                                    {selectedProduct.batchNumber || "_"}
-                                </span>
+                            <div className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-800">
+                                <span className="text-gray-500 dark:text-gray-400 font-medium">Batch Number</span>
+                                <Badge variant="info">{selectedProduct.batchNumber || "UNBATCHED"}</Badge>
                             </div>
                             {selectedProduct.quantity !== undefined && (
-                                <div className="flex justify-between py-2 border-b">
-                                    <span className="text-gray-600 font-medium">
-                                        Current Stock:
-                                    </span>
-                                    <span className="text-gray-800 font-bold">
+                                <div className="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-800">
+                                    <span className="text-gray-500 dark:text-gray-400 font-medium">Current Stock</span>
+                                    <span className={`text-lg font-extrabold ${selectedProduct.quantity <= (selectedProduct.lowStock || 0) ? 'text-rose-600' : 'text-emerald-600'}`}>
                                         {selectedProduct.quantity}
                                     </span>
                                 </div>
                             )}
-                            {selectedProduct.lowStock && (
-                                <div className="flex justify-between py-2 border-b">
-                                    <span className="text-gray-600 font-medium">
-                                        Low Stock Threshold:
-                                    </span>
-                                    <span className="text-gray-800">
-                                        {selectedProduct.lowStock}
-                                    </span>
-                                </div>
-                            )}
-                            {selectedProduct.buyingPrice && (
-                                <div className="flex justify-between py-2 border-b">
-                                    <span className="text-gray-600 font-medium">
-                                        Buying Price:
-                                    </span>
-                                    <span className="text-gray-800">
-                                        {formatCurrency(
-                                            selectedProduct.buyingPrice,
-                                        )}
-                                    </span>
-                                </div>
-                            )}
                             {selectedProduct.sellingPrice && (
-                                <div className="flex justify-between py-2 border-b">
-                                    <span className="text-gray-600 font-medium">
-                                        Selling Price:
-                                    </span>
-                                    <span className="text-gray-800 font-semibold">
-                                        {formatCurrency(
-                                            selectedProduct.sellingPrice,
-                                        )}
+                                <div className="flex justify-between items-center py-3">
+                                    <span className="text-gray-500 dark:text-gray-400 font-medium">Retail Price</span>
+                                    <span className="text-xl font-black text-indigo-600 dark:text-indigo-400">
+                                        {formatCurrency(selectedProduct.sellingPrice)}
                                     </span>
                                 </div>
                             )}
                         </div>
 
-                        <button
+                        <Button
                             onClick={() => setShowProductModal(false)}
-                            className="mt-6 w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition"
+                            className="mt-8 w-full"
                         >
-                            Close
-                        </button>
-                    </div>
+                            Close Detail
+                        </Button>
+                    </Card>
                 </div>
             )}
         </Authenticated>
     );
 }
 
-interface KPICardProps {
-    title: string;
-    value: string | number;
-    subtitle?: string;
-    icon: React.ReactNode;
-    color:
-        | "blue"
-        | "green"
-        | "orange"
-        | "red"
-        | "purple"
-        | "indigo"
-        | "emerald";
-}
-
-function KPICard({ title, value, subtitle, icon, color }: KPICardProps) {
-    const colorClasses = {
-        blue: "bg-blue-50 text-blue-600",
-        green: "bg-green-50 text-green-600",
-        orange: "bg-orange-50 text-orange-600",
-        red: "bg-red-50 text-red-600",
-        purple: "bg-purple-50 text-purple-600",
-        indigo: "bg-indigo-50 text-indigo-600",
-        emerald: "bg-emerald-50 text-emerald-600",
-    };
-
-    return (
-        <div className="bg-white rounded-2xl shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition">
-            <div className={`p-3 rounded-xl ${colorClasses[color]}`}>
-                {icon}
-            </div>
-            <div className="flex-1">
-                <div className="text-sm text-gray-600 font-medium">{title}</div>
-                <div className="text-2xl font-bold text-gray-800">{value}</div>
-                {subtitle && (
-                    <div className="text-xs text-gray-500 mt-1">{subtitle}</div>
-                )}
-            </div>
-        </div>
-    );
-}
+// KPICard removed as it's replaced by StatsCard component

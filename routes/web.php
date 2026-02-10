@@ -34,6 +34,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/inventory/{id}', [InventoryController::class, 'update'])->name('products.update');
     Route::delete('/inventory/{id}', [InventoryController::class, 'destroy'])->name('products.destroy');
     Route::post('/serias', [InventoryController::class, 'seriasStore'])->name('serias.store');
+    Route::resource('vehicle-types', \App\Http\Controllers\VehicleTypeController::class);
 
     Route::get('/customer', [CustomerController::class, 'index'])->name('customer.index');
     Route::post('/customer', [CustomerController::class, 'store'])->name('customer.store');
@@ -46,6 +47,14 @@ Route::middleware('auth')->group(function () {
     Route::post('/billing', [BillingController::class, 'store'])->name('billing.store');
     Route::get('/customers/search', [BillingController::class, 'search']);
     Route::get('/billing/print/{id}', [BillingController::class, 'invoice']);
+
+    // Barcode routes
+    Route::post('/barcode/generate', [App\Http\Controllers\BarcodeController::class, 'generate'])->name('barcode.generate');
+    Route::post('/barcode/save/{product}', [App\Http\Controllers\BarcodeController::class, 'save'])->name('barcode.save');
+    Route::get('/barcode/download', [App\Http\Controllers\BarcodeController::class, 'download'])->name('barcode.download');
+    Route::post('/barcode/bulk', [App\Http\Controllers\BarcodeController::class, 'bulk'])->name('barcode.bulk');
+    Route::get('/barcode/types', [App\Http\Controllers\BarcodeController::class, 'types'])->name('barcode.types');
+
 
     // Currency routes
     Route::get('/settings/currency', [CurrencyRateController::class, 'index'])->name('currency.index');
@@ -62,6 +71,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports/payments', [ReportController::class, 'paymentReport'])->name('reports.payments');
     Route::get('/reports/inventory', [ReportController::class, 'inventoryReport'])->name('reports.inventory');
     Route::get('/reports/sales-movement', [ReportController::class, 'salesMovementReport'])->name('reports.sales-movement');
+
+    // Enhanced analytics routes
+    Route::prefix('analytics')->name('analytics.')->group(function () {
+        Route::get('/inventory', [App\Http\Controllers\EnhancedReportController::class, 'inventory'])->name('inventory');
+        Route::get('/sales', [App\Http\Controllers\EnhancedReportController::class, 'sales'])->name('sales');
+        Route::get('/profit', [App\Http\Controllers\EnhancedReportController::class, 'profit'])->name('profit');
+        Route::get('/customers', [App\Http\Controllers\EnhancedReportController::class, 'customers'])->name('customers');
+        Route::get('/abc-analysis', [App\Http\Controllers\EnhancedReportController::class, 'abcAnalysis'])->name('abc');
+        Route::post('/export', [App\Http\Controllers\EnhancedReportController::class, 'export'])->name('export');
+    });
 
     // Admin routes
     Route::middleware('admin')->group(function () {
@@ -83,9 +102,46 @@ Route::middleware('auth')->group(function () {
         Route::delete('/discount-categories/{id}/customers/{customerId}', [\App\Http\Controllers\DiscountCategoryController::class, 'removeCustomer'])->name('discount-categories.remove-customer');
     });
 
+    // Payment routes
+    Route::prefix('sales/{sale}')->group(function () {
+        Route::post('/payments', [App\Http\Controllers\PaymentController::class, 'store'])->name('payments.store');
+        Route::get('/payments', [App\Http\Controllers\PaymentController::class, 'index'])->name('payments.index');
+    });
+    Route::get('/payments/history', [App\Http\Controllers\PaymentController::class, 'history'])->name('payments.history');
+    Route::delete('/payments/{payment}', [App\Http\Controllers\PaymentController::class, 'destroy'])->name('payments.destroy');
+
+    // Quotation routes
+    Route::resource('quotations', App\Http\Controllers\QuotationController::class);
+    Route::post('/quotations/{id}/convert', [App\Http\Controllers\QuotationController::class, 'convertToInvoice'])->name('quotations.convert');
+    Route::patch('/quotations/{id}/status', [App\Http\Controllers\QuotationController::class, 'updateStatus'])->name('quotations.status');
+
+    // Return routes
+    Route::get('/returns', [App\Http\Controllers\ReturnController::class, 'index'])->name('returns.index');
+    Route::get('/sales/{sale}/return', [App\Http\Controllers\ReturnController::class, 'create'])->name('returns.create');
+    Route::post('/returns', [App\Http\Controllers\ReturnController::class, 'store'])->name('returns.store');
+    Route::get('/returns/{id}', [App\Http\Controllers\ReturnController::class, 'show'])->name('returns.show');
+
+    // Warehouse routes
+    Route::resource('warehouses', App\Http\Controllers\WarehouseController::class);
+    Route::get('/products/{product}/warehouse-stock', [App\Http\Controllers\WarehouseController::class, 'productStock'])->name('warehouses.product-stock');
+
+    // Stock Transfer routes
+    Route::apiResource('transfers', App\Http\Controllers\WarehouseTransferController::class)->only(['index', 'store', 'show']);
+    Route::post('/transfers/{transfer}/complete', [App\Http\Controllers\WarehouseTransferController::class, 'complete'])->name('transfers.complete');
+
+    // Unit Management
+    Route::apiResource('units', App\Http\Controllers\UnitController::class);
+
+    // Advanced Stock Reports
+    Route::get('/reports/dead-stock', [App\Http\Controllers\EnhancedReportController::class, 'deadStock'])->name('reports.dead-stock');
+    Route::get('/reports/reorder-list', [App\Http\Controllers\EnhancedReportController::class, 'reorderReport'])->name('reports.reorder');
+
         Route::get('/invoices/archive', [InvoiceArchiveController::class, 'index'])->name('invoices.archive');
     Route::get('/billing/view/{id}', [BillingController::class, 'invoiceView']);
 
+
+    // Audit Trail
+    Route::get('/audit-logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('audit.index');
 
     // API route for getting user permissions
     Route::get('/api/user/permissions', [PermissionController::class, 'getUserPermissions']);

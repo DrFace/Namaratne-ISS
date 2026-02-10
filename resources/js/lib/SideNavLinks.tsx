@@ -43,6 +43,26 @@ const SideNavLinks: React.FC = () => {
             count: 0,
             disabled: false, // Accessible to all, actions restricted on page
         },
+        {
+            name: "Warehouses",
+            link: true,
+            border: false,
+            startWith: "/warehouses",
+            route: "warehouses.index",
+            icon: "HomeModernIcon",
+            count: 0,
+            disabled: false,
+        },
+        {
+            name: "Vehicle Types",
+            link: true,
+            border: false,
+            startWith: "/vehicle-types",
+            route: "vehicle-types.index",
+            icon: "TruckIcon", // Hero icon for vehicles
+            count: 0,
+            disabled: false,
+        },
 
         {
             name: "Reports",
@@ -93,6 +113,16 @@ const SideNavLinks: React.FC = () => {
             icon: "CurrencyDollarIcon",
             count: 0,
             disabled: false, // Accessible to all
+        },
+        {
+            name: "Quotations",
+            link: true,
+            border: false,
+            startWith: "/quotations",
+            route: "quotations.index",
+            icon: "DocumentTextIcon",
+            count: 0,
+            disabled: false,
         },
         {
             name: "Settings",

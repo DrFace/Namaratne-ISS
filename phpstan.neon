@@ -1,0 +1,15 @@
+includes:
+    - vendor/nunomaduro/larastan/extension.neon
+
+parameters:
+    paths:
+        - app/
+
+    # Level 5 is a good balance for existing codebases
+    level: 5
+
+    excludePaths:
+        - ./app/Http/Middleware/RedirectIfAuthenticated.php
+
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false

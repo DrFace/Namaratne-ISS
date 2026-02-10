@@ -3,10 +3,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Customer extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'email', 'contactNumber', 'creditLimit', 'status'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 
     protected $fillable = [
         'customerId',
@@ -43,6 +54,8 @@ class Customer extends Model
         'creditLimitReachedAt'    => 'datetime',
         'creditPeriodExpiresAt'   => 'datetime',
         'canPurchase'             => 'boolean',
+        'contactNumber'           => 'encrypted',
+        'vatNumber'               => 'encrypted',
     ];
 
     /**

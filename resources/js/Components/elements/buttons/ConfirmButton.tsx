@@ -1,6 +1,6 @@
-import { Link } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { useLaravelReactI18n } from 'laravel-react-i18n';
-import { ButtonHTMLAttributes, useState } from 'react';
+import { ButtonHTMLAttributes, useState, ReactNode } from 'react';
 
 export default function ConfirmButton({
     className = "",
@@ -10,6 +10,8 @@ export default function ConfirmButton({
     message = "Are you sure ?",
     yesText,
     noText,
+    onSuccess,
+    children,
     ...props
 }: {
     className?: string;
@@ -19,10 +21,21 @@ export default function ConfirmButton({
     message?: string;
     yesText?: string;
     noText?: string;
+    onSuccess?: () => void;
+    children?: ReactNode;
 } & ButtonHTMLAttributes<HTMLButtonElement>) {
     const { t } = useLaravelReactI18n();
 
     const [collapse, setCollapse] = useState(false);
+
+    const handleConfirm = () => {
+        router.delete(url, {
+            onSuccess: () => {
+                setCollapse(false);
+                if (onSuccess) onSuccess();
+            }
+        });
+    };
 
     return (
         <div
@@ -32,21 +45,18 @@ export default function ConfirmButton({
             }
         >
             {collapse && (
-                <span className="self-center mr-4 text-red-900">
+                <span className="self-center mr-4 text-red-900 text-xs font-bold">
                     {message ?? t("confirmButton.danger.message")}
                 </span>
             )}
-            <div className="ml-auto ">
+            <div className="ml-auto flex items-center">
                 {collapse && (
-                    <Link
-                        method="delete"
-                        href={url}
-                        as='button'
+                    <button
+                        onClick={handleConfirm}
                         className="inline-flex items-center px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase transition duration-150 ease-in-out bg-red-600 border border-transparent rounded-l-md hover:bg-red-500 active:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                     >
-                        {/* {t("confirmButton.danger.yes")} */}
                         Yes
-                    </Link>
+                    </button>
                 )}
                 <span
                     onClick={() => !disabled && setCollapse(!collapse)}
@@ -54,14 +64,15 @@ export default function ConfirmButton({
                         `${collapse
                             ? " bg-slate-600 hover:bg-slate-500 active:bg-slate-700 rounded-r-md focus:outline-none focus:ring-2 focus:ring-slate-500 "
                             : " bg-red-600 hover:bg-red-500 active:bg-red-700 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 "
-                        } inline-flex cursor-pointer items-center px-4 py-2   border border-transparent font-semibold text-xs text-white uppercase tracking-widest  focus:ring-offset-2 transition ease-in-out duration-150 ${disabled ? "cursor-not-allowed opacity-25" : ""
+                        } inline-flex cursor-pointer items-center px-4 py-2 border border-transparent font-semibold text-xs text-white uppercase tracking-widest focus:ring-offset-2 transition ease-in-out duration-150 ${disabled ? "cursor-not-allowed opacity-25" : ""
                         } ` + className
                     }
                 >
-                    <span>
-                        {/* {collapse ? t("confirmButton.danger.no") : label} */}
-                        {collapse ? "No" : label}
-                    </span>
+                    {children ? children : (
+                        <span>
+                            {collapse ? "No" : label}
+                        </span>
+                    )}
                 </span>
             </div>
         </div>

@@ -1,14 +1,19 @@
 import Authenticated from "@/Layouts/AuthenticatedLayout";
 import React, { useState, useEffect } from "react";
-import { Trash2, Plus, Minus } from "lucide-react";
+import { Trash2, Plus, Minus, X } from "lucide-react";
 import axios from "axios";
 import { router } from "@inertiajs/react";
 import { toast } from "react-toastify";
+import Breadcrumbs from "@/Components/UI/Breadcrumbs";
+import EmptyState from "@/Components/UI/EmptyState";
+import Badge from "@/Components/UI/Badge";
+import { ShoppingCart, Search, Users, Package } from "lucide-react";
 
 export default function Billing({ products: initialProducts }: any) {
     const [searchName, setSearchName] = useState("");
     const [searchCode, setSearchCode] = useState("");
     const [cartItems, setCartItems] = useState<any[]>([]);
+    const [isCartOpen, setIsCartOpen] = useState(false); // Mobile cart toggle
 
     // Customer fields
     const [customerName, setCustomerName] = useState("");
@@ -355,11 +360,24 @@ export default function Billing({ products: initialProducts }: any) {
             toast.error(err.response?.data?.message || "Error saving sale");
         }
     };
+    
+    // Close cart on large screens or when clicking outside (optional)
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth >= 1280) {
+                setIsCartOpen(false);
+            }
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     return (
         <Authenticated>
-            <div className="min-h-screen bg-gray-100 p-6">
-                <div className="max-w-8xl mx-auto grid grid-cols-3 gap-6">
+            <div className="min-h-screen bg-gray-50/50 p-6 space-y-6 animate-premium-in">
+                <Breadcrumbs items={[{ label: 'Billing', href: route('billing.index') }]} />
+                
+                <div className="max-w-8xl mx-auto grid grid-cols-1 xl:grid-cols-3 gap-6">
                     {/* Products Section */}
                     <div className="col-span-2 bg-white rounded-xl shadow p-4">
                         {!selectedCustomer ? (
@@ -409,62 +427,21 @@ export default function Billing({ products: initialProducts }: any) {
                                 ) : (customerName || customerContact) &&
                                   (customerName.length >= 2 ||
                                       customerContact.length >= 2) ? (
-                                    <div className="text-center">
-                                        <div className="text-gray-400 mb-4">
-                                            <svg
-                                                className="w-24 h-24 mx-auto"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                                />
-                                            </svg>
-                                        </div>
-                                        <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                                            No customers found
-                                        </h3>
-                                        <p className="text-gray-500 mb-4">
-                                            No customers match your search query
-                                        </p>
-                                        <button
-                                            onClick={() =>
-                                                router.visit("/customer")
-                                            }
-                                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium"
-                                        >
-                                            Add New Customer
-                                        </button>
-                                    </div>
+                                    <EmptyState 
+                                        title="No Customers Found" 
+                                        description="No records match your search query." 
+                                        icon={Users}
+                                        action={{
+                                            label: "Add New Customer",
+                                            onClick: () => router.visit("/customer")
+                                        }}
+                                    />
                                 ) : (
-                                    <div className="text-center">
-                                        <div className="text-gray-400 mb-4">
-                                            <svg
-                                                className="w-24 h-24 mx-auto"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                                />
-                                            </svg>
-                                        </div>
-                                        <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                                            Start by searching your customer
-                                        </h3>
-                                        <p className="text-gray-500">
-                                            Enter customer name or contact
-                                            number in the right panel to begin
-                                        </p>
-                                    </div>
+                                    <EmptyState 
+                                        title="Search for a Customer" 
+                                        description="Enter a name or contact number in the right panel to begin." 
+                                        icon={Search}
+                                    />
                                 )}
                             </div>
                         ) : (
@@ -489,65 +466,104 @@ export default function Billing({ products: initialProducts }: any) {
                                         className="w-full border rounded p-2"
                                     />
                                 </div>
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
                                     {filteredProducts.map((product: any) => (
                                         <div
                                             key={product.id}
-                                            className="border rounded p-3 flex flex-col justify-between"
+                                            className="group bg-white dark:bg-gray-800/40 border border-gray-100 dark:border-gray-700 rounded-2xl p-4 transition-all hover:shadow-xl hover:-translate-y-1 flex flex-col justify-between"
                                         >
-                                            <div>
-                                                <div className="font-semibold">
+                                            <div className="space-y-2">
+                                                <div className="font-bold text-gray-900 dark:text-white line-clamp-2 min-h-[3rem]">
                                                     {product.productName}
                                                 </div>
 
-                                                {product.productDescription && (
-                                                    <div className="text-xs text-gray-400 mt-1">
-                                                        ITEM NAME:{" "}
-                                                        {
-                                                            product.productDescription
-                                                        }
-                                                    </div>
-                                                )}
+                                                <div className="flex justify-between items-center text-xs">
+                                                    <span className="text-gray-400 uppercase tracking-wider font-semibold">SKU: {product.productCode}</span>
+                                                    <Badge variant={product.quantity > (product.lowStock || 5) ? 'success' : 'warning'}>
+                                                        {product.quantity} in stock
+                                                    </Badge>
+                                                </div>
 
-                                                <div className="text-sm text-gray-500 mt-1">
+                                                <div className="text-lg font-black text-indigo-600 dark:text-indigo-400 tabular-nums py-2">
                                                     {formatCurrency(
                                                         convertPrice(
                                                             product.sellingPrice,
                                                         ),
                                                     )}
                                                 </div>
-
-                                                <div className="text-xs text-gray-400">
-                                                    Stock: {product.quantity}
-                                                </div>
-
-                                                <div className="text-xs text-gray-400">
-                                                    Part Number:{" "}
-                                                    {product.productCode}
-                                                </div>
                                             </div>
                                             <button
-                                                className="mt-2 bg-blue-600 text-white py-1 rounded hover:bg-blue-700"
+                                                className="mt-4 w-full bg-indigo-600 text-white font-bold py-2.5 rounded-xl transition-all hover:bg-indigo-700 hover:shadow-lg active:scale-95 flex items-center justify-center gap-2"
                                                 onClick={() =>
                                                     addToCart(product)
                                                 }
                                             >
-                                                Add
+                                                <Plus className="w-4 h-4" /> Add to Cart
                                             </button>
                                         </div>
                                     ))}
+                                    {filteredProducts.length === 0 && (
+                                        <div className="col-span-full py-12">
+                                            <EmptyState 
+                                                title="No Products Found" 
+                                                description={`We couldn't find any products matching "${searchName || searchCode}"`}
+                                                icon={Package}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </>
                         )}
                     </div>
 
+                    </div>
+
+                    {/* Mobile Cart Toggle */}
+                    <div className="fixed bottom-4 left-4 right-4 z-40 xl:hidden">
+                        <button 
+                            onClick={() => setIsCartOpen(!isCartOpen)}
+                            className="w-full bg-indigo-600 text-white rounded-2xl shadow-2xl p-4 flex items-center justify-between hover:bg-indigo-700 transition-all active:scale-95"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="bg-white/20 p-2 rounded-lg">
+                                    <ShoppingCart className="w-6 h-6" />
+                                </div>
+                                <div className="text-left">
+                                    <div className="text-xs text-indigo-200 uppercase font-bold tracking-wider">Total</div>
+                                    <div className="text-xl font-black">{formatCurrency(convertPrice(grandTotal))}</div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 font-bold bg-white/10 px-4 py-2 rounded-xl">
+                                <span>{isCartOpen ? 'Close Cart' : 'View Cart'}</span>
+                                <div className="bg-white text-indigo-600 w-6 h-6 rounded-full flex items-center justify-center text-xs">
+                                    {cartItems.length}
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+
                     {/* Cart & Payment Section */}
-                    <div className="bg-white rounded-xl shadow p-4 flex flex-col">
-                        <h2 className="text-lg font-semibold mb-4 border-b pb-2">
-                            {selectedCustomer
-                                ? "Cart Summary"
-                                : "Select Customer"}
-                        </h2>
+                    <div className={`
+                        fixed inset-0 z-50 bg-white xl:bg-transparent xl:static xl:z-auto xl:flex flex-col 
+                        transition-transform duration-300 ease-in-out
+                        ${isCartOpen ? 'translate-y-0' : 'translate-y-full xl:translate-y-0'}
+                    `}>
+                        {/* Mobile Header for Cart */}
+                        <div className="xl:hidden bg-white border-b p-4 flex items-center justify-between sticky top-0 z-[60]">
+                             <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                <ShoppingCart className="w-5 h-5" /> Current Sale
+                             </h2>
+                             <button onClick={() => setIsCartOpen(false)} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200">
+                                <X className="w-5 h-5 text-gray-500" />
+                             </button>
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow h-full overflow-y-auto p-4 flex flex-col xl:h-auto">
+                            <h2 className="text-lg font-semibold mb-4 border-b pb-2 hidden xl:block">
+                                {selectedCustomer
+                                    ? "Cart Summary"
+                                    : "Select Customer"}
+                            </h2>
 
                         {/* Customer */}
                         {!selectedCustomer ? (
@@ -953,3 +969,4 @@ export default function Billing({ products: initialProducts }: any) {
         </Authenticated>
     );
 }
+

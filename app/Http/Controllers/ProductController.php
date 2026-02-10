@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use App\Models\Serias;
+use App\Models\SeriasNumber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -16,7 +16,7 @@ class ProductController extends Controller
     public function edit($id)
     {
         $product = Product::findOrFail($id);
-        $seriasList = Serias::all(['id', 'seriasNo']);
+        $seriasList = SeriasNumber::all(['id', 'seriasNo']);
 
         return Inertia::render('Inventory/EditProduct', [
             'product' => $product,
@@ -36,7 +36,7 @@ class ProductController extends Controller
             'productDescription' => 'nullable|string|max:1000',
             'unit' => 'nullable|string|max:50',
             'brand' => 'nullable|string|max:255',
-            'seriasId' => 'nullable|integer|exists:serias,id',
+            'seriasId' => 'nullable|integer|exists:serias_numbers,id',
             'lowStock' => 'nullable|integer|min:0',
             'productImage' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);

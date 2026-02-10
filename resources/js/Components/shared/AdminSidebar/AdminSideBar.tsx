@@ -1,7 +1,8 @@
-import { FC, useState } from "react";
+import { FC } from "react";
 import NavItem from "./partials/NavItem";
 import { User } from "@/types";
 import SideNavLinks from "@/lib/SideNavLinks";
+import { useUIStore } from "@/store/uiStore";
 
 
 interface ISidebar {
@@ -9,7 +10,7 @@ interface ISidebar {
 }
 
 const Sidebar: FC<ISidebar> = ({ user }) => {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const { sidebarOpen, setSidebarOpen } = useUIStore();
 
     return (
         <>

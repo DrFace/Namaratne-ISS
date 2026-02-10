@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Events;
+
+use App\Models\Product;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+class ReorderLevelReached
+{
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    /**
+     * Create a new event instance.
+     */
+    public function __construct(
+        public Product $product,
+        public float $currentQuantity,
+        public int $reorderPoint
+    ) {}
+}

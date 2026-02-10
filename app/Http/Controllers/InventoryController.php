@@ -1,52 +1,40 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\Product;
+use App\Services\ProductService;
+use App\Services\StockService;
 use App\Models\SeriasNumber;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class InventoryController extends Controller
 {
+    public function __construct(
+        protected ProductService $productService,
+        protected StockService $stockService
+    ) {}
+
     public function index()
     {
-        // Paginate only required columns
-        $products = Product::select([
-            'id',
-            'productName',
-            'productCode',
-            'productDescription', // ✅ FIX
-            'unit',               // ✅ FIX
-            'brand',              // ✅ FIX
-            'seriasId',
-            'lowStock',           // ✅ FIX
-            'productImage',       // ✅ FIX
-            'batchNumber',
-            'buyingPrice',
-            'sellingPrice',
-            'quantity',
-            'purchaseDate',
-            'status',
-        ])->paginate(10)->toArray();
-
-        // Fetch series list
+        $products = $this->productService->getPaginatedProducts([], 10);
         $seriasList = SeriasNumber::select(['id', 'seriasNo'])->get()->toArray();
 
-        // Get user permissions
         $user = auth()->user();
         $permissions = $user->getPermissions();
         $isAdmin = $user->isAdmin();
 
         return Inertia::render('Inventory/Index', [
-            'products'   => $products,
-            'seriasList' => $seriasList,
+            'products'    => $products,
+            'seriasList'  => $seriasList,
             'permissions' => $permissions,
-            'isAdmin' => $isAdmin,
+            'isAdmin'     => $isAdmin,
         ]);
     }
 
     public function store(Request $request)
     {
+        Gate::authorize('add_product');
+
         $validated = $request->validate([
             'productName'        => 'required|string|max:255',
             'productCode'        => 'required|string|max:255',
@@ -60,110 +48,48 @@ class InventoryController extends Controller
 
         $validated['createdBy'] = auth()->id();
 
-        // ✅ handle image upload
-        if ($request->hasFile('productImage')) {
-            $file     = $request->file('productImage');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('assets'), $filename);
-            $validated['productImage'] = 'assets/' . $filename;
+        try {
+            $product = $this->productService->createProduct($validated);
+
+            return response()->json([
+                'message' => 'Product created successfully. Add stock to set pricing.',
+                'product' => $product,
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error creating product: ' . $e->getMessage(),
+            ], 500);
         }
-
-        // Set pricing fields as null - will be filled when stock is added
-        $validated['buyingPrice'] = null;
-        $validated['sellingPrice'] = null;
-        $validated['quantity'] = 0;
-        $validated['tax'] = null;
-        $validated['profitMargin'] = null;
-        $validated['batchNumber'] = null;
-        $validated['expiryDate'] = null;
-        $validated['purchaseDate'] = null;
-
-        $product = Product::create($validated);
-
-        return response()->json([
-            'message' => 'Product created successfully. Add stock to set pricing.',
-            'product' => $product,
-        ], 201);
     }
 
     public function addStock(Request $request)
     {
-        $mode = $request->input('mode', 'new');
+        Gate::authorize('add_stock');
 
-        if ($mode === 'existing') {
-            // Adding to existing batch
-            $validated = $request->validate([
-                'batchId'   => 'required|integer|exists:products,id',
-                'quantity'  => 'required|integer|min:1',
-            ]);
-
-            $product = Product::findOrFail($validated['batchId']);
-            $product->increment('quantity', $validated['quantity']);
-
-            return response()->json([
-                'message' => "Added {$validated['quantity']} units to batch {$product->batchNumber}. New stock: {$product->quantity}",
-                'stock'   => $product->fresh(),
-            ], 200);
-        }
-
-        // Creating new batch (existing logic)
         $validated = $request->validate([
-            'productId'     => 'required|integer|exists:products,id',
-            'buyingPrice'   => 'required|numeric',
-            'tax'           => 'nullable|numeric',
-            'profitMargin'  => 'nullable|numeric',
-            'sellingPrice'  => 'required|numeric',
-            'quantity'      => 'required|integer|min:1',
-            'batchNumber'   => 'nullable|string',
-            'purchaseDate'  => 'nullable|date',
-            'expiryDate'    => 'nullable|date',
+            'productCode'    => 'required|string',
+            'quantity'       => 'required|integer|min:1',
+            'buyingPrice'    => 'nullable|numeric',
+            'sellingPrice'   => 'nullable|numeric',
+            'batchNumber'    => 'nullable|string',
+            'expiryDate'     => 'nullable|date',
+            'purchaseDate'   => 'nullable|date',
+            'supplierId'     => 'nullable|integer',
         ]);
 
-        $product = Product::findOrFail($validated['productId']);
+        $validated['createdBy'] = auth()->id();
 
-        // If buyingPrice is null (first stock addition), update the existing product
-        if (is_null($product->buyingPrice)) {
-            $product->update([
-                'buyingPrice'   => $validated['buyingPrice'],
-                'tax'           => $validated['tax'],
-                'profitMargin'  => $validated['profitMargin'],
-                'sellingPrice'  => $validated['sellingPrice'],
-                'quantity'      => $validated['quantity'],
-                'batchNumber'   => $validated['batchNumber'],
-                'purchaseDate'  => $validated['purchaseDate'],
-                'expiryDate'    => $validated['expiryDate'] ?? null,
-            ]);
+        try {
+            $product = $this->stockService->addStock($validated);
 
             return response()->json([
-                'message' => 'Stock added to product successfully',
-                'stock'   => $product->fresh(),
+                'message' => 'Stock added successfully',
+                'stock'   => $product,
             ], 200);
-        } else {
-            // If buyingPrice is not null, create a new product entry (new batch)
-            $newProduct = Product::create([
-                'productName'        => $product->productName,
-                'productCode'        => $product->productCode,
-                'productImage'       => $product->productImage,
-                'productDescription' => $product->productDescription,
-                'unit'               => $product->unit,
-                'brand'              => $product->brand,
-                'seriasId'           => $product->seriasId,
-                'lowStock'           => $product->lowStock,
-                'createdBy'          => auth()->id(),
-                'buyingPrice'        => $validated['buyingPrice'],
-                'tax'                => $validated['tax'],
-                'profitMargin'       => $validated['profitMargin'],
-                'sellingPrice'       => $validated['sellingPrice'],
-                'quantity'           => $validated['quantity'],
-                'batchNumber'        => $validated['batchNumber'],
-                'purchaseDate'       => $validated['purchaseDate'],
-                'expiryDate'         => $validated['expiryDate'] ?? null,
-            ]);
-
+        } catch (\Exception $e) {
             return response()->json([
-                'message' => 'New stock batch created successfully',
-                'stock'   => $newProduct,
-            ], 201);
+                'message' => 'Error adding stock: ' . $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -178,9 +104,9 @@ class InventoryController extends Controller
         return response()->json($serias, 201);
     }
 
-        public function show($id)
+    public function show($id)
     {
-        $product = Product::find($id);
+        $product = $this->productService->getProductById($id);
 
         if (!$product) {
             return response()->json(['message' => 'Product not found'], 404);
@@ -189,15 +115,8 @@ class InventoryController extends Controller
         return response()->json(['product' => $product], 200);
     }
 
-    // 🔹 Update existing product
     public function update(Request $request, $id)
     {
-        $product = Product::find($id);
-
-        if (!$product) {
-            return response()->json(['message' => 'Product not found'], 404);
-        }
-
         $validated = $request->validate([
             'productCode'        => 'nullable|string|max:255',
             'productDescription' => 'nullable|string|max:1000',
@@ -209,41 +128,49 @@ class InventoryController extends Controller
             'productImage'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
-        // Handle image upload
-        if ($request->hasFile('productImage')) {
-            $file     = $request->file('productImage');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('assets'), $filename);
-            $validated['productImage'] = 'assets/' . $filename;
+        try {
+            $product = $this->productService->updateProduct($id, $validated);
+
+            return response()->json([
+                'message' => 'Product updated successfully',
+                'product' => $product,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error updating product: ' . $e->getMessage(),
+            ], 500);
         }
+    }
 
-        // Update fields
-        $product->update($validated);
+    public function destroy($id)
+    {
+        Gate::authorize('delete_product');
 
-        return response()->json([
-            'message' => 'Product updated successfully',
-            'product' => $product,
-        ], 200);
+        try {
+            $this->productService->deleteProduct($id);
+
+            return response()->json([
+                'message' => 'Product deleted successfully',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error deleting product: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function getBatches($productId)
     {
-        // Get all products (batches) with the same product details
-        $baseProduct = Product::find($productId);
-        
-        if (!$baseProduct) {
-            return response()->json(['message' => 'Product not found'], 404);
+        try {
+            $batches = $this->productService->getProductsByBatch($productId);
+
+            return response()->json([
+                'batches' => $batches,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error fetching batches: ' . $e->getMessage(),
+            ], 404);
         }
-
-        // Find all batches for this product (same productName and productCode)
-        $batches = Product::where('productName', $baseProduct->productName)
-            ->where('productCode', $baseProduct->productCode)
-            ->whereNotNull('buyingPrice')
-            ->select('id', 'batchNumber', 'quantity', 'buyingPrice', 'tax', 'profitMargin', 'sellingPrice', 'purchaseDate')
-            ->get();
-
-        return response()->json([
-            'batches' => $batches,
-        ], 200);
     }
 }

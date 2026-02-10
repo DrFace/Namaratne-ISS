@@ -10,8 +10,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
+use App\Services\BillingService;
+use App\DTOs\CreateSaleDTO;
+
 class BillingController extends Controller
 {
+    public function __construct(
+        protected BillingService $billingService
+    ) {}
     /**
      * Display a listing of the resource.
      */
@@ -48,51 +54,29 @@ class BillingController extends Controller
             }
         }
 
-        return DB::transaction(function () use ($validated) {
+        try {
+            // Map cartItems to what BillingService expects
+            $products = collect($validated['cartItems'])->map(function ($item) {
+                return [
+                    'id' => $item['id'],
+                    'quantity' => $item['quantity'],
+                    'price' => $item['sellingPrice']
+                ];
+            })->toArray();
 
-            $sale = Sales::create([
-                'customerId'    => $validated['customerId'] ?? null,
-                'productId'     => collect($validated['cartItems'])->pluck('id'),
-                'totalQuantity' => collect($validated['cartItems'])->sum('quantity'),
-                'totalAmount'   => $validated['totalAmount'],
-                'paidAmount'    => $validated['paidAmount'] ?? 0,
-                'dueAmount'     => $validated['totalAmount'] - ($validated['paidAmount'] ?? 0),
-                'cashAmount'    => $validated['cashAmount'] ?? 0,
-                'cardAmount'    => $validated['cardAmount'] ?? 0,
-                'creditAmount'  => $validated['creditAmount'] ?? 0,
-                'discount_value'=> $validated['discountAmount'] ?? 0,
-                'paymentMethod' => $validated['paymentMethod'],
-                'status'        => $validated['status'],
-                'billNumber'    => 'BILL-' . time(),
-                'createdBy'     => auth()->id(),
-            ]);
+            $dto = new CreateSaleDTO(
+                customerId: (int) $validated['customerId'],
+                products: $products,
+                paidAmount: (float) ($validated['paidAmount'] ?? 0),
+                discount_value: (float) ($validated['discountAmount'] ?? 0),
+                creditAmount: (float) ($validated['creditAmount'] ?? 0),
+                cardAmount: (float) ($validated['cardAmount'] ?? 0),
+                cashAmount: (float) ($validated['cashAmount'] ?? 0),
+                paymentMethod: $validated['paymentMethod'],
+                createdBy: auth()->id()
+            );
 
-            if ($validated['status'] === 'approved') {
-                foreach ($validated['cartItems'] as $item) {
-                    SalesDetails::create([
-                        'salesId'        => $sale->id,
-                        'productId'      => $item['id'],
-                        'quantity'       => $item['quantity'],
-                        'salePrice'      => $item['sellingPrice'],
-                        'descount'       => 0, // you can calculate per item discount if needed
-                        'totalAmount'    => $item['quantity'] * $item['sellingPrice'],
-                        'returnQuantity' => 0,
-                    ]);
-
-                    Product::where('id', $item['id'])->decrement('quantity', $item['quantity']);
-                }
-
-                // Update customer's currentCreditSpend if payment method is credit
-                if ($validated['paymentMethod'] === 'credit' && $validated['customerId']) {
-                    $customer = Customer::find($validated['customerId']);
-                    if ($customer) {
-                        $customer->increment('currentCreditSpend', $validated['creditAmount'] ?? 0);
-                        // Update credit period status after purchase
-                        $customer->refresh();
-                        $customer->updateCreditPeriodStatus();
-                    }
-                }
-            }
+            $sale = $this->billingService->createSale($dto->toArray());
 
             return response()->json([
                 'message' => $validated['status'] === 'draft'
@@ -100,7 +84,12 @@ class BillingController extends Controller
                     : 'Sale completed successfully',
                 'sale'    => $sale,
             ]);
-        });
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'error' => 'sale_failed'
+            ], 422);
+        }
     }
 
     /**
@@ -185,7 +174,8 @@ class BillingController extends Controller
         $sale = Sales::with([
             'items.product:id,productName,productCode',
             'customer:id,name,contactNumber,email,address,vatNumber,discount_category_id',
-            'customer.discountCategory:id,name,type,value'
+            'customer.discountCategory:id,name,type,value',
+            'payments'
         ])->findOrFail($id);
 
         $sale->items->transform(function ($item) {

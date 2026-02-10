@@ -16,6 +16,14 @@ interface InvoiceItem {
     updated_at: string;
 }
 
+interface Payment {
+    id: number;
+    amount: string;
+    payment_method: string;
+    payment_date: string;
+    reference_number?: string;
+}
+
 interface InvoiceData {
     id: number;
     customerId: number | null;
@@ -36,6 +44,7 @@ interface InvoiceData {
     updated_at: string;
     discount_value: number;
     items: InvoiceItem[];
+    payments?: Payment[];
     customer_name?: string;
     customer_contact?: string;
     company?: string;
@@ -543,6 +552,33 @@ export default function InvoiceView() {
                                         )}
                                     </tbody>
                                 </table>
+
+                                {/* PAYMENT HISTORY */}
+                                {invoice.payments && invoice.payments.length > 0 && (
+                                    <div className="mb-6">
+                                        <p className="font-bold text-xs uppercase mb-2 border-b pb-1">Payment History</p>
+                                        <table className="w-full text-[11px] border-collapse">
+                                            <thead>
+                                                <tr className="bg-gray-50 border-y border-gray-300">
+                                                    <th className="p-1 text-left">Date</th>
+                                                    <th className="p-1 text-left">Method</th>
+                                                    <th className="p-1 text-left">Reference</th>
+                                                    <th className="p-1 text-right">Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {invoice.payments.map((payment) => (
+                                                    <tr key={payment.id} className="border-b border-gray-100">
+                                                        <td className="p-1">{new Date(payment.payment_date).toLocaleDateString()}</td>
+                                                        <td className="p-1 capitalize">{payment.payment_method}</td>
+                                                        <td className="p-1">{payment.reference_number || '-'}</td>
+                                                        <td className="p-1 text-right">{formatCurrency(convertPrice(payment.amount))}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
 
                                 {/* NOTE - Only on last page */}
                                 {pageIndex === itemChunks.length - 1 && (

@@ -4,10 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['productName', 'quantity', 'sellingPrice', 'buyingPrice', 'status'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 
    protected $fillable = [
         'productName',
@@ -25,6 +36,7 @@ class Product extends Model
         'supplierId',
         'createdBy',
         'lowStock',
+        'reorder_point',
         'profitMargin',
         'batchNumber',
         'status',
@@ -36,7 +48,10 @@ class Product extends Model
      protected $casts = [
         'expiryDate'   => 'date',
         'purchaseDate' => 'date',
-        'profitMargin' => 'decimal:2'
+        'profitMargin' => 'decimal:2',
+        'quantity'     => 'integer',
+        'buyingPrice'  => 'decimal:2',
+        'sellingPrice' => 'decimal:2',
     ];
 
     // public function scopeFilter($query, array $filters)
@@ -65,4 +80,19 @@ class Product extends Model
         return $this->belongsTo(SeriasNumber::class);
     }
 
+    /**
+     * Get inventory levels across all warehouses
+     */
+    public function warehouseInventory()
+    {
+        return $this->hasMany(WarehouseInventory::class);
+    }
+
+    /**
+     * Get total quantity across all warehouses
+     */
+    public function getTotalQuantityAttribute()
+    {
+        return $this->warehouseInventory()->sum('quantity');
+    }
 }

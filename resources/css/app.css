@@ -2,36 +2,75 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+    :root {
+        --glass-bg: rgba(255, 255, 255, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.3);
+        --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+
+    .dark {
+        --glass-bg: rgba(17, 24, 39, 0.6);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+    }
+
+    body {
+        @apply transition-colors duration-300 bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen font-sans antialiased;
+    }
+}
+
+@layer components {
+    .glass {
+        background: var(--glass-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--glass-shadow);
+    }
+
+    .glass-card {
+        @apply glass rounded-2xl p-6 transition-all duration-300;
+    }
+
+    .glass-card:hover {
+        @apply shadow-xl scale-[1.005];
+    }
+
+    .btn-premium {
+        @apply px-5 py-2.5 rounded-xl font-semibold transition-all duration-300 active:scale-95 flex items-center justify-center gap-2;
+    }
+
+    .btn-primary-premium {
+        @apply btn-premium bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5;
+    }
+
+    .btn-secondary-premium {
+        @apply btn-premium bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-700;
+    }
+
+    .input-premium {
+        @apply w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 outline-none;
+    }
+}
+
 @layer utilities {
     @keyframes slide-up {
         from {
-            transform: translateY(100%);
+            transform: translateY(10px);
             opacity: 0;
         }
-
         to {
             transform: translateY(0);
             opacity: 1;
         }
     }
 
-    @keyframes slide-down {
-        from {
-            transform: translate(-50%, -100%);
-            opacity: 0;
-        }
-
-        to {
-            transform: translate(-50%, 0);
-            opacity: 1;
-        }
+    .animate-premium-in {
+        animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    .animate-slide-up {
-        animation: slide-up 0.3s ease-out;
-    }
-
-    .animate-slide-down {
-        animation: slide-down 0.3s ease-out;
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
     }
 }

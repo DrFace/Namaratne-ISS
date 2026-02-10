@@ -9,6 +9,8 @@ import {
     XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { Link, usePage } from "@inertiajs/react";
+import DarkModeToggle from '../DarkModeToggle';
+import { useGlobalShortcuts } from '../../hooks/useKeyboardShortcuts';
 
 import HeaderSearch from "./HeaderSearch";
 import Dropdown from "../elements/other/Dropdown";
@@ -42,6 +44,9 @@ function classNames(...classes: any) {
 }
 
 export default function HeaderNew({ appName }: { appName: string }) {
+    // Activate global keyboard shortcuts
+    useGlobalShortcuts();
+    
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     let { url }: any = usePage();
     if (url == '/' || url.includes('/?category')) {
@@ -244,11 +249,17 @@ export default function HeaderNew({ appName }: { appName: string }) {
                                     </div> */}
 
 
+                                    {/* Desktop dark mode toggle */}
+                                    <div className="hidden lg:flex items-center gap-4">
+                                        <DarkModeToggle />
+                                    </div>
+
                                     {/* Mobile menu and search (lg-) */}
-                                    <div className="flex items-center justify-end flex-1 lg:hidden">
+                                    <div className="flex items-center justify-end flex-1 gap-3 lg:hidden">
+                                        <DarkModeToggle />
                                         <button
                                             type="button"
-                                            className="p-2 -ml-2 text-black"
+                                            className="p-2 -ml-2 text-black dark:text-white"
                                             onClick={() =>
                                                 setMobileMenuOpen(true)
                                             }
