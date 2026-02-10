@@ -20,6 +20,7 @@ interface AdvancedFilterProps {
 }
 
 const AdvancedFilter: React.FC<AdvancedFilterProps> = ({
+  options,
   onFilter,
   onSearch,
   isLoading,
@@ -166,8 +167,6 @@ const AdvancedFilter: React.FC<AdvancedFilterProps> = ({
             ))}
           </div>
 
-          </div>
-
           <div className="mt-8 pt-6 border-t border-gray-50 dark:border-gray-800 flex flex-col md:flex-row justify-between gap-4">
              <div className="flex gap-2 items-center text-xs font-bold text-gray-400">
                 <History className="w-4 h-4" />
@@ -213,7 +212,7 @@ const AdvancedFilter: React.FC<AdvancedFilterProps> = ({
             
             let displayValue = value;
             if (option.type === 'select') {
-              displayValue = option.options?.find(o => o.value === value)?.label || value;
+              displayValue = option.options?.find((o: { label: string; value: any }) => o.value === value)?.label || value;
             }
 
             return (
