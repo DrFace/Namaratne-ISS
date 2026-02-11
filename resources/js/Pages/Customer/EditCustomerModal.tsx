@@ -157,7 +157,7 @@ export default function EditCustomerModal({
                             Contact Number
                         </label>
                         <input
-                            type="number"
+                            type="text"
                             name="contactNumber"
                             placeholder="Contact Number"
                             value={form.contactNumber}

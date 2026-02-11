@@ -57,9 +57,9 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $permissions = [
-            'add_product', 'edit_product', 'delete_product', 
-            'add_stock', 'add_customer', 'edit_customer',
-            'delete_customer', 'process_sale', 'view_reports'
+            'add_products', 'edit_products', 'delete_products', 
+            'restock_products', 'add_series', 'add_customers', 'edit_customers',
+            'delete_customers', 'process_sale', 'view_reports'
         ];
 
         foreach ($permissions as $permission) {

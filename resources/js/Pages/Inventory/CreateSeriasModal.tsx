@@ -33,15 +33,18 @@ export default function CreateSeriasModal({
                 body: JSON.stringify(form),
             });
 
-            if (!res.ok) throw new Error("Failed to save Serias No");
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || "Failed to save Vehicle Type");
+            }
 
             const data = await res.json();
             onCreated(data);
             onClose();
             setForm({ seriasNo: "", status: "active" });
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert("Error saving Serias number");
+            alert(error.message || "Error saving vehicle type");
         }
     };
 

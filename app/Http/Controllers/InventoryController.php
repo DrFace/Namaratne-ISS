@@ -6,6 +6,7 @@ use App\Services\StockService;
 use App\Models\SeriasNumber;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Gate;
 
 class InventoryController extends Controller
 {
@@ -33,7 +34,7 @@ class InventoryController extends Controller
 
     public function store(Request $request)
     {
-        Gate::authorize('add_product');
+        Gate::authorize('add_products');
 
         $validated = $request->validate([
             'productName'        => 'required|string|max:255',
@@ -65,7 +66,7 @@ class InventoryController extends Controller
 
     public function addStock(Request $request)
     {
-        Gate::authorize('add_stock');
+        Gate::authorize('restock_products');
 
         $validated = $request->validate([
             'productCode'    => 'required|string',
@@ -96,13 +97,20 @@ class InventoryController extends Controller
 
     public function seriasStore(Request $request)
     {
+        Gate::authorize('add_series');
         $validated = $request->validate([
             'seriasNo' => 'required|string|max:255',
+            'status'   => 'nullable|string|in:active,inactive,pending,approved,draft',
         ]);
 
-        $serias = SeriasNumber::create($validated);
-
-        return response()->json($serias, 201);
+        try {
+            $serias = SeriasNumber::create($validated);
+            return response()->json($serias, 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error saving vehicle type: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function show($id)
@@ -146,7 +154,7 @@ class InventoryController extends Controller
 
     public function destroy($id)
     {
-        Gate::authorize('delete_product');
+        Gate::authorize('delete_products');
 
         try {
             $this->productService->deleteProduct($id);

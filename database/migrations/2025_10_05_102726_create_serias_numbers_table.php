@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('serias_numbers', function (Blueprint $table) {
             $table->id();
             $table->string('seriasNo')->nullable();
-            $table->enum('status', ['pending', 'approved', 'draft'])->default('pending')->nullable();
+            $table->enum('status', ['pending', 'approved', 'draft', 'active', 'inactive'])->default('pending')->nullable();
             $table->timestamps();
         });
     }

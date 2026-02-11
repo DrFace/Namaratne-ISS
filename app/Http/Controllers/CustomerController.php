@@ -7,6 +7,7 @@ use App\Models\DiscountCategory;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Gate;
 
 class CustomerController extends Controller
 {
@@ -74,7 +75,7 @@ class CustomerController extends Controller
 
     public function store(CustomerRequest $request)
     {
-        Gate::authorize('add_customer');
+        Gate::authorize('add_customers');
 
         $data = $request->validated();
 
@@ -124,7 +125,7 @@ class CustomerController extends Controller
 
     public function destroy($customerId)
     {
-        Gate::authorize('delete_customer');
+        Gate::authorize('delete_customers');
 
         try {
             $this->customerService->deleteCustomer($customerId);
