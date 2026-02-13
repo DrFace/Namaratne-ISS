@@ -231,40 +231,43 @@ export default function InvoiceView() {
                             <div className="max-w-[800px] mx-auto border border-gray-300 shadow-sm print:shadow-none print:border-black my-6 p-6 print:my-0 print:p-4">
                                 {/* HEADER */}
 
-                                {/* First Row: Logos and Company Info */}
-                                <div className="flex items-center gap-4 mb-3 print:mb-2">
-                                    {/* Logos on the LEFT */}
-                                    <div className="flex gap-2 print:hidden">
+                                {/* Header: Logos and Company Info side by side */}
+                                <div className="flex items-start gap-4 mb-4">
+                                    {/* ESP Logo */}
+                                    <div className="flex-shrink-0">
                                         <img
                                             src="/images/eep_logo.jpeg"
                                             alt="EEP Logo"
-                                            className="h-32 w-auto object-contain"
+                                            className="h-20 w-auto object-contain"
                                         />
+                                    </div>
+                                    
+                                    {/* NMD Logo */}
+                                    <div className="flex-shrink-0">
                                         <img
                                             src="/images/nmd_logo.png"
                                             alt="NMD logo"
-                                            className="h-32 w-auto object-contain"
+                                            className="h-20 w-auto object-contain"
                                         />
                                     </div>
 
                                     {/* Company Name and Details */}
                                     <div className="flex flex-col">
-                                        <h1 className="text-4xl print:text-5xl font-bold text-black tracking-wide leading-tight">
+                                        <h1 className="text-3xl font-bold text-black tracking-wide leading-tight">
                                             NAMARATNA
                                         </h1>
-                                        <h2 className="text-xl print:text-2xl font-semibold text-gray-800 print:text-black leading-tight">
+                                        <h2 className="text-lg font-semibold text-gray-800 leading-tight">
                                             Motor Distributors
                                         </h2>
-                                        <p className="text-xs text-gray-600 print:text-black mt-1">
-                                            Direct importers and island-wide
-                                            distributors for ESP shock absorbers
+                                        <p className="text-[10px] text-gray-600 mt-0.5">
+                                            Direct importers and island-wide distributors for ESP shock absorbers
                                         </p>
                                     </div>
                                 </div>
 
-                                {/* Second Row: Tax Invoice - Left Aligned */}
-                                <div className="mb-2">
-                                    <p className="text-lg font-bold text-black uppercase tracking-widest">
+                                {/* Tax Invoice Title */}
+                                <div className="mb-3">
+                                    <p className="text-base font-bold text-black">
                                         Tax Invoice
                                     </p>
                                 </div>
@@ -296,20 +299,23 @@ export default function InvoiceView() {
                                         <p className="font-bold underline mb-2">
                                             Invoice To:
                                         </p>
-                                        <p className="font-bold">
-                                            {invoice.customer_name || "__________________________"}
+                                        <p>
+                                            Client Name: <span className="font-bold">{invoice.customer_name || "__________________________"}</span>
                                         </p>
                                         <p>
-                                            Company: {invoice.company || "N/A"}
+                                            Company: {invoice.company || ""}
                                         </p>
                                         <p>
-                                            Phone No: {invoice.customer_contact || "N/A"}
+                                            Phone No: {invoice.customer_contact || ""}
                                         </p>
                                         <p>
-                                            Address: {invoice.customer_address || "N/A"}
+                                            Email: {invoice.customer_email || ""}
                                         </p>
                                         <p>
-                                            VAT No: {invoice.customer_vat_number || "N/A"}
+                                            Address: {invoice.customer_address || ""}
+                                        </p>
+                                        <p>
+                                            VAT No: {invoice.customer_vat_number || "______________"}
                                         </p>
                                     </div>
                                     <div className="w-1/2 p-3">
@@ -405,38 +411,38 @@ export default function InvoiceView() {
                                             itemChunks.length - 1 && (
                                             <>
                                                 <tr className="border-t-2 border-black">
-                                                    <td className="p-1" colSpan={2}></td>
-                                                    <td className="p-1 font-bold text-left" colSpan={2}>
+                                                    <td className="p-1" colSpan={3}></td>
+                                                    <td className="p-1 font-normal text-left">
                                                         GOODS VALUE
                                                     </td>
-                                                    <td className="p-1 text-right font-bold">
+                                                    <td className="p-1 text-right">
                                                         {formatCurrency(convertPrice(goodsValue))}
                                                     </td>
                                                 </tr>
 
                                                 <tr>
-                                                    <td className="p-1" colSpan={2}></td>
-                                                    <td className="p-1 font-normal text-left" colSpan={2}>
-                                                        DISCOUNT {invoice.discount_category_name && `(${invoice.discount_category_name})`}
+                                                    <td className="p-1" colSpan={3}></td>
+                                                    <td className="p-1 font-normal text-left">
+                                                        DISCOUNT
                                                     </td>
                                                     <td className="p-1 text-right">
-                                                        - {formatCurrency(convertPrice(discountValue))}
+                                                        {formatCurrency(convertPrice(discountValue))}
                                                     </td>
                                                 </tr>
 
                                                 <tr>
-                                                    <td className="p-1" colSpan={2}></td>
-                                                    <td className="p-1 font-bold text-left" colSpan={2}>
-                                                        NET TOTAL
+                                                    <td className="p-1" colSpan={3}></td>
+                                                    <td className="p-1 font-normal text-left">
+                                                        TOTAL
                                                     </td>
-                                                    <td className="p-1 text-right font-bold">
+                                                    <td className="p-1 text-right">
                                                         {formatCurrency(convertPrice(totalAfterDiscount))}
                                                     </td>
                                                 </tr>
 
                                                 <tr>
-                                                    <td className="p-1" colSpan={2}></td>
-                                                    <td className="p-1 font-normal text-left" colSpan={2}>
+                                                    <td className="p-1" colSpan={3}></td>
+                                                    <td className="p-1 font-normal text-left">
                                                         VAT 18%
                                                     </td>
                                                     <td className="p-1 text-right">
@@ -444,12 +450,12 @@ export default function InvoiceView() {
                                                     </td>
                                                 </tr>
 
-                                                <tr className="border-y-2 border-black">
-                                                    <td className="p-1" colSpan={2}></td>
-                                                    <td className="p-1 text-left font-black text-sm" colSpan={2}>
+                                                <tr className="bg-pink-100 print:bg-pink-100">
+                                                    <td className="p-1" colSpan={3}></td>
+                                                    <td className="p-1 text-left font-bold">
                                                         GRAND TOTAL
                                                     </td>
-                                                    <td className="p-1 text-right font-black text-sm underline decoration-double">
+                                                    <td className="p-1 text-right font-bold">
                                                         {formatCurrency(convertPrice(grandTotal))}
                                                     </td>
                                                 </tr>
