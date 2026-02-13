@@ -30,7 +30,7 @@ return new class extends Migration
             $table->integer('lowStock')->nullable();
             $table->string('batchNumber')->unique()->nullable();
             $table->decimal('profitMargin', 15, 2)->default(0.00)->nullable();
-            $table->enum('status', ['pending', 'approved', 'draft'])->default('pending')->nullable();
+            $table->enum('status', ['pending', 'approved', 'draft', 'active'])->default('pending')->nullable();
             $table->enum('availability', ['instock', 'outstock', 'minstock'])->default('instock')->nullable();
             $table->date('expiryDate')->nullable();
             $table->date('purchaseDate')->nullable();

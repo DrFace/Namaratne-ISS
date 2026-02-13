@@ -24,7 +24,7 @@ class BillingController extends Controller
     public function index()
     {
         // send all products to page for search/autocomplete
-        $products = Product::where('quantity', '>', 0)->get(['id', 'productName', 'sellingPrice', 'quantity', 'productCode']);
+        $products = Product::all(['id', 'productName', 'sellingPrice', 'quantity', 'productCode']);
         return Inertia::render('Billing/Index', [
             'products' => $products,
         ]);

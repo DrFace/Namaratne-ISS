@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { usePage } from "@inertiajs/react";
+import { usePage, router } from "@inertiajs/react";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
 import MasterTable, {
     TableBody,
@@ -50,13 +50,19 @@ export default function ProductsIndexPage() {
         }
     };
 
+    const [currentFilters, setCurrentFilters] = useState<Record<string, any>>({});
+    const [searchQuery, setSearchQuery] = useState('');
+
     // React Query for data management
     const { 
         data: productsData, 
         isLoading, 
         remove: deleteProduct,
         refetch 
-    } = useEntities<any>('products', '/api/v1/products');
+    } = useEntities<any>('products', '/api/v1/products', {
+        ...currentFilters,
+        search: searchQuery
+    });
 
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
     const [isSeriasModalOpen, setIsSeriasModalOpen] = useState(false);
@@ -65,8 +71,6 @@ export default function ProductsIndexPage() {
     const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
     const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
-    const [currentFilters, setCurrentFilters] = useState<Record<string, any>>({});
-    const [searchQuery, setSearchQuery] = useState('');
 
     const filterOptions: FilterOption[] = [
         { 
@@ -126,6 +130,8 @@ export default function ProductsIndexPage() {
 
     const handleSeriasCreated = (newSerias: any) => {
         console.log("New series added:", newSerias);
+        // Reload props to get updated seriasList
+        router.reload({ only: ['seriasList'] });
         refetch();
     };
 

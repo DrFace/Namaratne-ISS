@@ -43,8 +43,26 @@ class ProductService
         if (!empty($filters['availability'])) {
             $query->where('availability', $filters['availability']);
         }
-        
-        // Add more filters as needed from AdvancedFilter
+
+        if (!empty($filters['seriasId'])) {
+            $query->where('seriasId', $filters['seriasId']);
+        }
+
+        if (isset($filters['min_price'])) {
+            $query->where('sellingPrice', '>=', $filters['min_price']);
+        }
+
+        if (isset($filters['max_price'])) {
+            $query->where('sellingPrice', '<=', $filters['max_price']);
+        }
+
+        if (isset($filters['in_stock'])) {
+            if ($filters['in_stock'] === '1') {
+                $query->where('quantity', '>', 0);
+            } elseif ($filters['in_stock'] === '0') {
+                $query->where('quantity', '<=', 0);
+            }
+        }
 
         return $query;
     }

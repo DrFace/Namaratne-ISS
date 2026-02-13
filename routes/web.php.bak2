@@ -1,0 +1,166 @@
+<?php
+
+use App\Http\Controllers\BillingController;
+use App\Http\Controllers\CurrencyRateController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\UserManagementController;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use App\Http\Controllers\InvoiceArchiveController;
+use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\BulkImportController;
+
+Route::get('/', function () {
+    return redirect()->route('login');
+});
+
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/inventory', [InventoryController::class, 'index'])->name('products.index');
+    Route::post('/inventory', [InventoryController::class, 'store'])->name('products.store');
+    Route::post('/stock', [InventoryController::class, 'addStock'])->name('stock.add');
+    Route::get('/inventory/batches/{productId}', [InventoryController::class, 'getBatches'])->name('inventory.batches');
+    Route::get('/inventory/{id}/edit', [InventoryController::class, 'show'])->name('products.edit');
+    Route::put('/inventory/{id}', [InventoryController::class, 'update'])->name('products.update');
+    Route::delete('/inventory/{id}', [InventoryController::class, 'destroy'])->name('products.destroy');
+    Route::post('/serias', [InventoryController::class, 'seriasStore'])->name('serias.store');
+    Route::resource('vehicle-types', \App\Http\Controllers\VehicleTypeController::class);
+    Route::resource('suppliers', \App\Http\Controllers\SupplierController::class);
+
+    Route::get('/customer', [CustomerController::class, 'index'])->name('customer.index');
+    Route::post('/customer', [CustomerController::class, 'store'])->name('customer.store');
+    Route::get('/customer/{customer}/edit', [CustomerController::class, 'edit'])->name('customer.edit');
+    Route::post('/customer/{customer}', [CustomerController::class, 'update'])->name('customer.update');
+    Route::delete('/customer/{customer}', [CustomerController::class, 'destroy'])->name('customer.destroy');
+    Route::post('/customer/{customer}/settle-credit', [CustomerController::class, 'settleCredit'])->name('customer.settle-credit');
+    Route::get('/customer/{customer}/timeline', [CustomerController::class, 'timeline'])->name('customer.timeline');
+    Route::post('/customer-notes', [CustomerController::class, 'storeNote'])->name('customer.notes.store');
+
+    Route::resource('purchase-orders', PurchaseOrderController::class);
+    Route::post('purchase-orders/{id}/receive', [PurchaseOrderController::class, 'receive'])->name('purchase-orders.receive');
+    Route::get('purchase-orders/{id}/print', [PurchaseOrderController::class, 'print'])->name('purchase-orders.print');
+
+    Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
+    Route::post('/billing', [BillingController::class, 'store'])->name('billing.store');
+    Route::get('/customers/search', [BillingController::class, 'search']);
+    Route::get('/billing/print/{id}', [BillingController::class, 'invoice']);
+
+    // Barcode routes
+    Route::post('/barcode/generate', [App\Http\Controllers\BarcodeController::class, 'generate'])->name('barcode.generate');
+    Route::post('/barcode/save/{product}', [App\Http\Controllers\BarcodeController::class, 'save'])->name('barcode.save');
+    Route::get('/barcode/download', [App\Http\Controllers\BarcodeController::class, 'download'])->name('barcode.download');
+    Route::post('/barcode/bulk', [App\Http\Controllers\BarcodeController::class, 'bulk'])->name('barcode.bulk');
+    Route::get('/barcode/types', [App\Http\Controllers\BarcodeController::class, 'types'])->name('barcode.types');
+
+
+    // Currency routes
+    Route::get('/settings/currency', [CurrencyRateController::class, 'index'])->name('currency.index');
+    Route::post('/settings/currency', [CurrencyRateController::class, 'update'])->name('currency.update');
+    Route::get('/api/currency/rate', [CurrencyRateController::class, 'getCurrentRate']);
+    Route::post('/api/currency/convert', [CurrencyRateController::class, 'convert']);
+    // Route::get('/billing/{billing}/edit', [BillingController::class, 'edit'])->name('billing.edit');
+    // Route::post('/billing/{billing}', [BillingController::class, 'update'])->name('billing.update');
+    // Route::delete('/billing/{billing}', [BillingController::class, 'destroy'])->name('billing.destroy');
+
+    // Report routes
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/customers', [ReportController::class, 'customerReport'])->name('reports.customers');
+    Route::get('/reports/payments', [ReportController::class, 'paymentReport'])->name('reports.payments');
+    Route::get('/reports/inventory', [ReportController::class, 'inventoryReport'])->name('reports.inventory');
+    Route::get('/reports/sales-movement', [ReportController::class, 'salesMovementReport'])->name('reports.sales-movement');
+
+    // Enhanced analytics routes
+    Route::prefix('analytics')->name('analytics.')->group(function () {
+        Route::get('/inventory', [App\Http\Controllers\EnhancedReportController::class, 'inventory'])->name('inventory');
+        Route::get('/sales', [App\Http\Controllers\EnhancedReportController::class, 'sales'])->name('sales');
+        Route::get('/profit', [App\Http\Controllers\EnhancedReportController::class, 'profit'])->name('profit');
+        Route::get('/customers', [App\Http\Controllers\EnhancedReportController::class, 'customers'])->name('customers');
+        Route::get('/abc-analysis', [App\Http\Controllers\EnhancedReportController::class, 'abcAnalysis'])->name('abc');
+        Route::post('/export', [App\Http\Controllers\EnhancedReportController::class, 'export'])->name('export');
+    });
+
+    // Admin routes
+    Route::middleware('admin')->group(function () {
+        Route::get('/admin/permissions', [PermissionController::class, 'index'])->name('permissions.index');
+        Route::post('/admin/permissions', [PermissionController::class, 'update'])->name('permissions.update');
+        Route::get('/admin/users', [UserManagementController::class, 'index'])->name('users.index');
+        Route::post('/admin/users/{id}/role', [UserManagementController::class, 'updateRole'])->name('users.updateRole');
+        
+        // Settings routes
+        Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('settings.index');
+        Route::post('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('settings.update');
+
+        // Bulk Import Routes
+        Route::post('/settings/import-products', [BulkImportController::class, 'importProducts'])->name('settings.import-products');
+        Route::post('/settings/import-customers', [BulkImportController::class, 'importCustomers'])->name('settings.import-customers');
+        Route::get('/settings/download-template/{type}', [BulkImportController::class, 'downloadTemplate'])->name('settings.download-template');
+        
+        // Discount Categories routes
+        Route::get('/discount-categories', [\App\Http\Controllers\DiscountCategoryController::class, 'index'])->name('discount-categories.index');
+        Route::post('/discount-categories', [\App\Http\Controllers\DiscountCategoryController::class, 'store'])->name('discount-categories.store');
+        Route::put('/discount-categories/{id}', [\App\Http\Controllers\DiscountCategoryController::class, 'update'])->name('discount-categories.update');
+        Route::delete('/discount-categories/{id}', [\App\Http\Controllers\DiscountCategoryController::class, 'destroy'])->name('discount-categories.destroy');
+        Route::post('/discount-categories/{id}/customers', [\App\Http\Controllers\DiscountCategoryController::class, 'assignCustomer'])->name('discount-categories.assign-customer');
+        Route::delete('/discount-categories/{id}/customers/{customerId}', [\App\Http\Controllers\DiscountCategoryController::class, 'removeCustomer'])->name('discount-categories.remove-customer');
+    });
+
+    // Payment routes
+    Route::prefix('sales/{sale}')->group(function () {
+        Route::post('/payments', [App\Http\Controllers\PaymentController::class, 'store'])->name('payments.store');
+        Route::get('/payments', [App\Http\Controllers\PaymentController::class, 'index'])->name('payments.index');
+    });
+    Route::get('/payments/history', [App\Http\Controllers\PaymentController::class, 'history'])->name('payments.history');
+    Route::delete('/payments/{payment}', [App\Http\Controllers\PaymentController::class, 'destroy'])->name('payments.destroy');
+
+    // Quotation routes
+    Route::resource('quotations', App\Http\Controllers\QuotationController::class);
+    Route::post('/quotations/{id}/convert', [App\Http\Controllers\QuotationController::class, 'convertToInvoice'])->name('quotations.convert');
+    Route::patch('/quotations/{id}/status', [App\Http\Controllers\QuotationController::class, 'updateStatus'])->name('quotations.status');
+
+    // Return routes
+    Route::get('/returns', [App\Http\Controllers\ReturnController::class, 'index'])->name('returns.index');
+    Route::get('/sales/{sale}/return', [App\Http\Controllers\ReturnController::class, 'create'])->name('returns.create');
+    Route::post('/returns', [App\Http\Controllers\ReturnController::class, 'store'])->name('returns.store');
+    Route::get('/returns/{id}', [App\Http\Controllers\ReturnController::class, 'show'])->name('returns.show');
+
+    // Warehouse routes
+    Route::resource('warehouses_test', App\Http\Controllers\WarehouseController::class);
+    Route::get('/products/{product}/warehouse-stock', [App\Http\Controllers\WarehouseController::class, 'productStock'])->name('warehouses.product-stock');
+
+    // Stock Transfer routes
+    Route::apiResource('transfers', App\Http\Controllers\WarehouseTransferController::class)->only(['index', 'store', 'show']);
+    Route::post('/transfers/{transfer}/complete', [App\Http\Controllers\WarehouseTransferController::class, 'complete'])->name('transfers.complete');
+
+    // Unit Management
+    Route::apiResource('units', App\Http\Controllers\UnitController::class);
+
+    // Advanced Stock Reports
+    Route::get('/reports/dead-stock', [App\Http\Controllers\EnhancedReportController::class, 'deadStock'])->name('reports.dead-stock');
+    Route::get('/reports/reorder-list', [App\Http\Controllers\EnhancedReportController::class, 'reorderReport'])->name('reports.reorder');
+
+        Route::get('/invoices/archive', [InvoiceArchiveController::class, 'index'])->name('invoices.archive');
+    Route::get('/billing/view/{id}', [BillingController::class, 'invoiceView']);
+
+
+    // Audit Trail
+    Route::get('/audit-logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('audit.index');
+
+    // API route for getting user permissions
+    Route::get('/api/user/permissions', [PermissionController::class, 'getUserPermissions']);
+    // Help & User Manual
+    Route::get('/help', [App\Http\Controllers\HelpController::class, 'index'])->name('help.index');
+});
+
+require __DIR__ . '/auth.php';

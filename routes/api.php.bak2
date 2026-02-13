@@ -71,7 +71,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(functio
     });
 
     // Unit Management API
-    Route::apiResource('units', App\Http\Controllers\UnitController::class)->names('api.units');
+    Route::apiResource('units', App\Http\Controllers\UnitController::class);
 
     // Quotations API
     Route::prefix('quotations')->group(function () {
@@ -96,8 +96,13 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:api'])->group(functio
         Route::get('/{id}', [App\Http\Controllers\ReturnController::class, 'show']);
     });
 
-    // Transfers API
-    Route::post('/transfers/{transfer}/complete', [App\Http\Controllers\WarehouseTransferController::class, 'complete']);
-    Route::apiResource('transfers', App\Http\Controllers\WarehouseTransferController::class)->only(['index', 'store', 'show'])->names('api.transfers');
+    // Warehouse API
+    // Warehouse & Transfers API (Namespaced to avoid conflict with Web routes)
+    // Route::name('api.')->group(function () {
+    //     Route::apiResource('warehouses', App\Http\Controllers\WarehouseController::class);
+    //     Route::get('/products/{product}/warehouse-stock', [App\Http\Controllers\WarehouseController::class, 'productStock']);
 
+    //     Route::post('/transfers/{transfer}/complete', [App\Http\Controllers\WarehouseTransferController::class, 'complete']);
+    //     Route::apiResource('transfers', App\Http\Controllers\WarehouseTransferController::class)->only(['index', 'store', 'show']);
+    // });
 });

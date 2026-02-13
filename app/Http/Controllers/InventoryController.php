@@ -38,7 +38,7 @@ class InventoryController extends Controller
 
         $validated = $request->validate([
             'productName'        => 'required|string|max:255',
-            'productCode'        => 'required|string|max:255',
+            'productCode'        => 'required|string|max:255|unique:products',
             'productImage'       => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,webp|max:10240',
             'productDescription' => 'nullable|string',
             'unit'               => 'required|string',
@@ -99,7 +99,7 @@ class InventoryController extends Controller
     {
         Gate::authorize('add_series');
         $validated = $request->validate([
-            'seriasNo' => 'required|string|max:255',
+            'seriasNo' => 'required|string|max:255|unique:serias_numbers',
             'status'   => 'nullable|string|in:active,inactive,pending,approved,draft',
         ]);
 
