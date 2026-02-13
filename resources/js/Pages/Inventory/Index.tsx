@@ -61,7 +61,8 @@ export default function ProductsIndexPage() {
         refetch 
     } = useEntities<any>('products', '/api/v1/products', {
         ...currentFilters,
-        search: searchQuery
+        search: searchQuery,
+        initialData: initialProducts // ✅ Pass initial data
     });
 
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);

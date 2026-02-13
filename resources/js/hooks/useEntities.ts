@@ -18,6 +18,7 @@ export const useEntities = <T>(entityName: string, endpoint: string, params: Que
       const { data } = await axios.get(endpoint, { params });
       return data;
     },
+    initialData: params.initialData, // ✅ Hydrate with server data
   });
 
   const createMutation = useMutation({
