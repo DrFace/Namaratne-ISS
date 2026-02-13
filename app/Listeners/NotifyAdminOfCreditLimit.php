@@ -14,7 +14,7 @@ class NotifyAdminOfCreditLimit
      */
     public function handle(CustomerCreditExceeded $event): void
     {
-        $admins = User::where('isAdmin', true)->get();
+        $admins = User::where('role', User::ROLE_ADMIN)->get();
         
         Notification::send($admins, new CreditLimitExceededNotification($event->customer, $event->exceededAmount));
     }
