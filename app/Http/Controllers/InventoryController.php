@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Services\ProductService;
 use App\Services\StockService;
 use App\Models\SeriasNumber;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Gate;
@@ -68,30 +69,81 @@ class InventoryController extends Controller
     {
         Gate::authorize('restock_products');
 
-        $validated = $request->validate([
-            'productCode'    => 'required|string',
-            'quantity'       => 'required|integer|min:1',
-            'buyingPrice'    => 'nullable|numeric',
-            'sellingPrice'   => 'nullable|numeric',
-            'batchNumber'    => 'nullable|string',
-            'expiryDate'     => 'nullable|date',
-            'purchaseDate'   => 'nullable|date',
-            'supplierId'     => 'nullable|integer',
-        ]);
+        $mode = $request->input('mode', 'new');
 
-        $validated['createdBy'] = auth()->id();
+        if ($mode === 'existing') {
+            // Existing batch mode - only need batchId and quantity
+            $validated = $request->validate([
+                'batchId'  => 'required|integer|exists:products,id',
+                'quantity' => 'required|integer|min:1',
+            ]);
 
-        try {
-            $product = $this->stockService->addStock($validated);
+            try {
+                $batch = Product::findOrFail($validated['batchId']);
+                $batch->increment('quantity', $validated['quantity']);
 
-            return response()->json([
-                'message' => 'Stock added successfully',
-                'stock'   => $product,
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error adding stock: ' . $e->getMessage(),
-            ], 500);
+                return response()->json([
+                    'message' => 'Stock added to existing batch successfully',
+                    'stock'   => $batch->fresh(),
+                ], 200);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'message' => 'Error adding stock: ' . $e->getMessage(),
+                ], 500);
+            }
+        } else {
+            // New batch mode - need full product details
+            $validated = $request->validate([
+                'productId'      => 'required|integer|exists:products,id',
+                'quantity'       => 'required|integer|min:1',
+                'buyingPrice'    => 'required|numeric|min:0',
+                'tax'            => 'required|numeric|min:0',
+                'profitMargin'   => 'required|numeric|min:0',
+                'sellingPrice'   => 'required|numeric|min:0',
+                'batchNumber'    => 'required|string',
+                'purchaseDate'   => 'required|date',
+                'expiryDate'     => 'nullable|date',
+                'supplierId'     => 'nullable|integer',
+            ]);
+
+            try {
+                // Get the base product
+                $baseProduct = Product::findOrFail($validated['productId']);
+
+                // Create new batch as a new product record
+                $newBatch = Product::create([
+                    'productName'        => $baseProduct->productName,
+                    'productCode'        => $baseProduct->productCode,
+                    'productDescription' => $baseProduct->productDescription,
+                    'productImage'       => $baseProduct->productImage,
+                    'buyingPrice'        => $validated['buyingPrice'],
+                    'sellingPrice'       => $validated['sellingPrice'],
+                    'tax'                => $validated['tax'],
+                    'profitMargin'       => $validated['profitMargin'],
+                    'quantity'           => $validated['quantity'],
+                    'unit'               => $baseProduct->unit,
+                    'brand'              => $baseProduct->brand,
+                    'seriasId'           => $baseProduct->seriasId,
+                    'supplierId'         => $validated['supplierId'] ?? $baseProduct->supplierId,
+                    'createdBy'          => auth()->id(),
+                    'lowStock'           => $baseProduct->lowStock,
+                    'batchNumber'        => $validated['batchNumber'],
+                    'expiryDate'         => $validated['expiryDate'] ?? null,
+                    'purchaseDate'       => $validated['purchaseDate'],
+                    'status'             => 'active',
+                    'availability'       => 'instock',
+                    'vehicle_type'       => $baseProduct->vehicle_type,
+                ]);
+
+                return response()->json([
+                    'message' => 'New batch created successfully',
+                    'stock'   => $newBatch,
+                ], 200);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'message' => 'Error creating batch: ' . $e->getMessage(),
+                ], 500);
+            }
         }
     }
 
